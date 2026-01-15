@@ -3,6 +3,7 @@ import { createRoot } from 'react-dom/client'
 import App from './App.jsx'
 import {
   createBrowserRouter,
+  Navigate,
   RouterProvider,
 } from "react-router-dom";
 import LoginPage from './pages/login.jsx';
@@ -17,11 +18,15 @@ const router = createBrowserRouter([
     element: <App />,
     // errorElement: <ErrorPage />,
     children: [
-      {
-        //home page
-        index: true,
-        element: <HomePage />,
+      // {
+      //   //home page
+      //   index: true,
+      //   element: <HomePage />,
 
+      // },
+       {
+        index: true,
+        element: <Navigate to="/login" replace />,
       },
       {
         //flycam management

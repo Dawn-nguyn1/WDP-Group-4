@@ -31,16 +31,16 @@ const Header = () => {
             key: 'flycams',
             icon: <PlayCircleOutlined />,
         },
-        {
-            label: <Link to={"/login"}>Đăng nhập</Link>,
-            key: 'login',
-            icon: <PlayCircleOutlined />,
-        },
-        {
-            label: <Link to={"/register"}>Đăng ký</Link>,
-            key: 'register',
-            icon: <PlayCircleOutlined />,
-        },
+        // {
+        //     label: <Link to={"/login"}>Đăng nhập</Link>,
+        //     key: 'login',
+        //     icon: <PlayCircleOutlined />,
+        // },
+        // {
+        //     label: <Link to={"/register"}>Đăng ký</Link>,
+        //     key: 'register',
+        //     icon: <PlayCircleOutlined />,
+        // },
     ];
 
     return (
