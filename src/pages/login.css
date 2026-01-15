@@ -77,23 +77,49 @@
     margin-bottom: 0;
 }
 
-.modern-tabs .ant-tabs-tab {
-    font-size: 16px;
-    font-weight: 500;
-    padding: 12px 24px;
-    margin: 0 8px;
-    border-radius: 8px;
-    transition: all 0.3s ease;
+/* Modern Tabs - Tăng specificity để override Ant Design */
+.login-container .form-container .modern-tabs .ant-tabs-nav {
+    margin-bottom: 24px;
 }
 
-.modern-tabs .ant-tabs-tab-active {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+.login-container .form-container .modern-tabs .ant-tabs-nav::before {
+    border-bottom: none !important;
+}
+
+.login-container .form-container .modern-tabs .ant-tabs-tab {
+    font-size: 16px !important;
+    font-weight: 500 !important;
+    padding: 12px 24px !important;
+    margin: 0 8px !important;
+    border-radius: 8px !important;
+    transition: all 0.3s ease !important;
+    color: #667eea !important;
+    background: transparent !important;
+    border: 2px solid #e1e8ed !important;
+}
+
+.login-container .form-container .modern-tabs .ant-tabs-tab-active {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
     color: white !important;
-    border: none;
+    border: none !important;
 }
 
-.modern-tabs .ant-tabs-ink-bar {
-    display: none;
+.login-container .form-container .modern-tabs .ant-tabs-tab-active .ant-tabs-tab-btn {
+    color: white !important;
+}
+
+.login-container .form-container .modern-tabs .ant-tabs-tab:hover {
+    color: #667eea !important;
+    background: rgba(102, 126, 234, 0.05) !important;
+}
+
+.login-container .form-container .modern-tabs .ant-tabs-tab-active:hover {
+    color: white !important;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+}
+
+.login-container .form-container .modern-tabs .ant-tabs-ink-bar {
+    display: none !important;
 }
 
 .modern-form {

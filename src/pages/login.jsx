@@ -90,9 +90,8 @@ const LoginPage = () => {
                 <Col xs={0} md={12} className="image-col">
                     <div className="image-overlay">
                         <div className="brand-content">
-                            <h1>Green Space</h1>
-                            <h2>Bonsai</h2>
-                            <p>Khám phá thế giới bonsai tuyệt vời</p>
+                            <h1>Mini UTM </h1>
+                            <p>Quản lý và giám sát bay drone tầm thấp</p>
                         </div>
                     </div>
                 </Col>
