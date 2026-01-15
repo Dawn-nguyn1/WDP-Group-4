@@ -1,14 +1,20 @@
 import React from 'react';
 import { Button, Form, Input, Row, Col, Tabs } from "antd";
-import { Link } from "react-router-dom";
 import OIPImage from '../assets/OIP.jpg';
 import './login.css';
-
+import { Link, useNavigate } from "react-router-dom";
 const LoginPage = () => {
     const [form] = Form.useForm();
+    const navigate = useNavigate();
 
     const onFinish = (values) => {
         console.log("email va password:", values);
+    };
+
+    const handleTabChange = (key) => {
+        if (key === 'register') {
+            navigate('/register');
+        }
     };
 
     const items = [
@@ -80,7 +86,7 @@ const LoginPage = () => {
         },
         {
             key: 'register',
-            label: <Link to="/register">Đăng ký</Link>,
+            label: 'Đăng ký', 
         },
     ];
 
@@ -102,6 +108,7 @@ const LoginPage = () => {
                             centered
                             items={items}
                             className="modern-tabs"
+                            onChange={handleTabChange} // ← THÊM DÒNG NÀY
                         />
                     </div>
                 </Col>

@@ -1,12 +1,23 @@
 .register-container {
     min-height: 100vh;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: white;
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
 }
 
 .register-row {
-    min-height: 100vh;
+    width: 100%;
+    max-width: 1400px;
     margin: 0;
+    border: 1px solid #e0e0e0;
+    border-radius: 12px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
+    background: white;
+    min-height: 700px;
 }
 
 .image-col {
@@ -66,9 +77,6 @@
 .form-container {
     width: 100%;
     max-width: 450px;
-    border: 1px solid #e0e0e0;
-    border-radius: 12px;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
     padding: 20px;
     background: white;
 }
@@ -216,28 +224,6 @@
     text-decoration: underline;
 }
 
-/* Responsive Design */
-@media (max-width: 768px) {
-    .register-container {
-        background: white;
-    }
-    
-    .form-col {
-        padding: 20px;
-    }
-    
-    .brand-content h1 {
-        font-size: 2.5rem;
-    }
-    
-    .brand-content h2 {
-        font-size: 1.5rem;
-    }
-    
-    .form-container {
-        max-width: 100%;
-    }
-}
 
 /* Animation */
 @keyframes fadeInUp {

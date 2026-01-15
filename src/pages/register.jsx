@@ -1,20 +1,26 @@
 import React from 'react';
 import { Button, Form, Input, Row, Col, Tabs } from "antd";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import OIPImage from '../assets/OIP.jpg';
 import './register.css';
 
 const RegisterPage = () => {
     const [form] = Form.useForm();
+    const navigate = useNavigate();
 
     const onFinish = (values) => {
         console.log("name, email va password:", values);
+    };
+    const handleTabChange = (key) => {
+        if (key === 'login') {
+            navigate('/login');
+        }
     };
 
     const items = [
         {
             key: 'login',
-            label: <Link to="/login">Đăng nhập</Link>,
+            label: 'Đăng nhập', 
         },
         {
             key: 'register',
@@ -30,19 +36,19 @@ const RegisterPage = () => {
                         <h2>Tạo tài khoản mới!</h2>
                         <p>Vui lòng nhập thông tin để đăng ký.</p>
                     </div>
-                    
+
                     <Form.Item
                         label="Full Name"
                         name="fullName"
                         rules={[{ required: true, message: 'Please input your fullName!' }]}
                     >
-                        <Input 
-                            placeholder="Nhập họ tên của bạn" 
+                        <Input
+                            placeholder="Nhập họ tên của bạn"
                             className="modern-input"
                             size="large"
                         />
                     </Form.Item>
-                    
+
                     <Form.Item
                         label="Email"
                         name="email"
@@ -51,25 +57,25 @@ const RegisterPage = () => {
                             { type: "email", message: 'Email không đúng định dạng!' }
                         ]}
                     >
-                        <Input 
-                            placeholder="Nhập email của bạn" 
+                        <Input
+                            placeholder="Nhập email của bạn"
                             className="modern-input"
                             size="large"
                         />
                     </Form.Item>
-                    
+
                     <Form.Item
                         label="Password"
                         name="password"
                         rules={[{ required: true, message: 'Please input your password!' }]}
                     >
-                        <Input.Password 
-                            placeholder="Nhập mật khẩu của bạn" 
+                        <Input.Password
+                            placeholder="Nhập mật khẩu của bạn"
                             className="modern-input"
                             size="large"
                         />
                     </Form.Item>
-                    
+
                     <Form.Item
                         label="Phone number"
                         name="phone"
@@ -78,13 +84,13 @@ const RegisterPage = () => {
                             { pattern: new RegExp(/\d+/g), message: "Wrong format!" }
                         ]}
                     >
-                        <Input 
-                            placeholder="Nhập số điện thoại của bạn" 
+                        <Input
+                            placeholder="Nhập số điện thoại của bạn"
                             className="modern-input"
                             size="large"
                         />
                     </Form.Item>
-                    
+
                     <Form.Item className="form-actions">
                         <Button
                             htmlType="submit"
@@ -96,7 +102,7 @@ const RegisterPage = () => {
                             Đăng ký
                         </Button>
                     </Form.Item>
-                    
+
                     <div className="form-footer">
                         <span>Đã có tài khoản? </span>
                         <Link to="/login" className="modern-link">Đăng nhập tại đây</Link>
@@ -124,6 +130,7 @@ const RegisterPage = () => {
                             centered
                             items={items}
                             className="modern-tabs"
+                            onChange={handleTabChange} 
                         />
                     </div>
                 </Col>

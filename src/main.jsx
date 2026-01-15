@@ -18,15 +18,16 @@ const router = createBrowserRouter([
     element: <App />,
     // errorElement: <ErrorPage />,
     children: [
-      // {
-      //   //home page
-      //   index: true,
-      //   element: <HomePage />,
-
-      // },
+      
        {
         index: true,
         element: <Navigate to="/login" replace />,
+      },
+      {
+        //home page
+        path: "/homepage",
+        element: <HomePage />,
+
       },
       {
         //flycam management

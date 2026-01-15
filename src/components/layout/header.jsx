@@ -17,7 +17,7 @@ const Header = () => {
 
     const items = [
         {
-            label: <Link to={"/"}>Home</Link>,
+            label: <Link to={"/homepage"}>Home</Link>,
             key: 'home',
             icon: <HomeOutlined />,
         },
