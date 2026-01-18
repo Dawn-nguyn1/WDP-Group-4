@@ -127,7 +127,7 @@ const LoginPage = () => {
                             centered
                             items={items}
                             className="modern-tabs"
-                            onChange={handleTabChange} // ← THÊM DÒNG NÀY
+                            onChange={handleTabChange} 
                         />
                     </div>
                 </Col>

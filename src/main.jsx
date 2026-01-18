@@ -10,8 +10,8 @@ import {
 import LoginPage from './pages/login.jsx';
 import RegisterPage from './pages/register.jsx';
 import HomePage from './pages/homepage.jsx';
-import FlycamManagement from './components/flycam/flycam.management.jsx';
-import UserManagement from './components/user/user.management.jsx';
+import FlycamPage from './components/flycam/flycam.management.jsx';
+import UserPage from './components/user/user.jsx';
 import { AuthWrapper } from './context/auth.context.jsx';
 
 const router = createBrowserRouter([
@@ -33,12 +33,12 @@ const router = createBrowserRouter([
       {
         //flycam management
         path: "/flycams",
-        element: <FlycamManagement/>,
+        element: <FlycamPage/>,
       },
       {
         //user management
         path: "/users",
-        element: <UserManagement/>,
+        element: <UserPage/>,
       }
     ]
   },
