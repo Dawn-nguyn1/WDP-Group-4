@@ -1,15 +1,30 @@
 import React from 'react';
-import { Button, Form, Input, Row, Col, Tabs } from "antd";
+import { Button, Form, Input, Row, Col, Tabs, notification } from "antd";
 import { Link, useNavigate } from "react-router-dom";
 import OIPImage from '../assets/OIP.jpg';
-import './register.css';
+import './styles/register.css';
+import {registerUserAPI} from '../services/api.service';
 
 const RegisterPage = () => {
     const [form] = Form.useForm();
     const navigate = useNavigate();
 
-    const onFinish = (values) => {
-        console.log("name, email va password:", values);
+    const onFinish = async (values) => {
+        const res = await registerUserAPI(values.fullName, values.email, values.password);
+        if (res.user) {
+            notification.success({
+                title: "Register success",
+                description: "Tạo tài khoản thành công!",
+            });
+        } else {
+            notification.error({
+                title: "Register failed",
+                description: JSON.stringify(res.message),
+            });
+        }
+        console.log(">>>>> response tu API:", res.user);
+
+
     };
     const handleTabChange = (key) => {
         if (key === 'login') {
@@ -76,7 +91,7 @@ const RegisterPage = () => {
                         />
                     </Form.Item>
 
-                    <Form.Item
+                    {/* <Form.Item
                         label="Phone number"
                         name="phone"
                         rules={[
@@ -89,7 +104,7 @@ const RegisterPage = () => {
                             className="modern-input"
                             size="large"
                         />
-                    </Form.Item>
+                    </Form.Item> */}
 
                     <Form.Item className="form-actions">
                         <Button

@@ -1,14 +1,32 @@
-import React from 'react';
-import { Button, Form, Input, Row, Col, Tabs } from "antd";
-import OIPImage from '../assets/OIP.jpg';
-import './login.css';
+import React, { useContext } from 'react';
+import { Button, Form, Input, Row, Col, Tabs, notification } from "antd";
+import './styles/login.css';
 import { Link, useNavigate } from "react-router-dom";
+import { loginUserAPI } from "../services/api.service";
+import { AuthContext } from "../context/auth.context";
 const LoginPage = () => {
     const [form] = Form.useForm();
     const navigate = useNavigate();
+    const {user,setUser} = useContext(AuthContext);
 
-    const onFinish = (values) => {
-        console.log("email va password:", values);
+    const onFinish = async (values) => {
+        const res = await loginUserAPI(values.email, values.password);
+        console.log(">>>>> response tu API:", res);
+        if (res.user) {
+            notification.success({
+                title: "Login success",
+                description: "Đăng nhập thành công!",
+            });
+            localStorage.setItem("access_token", res.token);
+            setUser(res.user);
+            navigate('/homepage');
+        } else {
+            notification.error({
+                title: "Login failed",
+                description: JSON.stringify(res.message),
+            });
+        }
+        
     };
 
     const handleTabChange = (key) => {
@@ -89,7 +107,8 @@ const LoginPage = () => {
             label: 'Đăng ký', 
         },
     ];
-
+    
+    console.log(">>>>> user:",user );
     return (
         <div className="login-container">
             <Row className="login-row">
