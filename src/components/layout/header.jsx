@@ -17,28 +17,24 @@ const Header = () => {
     const navigate = useNavigate();
     const { user, setUser } = useContext(AuthContext);
 
-    // const handleLogout = async () => {
-    //     const res = await logoutAPI();
-    //     if (res.data) {
-    //         // clear data
-    //         localStorage.removeItem("access_token");
-    //         setUser({
-    //             email: "",
-    //             phone: "",
-    //             fullName: "",
-    //             role: "",
-    //             avatar: "",
-    //             id: ""
-    //         })
-    //         message.success("Logout thành công.");
-
-    //         //redirect to home
-    //         navigate("/");
-    //     }
-    // }
-
+    const handleLogout = () => {
+        localStorage.removeItem("access_token");
+        setUser({
+            _id: "",
+            email: "",
+            profile: {
+                fullName: ""
+            },
+            role: "",
+        });
+        navigate("/login");
+    };
 
     const onClick = (e) => {
+        if (e.key === 'logout') {
+            handleLogout();
+            return;
+        }
         setCurrent(e.key);
     };
 
@@ -59,33 +55,58 @@ const Header = () => {
             icon: <PlayCircleOutlined />,
         },
 
-        ...(!user._id ? [{
+        ...(!user?._id ? [{
             label: <Link to={"/login"}>Đăng nhập</Link>,
             key: 'login',
             icon: <LoginOutlined />,
         }] : []),
 
-        ...(user._id ? [{
-            label: `Welcome ${user.profile.fullName}`,
+        ...(user?._id ? [{
+            label: `Welcome ${user.profile?.fullName ?? user.email}`,
             key: 'setting',
             icon: <AliwangwangOutlined />,
             children: [
                 {
                     label: <span >Đăng xuất</span>,
                     key: 'logout',
-                    onClick: () => handleLogout()
                 },
             ],
         }] : []),
     ];
 
     return (
-        <Menu
-            onClick={onClick}
-            selectedKeys={[current]}
-            mode="horizontal"
-            items={items}
-        />
+        <div
+            style={{
+                width: 256,
+                height: '100vh',
+                position: 'sticky',
+                top: 0,
+                left: 0,
+                overflow: 'auto',
+                borderRight: '1px solid #e2e8f0',
+                background: '#fff'
+            }}
+        >
+            <div
+                style={{
+                    padding: '16px 20px',
+                    fontWeight: 700,
+                    fontSize: 16,
+                    color: '#fff',
+                    borderBottom: '1px solid #e2e8f0',
+                    background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)'
+                }}
+            >
+                Mini UTM
+            </div>
+            <Menu
+                onClick={onClick}
+                style={{ width: 256, borderRight: 0 }}
+                selectedKeys={current ? [current] : undefined}
+                mode="inline"
+                items={items}
+            />
+        </div>
     )
 }
 
