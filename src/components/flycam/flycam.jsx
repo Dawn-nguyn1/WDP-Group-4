@@ -1,9 +1,9 @@
 import React from 'react'
 
-const FlycamManagement = () => {
+const FlycamPage = () => {
   return (
     <div>FlycamManagement</div>
   )
 }
 
-export default FlycamManagement
+export default FlycamPage

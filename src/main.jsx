@@ -1,15 +1,18 @@
+import React from 'react'
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import App from './App.jsx'
 import {
   createBrowserRouter,
+  Navigate,
   RouterProvider,
 } from "react-router-dom";
 import LoginPage from './pages/login.jsx';
 import RegisterPage from './pages/register.jsx';
 import HomePage from './pages/homepage.jsx';
-import FlycamManagement from './components/flycam/flycam.management.jsx';
-import UserManagement from './components/user/user.management.jsx';
+import UserPage from './components/user/user.jsx';
+import { AuthWrapper } from './context/auth.context.jsx';
+import FlycamPage from './components/flycam/flycam.jsx';
 
 const router = createBrowserRouter([
   {
@@ -17,21 +20,25 @@ const router = createBrowserRouter([
     element: <App />,
     // errorElement: <ErrorPage />,
     children: [
+       {
+        index: true,
+        element: <Navigate to="/login" replace />,
+      },
       {
         //home page
-        index: true,
+        path: "/homepage",
         element: <HomePage />,
 
       },
       {
         //flycam management
         path: "/flycams",
-        element: <FlycamManagement/>,
+        element: <FlycamPage/>,
       },
       {
         //user management
         path: "/users",
-        element: <UserManagement/>,
+        element: <UserPage/>,
       }
     ]
   },
@@ -49,7 +56,8 @@ const router = createBrowserRouter([
 
 createRoot(document.getElementById('root')).render(
   // <StrictMode>
-  //   <App />
+  <AuthWrapper>
   <RouterProvider router={router} />
+  </AuthWrapper>
   // </StrictMode>,
 )

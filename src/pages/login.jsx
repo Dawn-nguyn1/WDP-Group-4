@@ -1,84 +1,139 @@
-import { Button, Form, Input, Row, Col, Divider } from "antd";
-import { Link } from "react-router-dom";
-import { ArrowRightOutlined } from "@ant-design/icons";
-
-
+import React, { useContext } from 'react';
+import { Button, Form, Input, Row, Col, Tabs, notification } from "antd";
+import './styles/login.css';
+import { Link, useNavigate } from "react-router-dom";
+import { loginUserAPI } from "../services/api.service";
+import { AuthContext } from "../context/auth.context";
 const LoginPage = () => {
     const [form] = Form.useForm();
+    const navigate = useNavigate();
+    const {user,setUser} = useContext(AuthContext);
 
-    const onFinish = (values) => {
-        console.log("email va password:", values);
+    const onFinish = async (values) => {
+        const res = await loginUserAPI(values.email, values.password);
+        console.log(">>>>> response tu API:", res);
+        if (res.user) {
+            notification.success({
+                title: "Login success",
+                description: "Đăng nhập thành công!",
+            });
+            localStorage.setItem("access_token", res.token);
+            setUser(res.user);
+            navigate('/homepage');
+        } else {
+            notification.error({
+                title: "Login failed",
+                description: JSON.stringify(res.message),
+            });
+        }
+        
     };
 
-  return (
-        <Row justify={"center"} style={{ marginTop: "30px" }}>
-            <Col xs={24} md={16} lg={8}>
-                <fieldset style={{
-                    padding: "15px",
-                    margin: "5px",
-                    border: "1px solid #ccc",
-                    borderRadius: "5px"
-                }}>
-                    <legend>Đăng Nhập</legend>
-                    <Form
-                        form={form}
-                        layout="vertical"
-                        onFinish={onFinish}
-                    >
-                        <Form.Item
-                            label="Email"
-                            name="email"
-                            rules={[
-                                {
-                                    required: true,
-                                    message: 'Email không được để trống!',
-                                },
-                                {
-                                    type: "email",
-                                    message: 'Email không đúng định dạng!',
-                                },
-                            ]}
-                        >
-                            <Input />
-                        </Form.Item>
+    const handleTabChange = (key) => {
+        if (key === 'register') {
+            navigate('/register');
+        }
+    };
 
-                        <Form.Item
-                            label="Password"
-                            name="password"
-                            rules={[
-                                {
-                                    required: true,
-                                    message: 'Password không được để trống!',
-                                },
-                            ]}
-                        >
-                            <Input.Password onKeyDown={(event) => {
-                                if (event.key === 'Enter') form.submit()
-                            }} />
-                        </Form.Item>
-
-                        <Form.Item >
-                            <div style={{
-                                display: "flex",
-                                justifyContent: "space-between",
-                                alignItems: "center"
-                            }}>
-                                <Button
-                                    type="primary" onClick={() => form.submit()}>
-                                    Login
-                                </Button>
-                                <Link to="/">Go to homepage<ArrowRightOutlined /></Link>
-                            </div>
-                        </Form.Item>
-                    </Form>
-                    <Divider />
-                    <div style={{ textAlign: "center" }}>
-                        Chưa có tài khoản? <Link to={"/register"}>Đăng ký tại đây</Link>
+    const items = [
+        {
+            key: 'login',
+            label: 'Đăng nhập',
+            children: (
+                <Form
+                    form={form}
+                    layout="vertical"
+                    onFinish={onFinish}
+                    className="modern-form"
+                >
+                    <div className="form-header">
+                        <h2>Chào mừng bạn!</h2>
+                        <p>Vui lòng nhập thông tin để đăng nhập.</p>
                     </div>
-                </fieldset>
-            </Col>
-        </Row>
+                    
+                    <Form.Item
+                        label="Email"
+                        name="email"
+                        rules={[
+                            { required: true, message: 'Email không được để trống!' },
+                            { type: "email", message: 'Email không đúng định dạng!' },
+                        ]}
+                    >
+                        <Input 
+                            placeholder="Nhập email của bạn" 
+                            className="modern-input"
+                            size="large"
+                        />
+                    </Form.Item>
+
+                    <Form.Item
+                        label="Password"
+                        name="password"
+                        rules={[
+                            { required: true, message: 'Password không được để trống!' },
+                        ]}
+                    >
+                        <Input.Password 
+                            placeholder="Nhập mật khẩu của bạn" 
+                            className="modern-input"
+                            size="large"
+                            onKeyDown={(event) => {
+                                if (event.key === 'Enter') form.submit()
+                            }} 
+                        />
+                    </Form.Item>
+
+                    <Form.Item className="form-actions">
+                        <Button
+                            type="primary" 
+                            onClick={() => form.submit()}
+                            className="modern-button"
+                            size="large"
+                            block
+                        >
+                            Đăng nhập
+                        </Button>
+                    </Form.Item>
+                    
+                    <div className="form-footer">
+                        <span>Chưa có tài khoản? </span>
+                        <Link to="/register" className="modern-link">Đăng ký tại đây</Link>
+                    </div>
+                </Form>
+            ),
+        },
+        {
+            key: 'register',
+            label: 'Đăng ký', 
+        },
+    ];
+    
+    console.log(">>>>> user:",user );
+    return (
+        <div className="login-container">
+            <Row className="login-row">
+                <Col xs={0} md={12} className="image-col">
+                    <div className="image-overlay">
+                        <div className="brand-content">
+                            <h1>Mini UTM </h1>
+                            <p>Quản lý và giám sát bay drone tầm thấp</p>
+                        </div>
+                    </div>
+                </Col>
+                <Col xs={24} md={12} className="form-col">
+                    <div className="form-container">
+                        <Tabs
+                            defaultActiveKey="login"
+                            centered
+                            items={items}
+                            className="modern-tabs"
+                            onChange={handleTabChange} 
+                        />
+                    </div>
+                </Col>
+            </Row>
+        </div>
     )
 }
 
-export default LoginPage
+export default LoginPage;
