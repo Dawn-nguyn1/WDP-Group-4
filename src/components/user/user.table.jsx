@@ -5,6 +5,7 @@ import { useState } from 'react';
 import UpdateUserModal from './update.user.modal';
 import ViewUserDetail from './user.detail';
 import './user.css'; // Import CSS file
+import Map from './map';
 
 const UserTable = (props) => {
     const { 
@@ -214,7 +215,9 @@ const UserTable = (props) => {
     };
 
     return (
+        
         <div className="user-table-wrapper">
+            <Map/>
             <Table
                 className="user-table"
                 columns={columns}

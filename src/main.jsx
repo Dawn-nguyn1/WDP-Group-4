@@ -10,9 +10,9 @@ import {
 import LoginPage from './pages/login.jsx';
 import RegisterPage from './pages/register.jsx';
 import HomePage from './pages/homepage.jsx';
-import FlycamPage from './components/flycam/flycam.management.jsx';
 import UserPage from './components/user/user.jsx';
 import { AuthWrapper } from './context/auth.context.jsx';
+import FlycamPage from './components/flycam/flycam.jsx';
 
 const router = createBrowserRouter([
   {
