@@ -27,12 +27,32 @@ instance.interceptors.request.use(function (config) {
 instance.interceptors.response.use(function (response) { // noi tra ve respone
     // Any status code that lie within the range of 2xx cause this function to trigger
     // Do something with response data
-    if(response.data && response.data.user )
-    return response.data;
+        console.log("RESPONSE SAU MOI HANH DONG:", response);
+
+    // Smart check: ưu tiên user object, fallback to data
+    if(response.data && response.data.user) {
+        // APIs có structure: { "user": {...} }
+        return response.data;  // Trả về user object trực tiếp
+    } else if(response.data && response.data.data && response.data.data.user) {
+        // APIs có structure: { "data": { "user": {...} } }
+        return response.data.data;  // Trả về data object chứa user
+    } else if(response.user) {
+        // APIs có structure: { "user": {...}, "token": "..." } (login)
+        return response;
+    } else if(response.data && response.data._id) {
+        // APIs có structure: { "_id": "...", "email": "...", ... } (user detail)
+        return response.data;  // Trả về user object trực tiếp
+    } else if(response.data) {
+        // APIs có structure: { "data": {...} }
+        return response.data;
+    }
+    
+    return response; 
   }, function (error) {
-    // Any status codes that falls outside the range of 2xx cause this function to trigger
+    console.log("RESPONSE SAU MOI HANH DONG ERROR:", error);
+    // Any status codes that falls outside of range of 2xx cause this function to trigger
     // Do something with response error
-    if (error.response && error.response.data) return error.response.data;
-    // return Promise.reject(error);
+    if (error.response && error.response.data) return Promise.reject(error.response.data);
+    return Promise.reject(error);
   });
 export default instance;

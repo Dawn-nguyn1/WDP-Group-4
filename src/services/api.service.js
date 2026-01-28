@@ -21,4 +21,66 @@ const loginUserAPI = ( email, password) => {
     return axios.post(URL_BACKEND, data);
 };
 
-export  {registerUserAPI, loginUserAPI};
+const createUserAPI = (fullName, email, password, role, status) => {
+    
+    const URL_BACKEND = "/api/admin/users";
+    const data = {
+        fullName: fullName,
+        email: email,
+        password: password,
+        role: role,
+        status: status
+    }
+    return axios.post(URL_BACKEND, data);
+};
+
+const fetchUsersAPI = () => {
+    const URL_BACKEND = "/api/admin/users";
+    return axios.get(URL_BACKEND);
+};
+
+const updateUserAPI = (id, email, password, fullName, role, status) => {
+    const URL_BACKEND = `/api/admin/users/${id}`;
+    const data = {
+        email: email,
+        password: password,
+        fullName: fullName,
+        role: role,
+        status: status
+    }
+    return axios.put(URL_BACKEND, data);
+};
+
+const deleteUserAPI = (id) => {
+    const URL_BACKEND = `/api/admin/users/${id}`;
+    return axios.delete(URL_BACKEND);
+};
+
+const getUserDetailAPI = (id) => {
+    const URL_BACKEND = `/api/admin/users/${id}`;
+    return axios.get(URL_BACKEND);
+};
+
+const handleUploadFile = (file, folder) => {
+    const URL_BACKEND = "/api/v1/file/upload";
+    const data = new FormData();
+    data.append("file", file);
+    data.append("folder", folder);
+    return axios.post(URL_BACKEND, data, {
+        headers: {
+            'Content-Type': 'multipart/form-data'
+        }
+    });
+};
+
+const updateUserAvatarAPI = (avatar, id, fullName, phone) => {
+    const URL_BACKEND = `/api/admin/users/${id}`;
+    const data = {
+        avatar: avatar,
+        fullName: fullName,
+        phone: phone
+    }
+    return axios.put(URL_BACKEND, data);
+};
+
+export  {registerUserAPI, loginUserAPI, createUserAPI, fetchUsersAPI, updateUserAPI, deleteUserAPI, getUserDetailAPI, handleUploadFile, updateUserAvatarAPI};
