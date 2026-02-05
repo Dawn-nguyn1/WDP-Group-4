@@ -1,11 +1,10 @@
-import React from 'react';
-import { Table, Popconfirm, notification } from 'antd';
+import React, { useState } from 'react';
+import { Table, Popconfirm, notification, Switch } from 'antd';
 import { EditOutlined, DeleteOutlined, CheckCircleOutlined, CloseCircleOutlined } from '@ant-design/icons';
-import { useState } from 'react';
 import UpdateUserModal from './update.user.modal';
 import ViewUserDetail from './user.detail';
+import { deleteUserAPI } from '../../services/api.service';
 import './user.css'; // Import CSS file
-import Map from './map';
 
 const UserTable = (props) => {
     const { 
@@ -22,6 +21,7 @@ const UserTable = (props) => {
     const [dataUpdate, setDataUpdate] = useState(null);
     const [dataDetail, setDataDetail] = useState(null);
     const [isDetailOpen, setIsDetailOpen] = useState(false);
+    const [confirmDelete, setConfirmDelete] = useState(false); // Toggle xác nhận xóa
 
     // Function to get initials from name
     const getInitials = (name) => {
@@ -156,42 +156,70 @@ const UserTable = (props) => {
                     >
                         <EditOutlined />
                     </button>
-                    <Popconfirm
-                        title="Xóa người dùng"
-                        description="Bạn chắc chắn xóa user này ?"
-                        onConfirm={() => handleDeleteUser(record._id)}
-                        okText="Yes"
-                        cancelText="No"
-                        placement="left"
-                    >
+                    {confirmDelete ? (
+                        // Xóa trực tiếp
                         <button 
                             className="action-btn-icon delete-btn"
-                            title="Delete"
+                            onClick={() => handleDeleteClick(record)}
+                            title="Delete (No confirmation)"
                         >
                             <DeleteOutlined />
                         </button>
-                    </Popconfirm>
+                    ) : (
+                        // Xác nhận trước khi xóa
+                        <Popconfirm
+                            title="Xóa người dùng"
+                            description="Bạn chắc chắn xóa user này ?"
+                            onConfirm={() => handleDeleteUser(record._id)}
+                            okText="Yes"
+                            cancelText="No"
+                            placement="left"
+                        >
+                            <button 
+                                className="action-btn-icon delete-btn"
+                                title="Delete"
+                            >
+                                <DeleteOutlined />
+                            </button>
+                        </Popconfirm>
+                    )}
                 </div>
             ),
         },
     ];
 
     const handleDeleteUser = async (id) => {
-        // Mock delete for now - just remove from array
-        const res = { data: true }; // Mock successful response
-        
-        if (res.data) {
-            notification.success({
-                message: "Delete user",
-                description: "Xóa user thành công"
-            });
-            await loadUser();
-        } else {
+        try {
+            const res = await deleteUserAPI(id);
+            
+            // API trả về {message: "User deleted successfully"}
+            if (res && res.message) {
+                notification.success({
+                    message: "Delete user",
+                    description: "Xóa user thành công"
+                });
+                await loadUser();
+            } else {
+                notification.error({
+                    message: "Error delete user",
+                    description: "Không nhận được xác nhận xóa từ server"
+                });
+            }
+        } catch (error) {
+            console.error("Delete user error:", error);
             notification.error({
                 message: "Error delete user",
-                description: JSON.stringify(res.message)
+                description: error?.message || "Xóa user thất bại, vui lòng thử lại!"
             });
         }
+    };
+
+    const handleDeleteClick = (record) => {
+        if (confirmDelete) {
+            // Xóa trực tiếp không cần xác nhận
+            handleDeleteUser(record._id);
+        }
+        // Nếu không confirmDelete, Popconfirm sẽ xử lý
     };
 
     const onChange = (pagination, filters, sorter, extra) => {
@@ -215,9 +243,17 @@ const UserTable = (props) => {
     };
 
     return (
-        
         <div className="user-table-wrapper">
-            <Map/>
+            {/* Toggle xác nhận xóa */}
+            <div style={{ marginBottom: 16, display: 'flex', alignItems: 'center', gap: 8 }}>
+                <span>Xóa liên tục:</span>
+                <Switch 
+                    checked={confirmDelete}
+                    onChange={setConfirmDelete}
+                    
+                />
+            </div>
+            
             <Table
                 className="user-table"
                 columns={columns}

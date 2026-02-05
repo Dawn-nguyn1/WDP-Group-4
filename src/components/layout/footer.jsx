@@ -4,7 +4,7 @@ const Footer = () => {
     return (
         <div className="footer">
             <div className="footer-content">
-                <p className="footer-text"> 2024 Mini UTM. All rights reserved.</p>
+                <p className="footer-text"> 2026 Mini UTM. All rights reserved.</p>
                 <p className="footer-version">Version 1.0.0</p>
             </div>
         </div>

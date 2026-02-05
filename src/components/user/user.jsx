@@ -4,6 +4,7 @@ import { mockUsers } from './user.data';
 import UserTable from './user.table';
 import UserForm from './user.form';
 import './user.css'; // Import CSS file
+import { fetchUsersAPI } from '../../services/api.service';
 
 const UserPage = () => {
     const [dataUsers, setDataUsers] = useState([]);
@@ -13,22 +14,23 @@ const UserPage = () => {
 
     // Empty array => run once
     useEffect(() => {
+        console.log("day la page user");
         loadUser();
     }, [current, pageSize]);
 
     const loadUser = async () => {
-        // Use mock data for now
-        setDataUsers(mockUsers);
-        setTotal(mockUsers.length);
-        
-        // Uncomment when API is ready
-        // const res = await fetchAllUserAPI(current, pageSize)
-        // if (res.data) {
-        //     setDataUsers(res.data.result)
-        //     setCurrent(res.data.meta.current)
-        //     setPageSize(res.data.meta.pageSize)
-        //     setTotal(res.data.meta.total)
-        // }
+        const res = await fetchUsersAPI();
+        console.log("kiem tra du lieu fetch API", res);
+
+        // Với smart interceptor, res đã là array user objects trực tiếp
+        if (res && Array.isArray(res)) {
+            setDataUsers(res);  // res là array của user objects
+            setTotal(res.length);
+        } else {
+            // Fallback to mock data if API fails
+            setDataUsers(mockUsers);
+            setTotal(mockUsers.length);
+        }
     };
 
     return (
@@ -50,7 +52,7 @@ const UserPage = () => {
                 pageSize={pageSize}
                 total={total}
                 setCurrent={setCurrent}
-                setPageSize={setPageSize} 
+                setPageSize={setPageSize}
             />
         </div>
     );

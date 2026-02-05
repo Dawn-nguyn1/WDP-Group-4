@@ -1,6 +1,6 @@
 import React, { useContext } from 'react'
 import { Link, useNavigate } from 'react-router-dom';
-import { Menu } from 'antd';
+import { Menu, notification } from 'antd';
 import {
     UsergroupAddOutlined,
     HomeOutlined,
@@ -11,23 +11,41 @@ import {
 
 import { useState } from 'react';
 import { AuthContext } from '../../context/auth.context';
+import { logoutAPI } from '../../services/api.service';
 
 const Header = () => {
     const [current, setCurrent] = useState('');
     const navigate = useNavigate();
     const { user, setUser } = useContext(AuthContext);
 
-    const handleLogout = () => {
-        localStorage.removeItem("access_token");
-        setUser({
-            _id: "",
-            email: "",
-            profile: {
-                fullName: ""
-            },
-            role: "",
-        });
-        navigate("/login");
+    const handleLogout = async () => {
+        const res = await logoutAPI();
+        console.log("CHECK LOGOUT", res);
+
+        if (res.message) {
+            localStorage.removeItem("access_token");
+            setUser({
+                _id: "",
+                email: "",
+                profile: {
+                    fullName: ""
+                },
+                role: "",
+            });
+            navigate("/login");
+            
+            notification.success({
+                tittle: "Đăng xuất thành công",
+                description: JSON.stringify(res.message)
+            })
+        } else {
+            notification.error({
+                tittle: "Đăng xuất thất bại",
+                description: JSON.stringify(res.message)
+            })
+        }
+
+
     };
 
     const onClick = (e) => {
@@ -50,6 +68,11 @@ const Header = () => {
             icon: <UsergroupAddOutlined />
         },
         {
+            label: <Link to={"/zones"}>Zones</Link>,
+            key: 'zones',
+            icon: <HomeOutlined />,
+        },
+        {
             label: <Link to={"/flycams"}>Flycams</Link>,
             key: 'flycams',
             icon: <PlayCircleOutlined />,
@@ -67,7 +90,7 @@ const Header = () => {
             icon: <AliwangwangOutlined />,
             children: [
                 {
-                    label: <span >Đăng xuất</span>,
+                    label: <span onClick={() => handleLogout()} >Đăng xuất</span>,
                     key: 'logout',
                 },
             ],
