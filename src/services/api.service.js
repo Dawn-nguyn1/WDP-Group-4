@@ -83,4 +83,31 @@ const updateUserAvatarAPI = (avatar, id, fullName, phone) => {
     return axios.put(URL_BACKEND, data);
 };
 
-export  {registerUserAPI, loginUserAPI, createUserAPI, fetchUsersAPI, updateUserAPI, deleteUserAPI, getUserDetailAPI, handleUploadFile, updateUserAvatarAPI};
+const getAccountAPI = () => {
+    const URL_BACKEND = ``;
+    return axios.get(URL_BACKEND);
+};
+const logoutAPI = () => {
+    const URL_BACKEND = `/api/auth/logout`;
+    return axios.post(URL_BACKEND);
+};
+
+const fetchZonesAPI = (params = {}) => {
+    const URL_BACKEND = "/api/zones";
+    return axios.get(URL_BACKEND, { params });
+};
+
+const createZoneAPI = (zoneData) => {
+    const URL_BACKEND = "/api/zones";
+    return axios.post(URL_BACKEND, zoneData);
+};
+
+const deleteZoneAPI = (id) => {
+    const URL_BACKEND = `/api/zones/${id}`;
+    return axios.delete(URL_BACKEND);
+};
+
+export  {registerUserAPI, loginUserAPI, createUserAPI,
+     fetchUsersAPI, updateUserAPI, deleteUserAPI, 
+     getUserDetailAPI, handleUploadFile, updateUserAvatarAPI,
+     getAccountAPI, logoutAPI, fetchZonesAPI, createZoneAPI, deleteZoneAPI};

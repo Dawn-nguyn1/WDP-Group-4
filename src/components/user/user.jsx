@@ -4,7 +4,6 @@ import { mockUsers } from './user.data';
 import UserTable from './user.table';
 import UserForm from './user.form';
 import './user.css'; // Import CSS file
-import Map from './map';
 import { fetchUsersAPI } from '../../services/api.service';
 
 const UserPage = () => {
@@ -41,9 +40,6 @@ const UserPage = () => {
                 <h1 className="page-title">User Management</h1>
                 <p className="page-subtitle">Manage and view all users in the system</p>
             </div>
-
-            {/* MAP */}
-            <Map />
 
             {/* User Form - Uncomment when ready */}
             <UserForm loadUser={loadUser} />

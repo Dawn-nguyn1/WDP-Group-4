@@ -13,6 +13,7 @@ import HomePage from './pages/homepage.jsx';
 import UserPage from './components/user/user.jsx';
 import { AuthWrapper } from './context/auth.context.jsx';
 import FlycamPage from './components/flycam/flycam.jsx';
+import ZonePage from './pages/zone.jsx';
 
 const router = createBrowserRouter([
   {
@@ -39,6 +40,11 @@ const router = createBrowserRouter([
         //user management
         path: "/users",
         element: <UserPage/>,
+      }
+      ,
+      {
+        path: "/zones",
+        element: <ZonePage />,
       }
     ]
   },
