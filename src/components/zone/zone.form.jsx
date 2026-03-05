@@ -1,10 +1,10 @@
-import React, { useState, useRef, useMemo, useEffect } from "react";
-import { Button, Input, notification, Modal, Select, Form, InputNumber, DatePicker, Tag } from "antd";
-import { MapContainer, TileLayer, FeatureGroup, Polygon, useMap, Marker, Popup } from "react-leaflet";
+import React, { useState, useRef, useEffect } from "react";
+import { Button, Input, notification, Modal, Select, Form, InputNumber, DatePicker } from "antd";
+import { MapContainer, TileLayer, FeatureGroup, Polygon } from "react-leaflet";
 import { EditControl } from "react-leaflet-draw";
 import "leaflet/dist/leaflet.css";
 import "leaflet-draw/dist/leaflet.draw.css";
-import { createZoneAPI, fetchZonesAPI } from "../../services/api.service";
+import { createZoneAPI } from "../../services/api.service";
 import dayjs from "dayjs";
 import utc from "dayjs/plugin/utc";
 
@@ -13,49 +13,13 @@ dayjs.extend(utc);
 const { Option } = Select;
 const { TextArea } = Input;
 
-// Component để invalidate map size khi modal mở
-function MapResizeHandler({ isModalOpen }) {
-  const map = useMap();
-  
-  useEffect(() => {
-    if (isModalOpen) {
-      // Đợi một chút để modal render hoàn toàn
-      const timer1 = setTimeout(() => {
-        map.invalidateSize();
-      }, 100);
-      
-      // Invalidate lại sau khi modal animation hoàn tất
-      const timer2 = setTimeout(() => {
-        map.invalidateSize();
-      }, 300);
-      
-      return () => {
-        clearTimeout(timer1);
-        clearTimeout(timer2);
-      };
-    }
-  }, [map, isModalOpen]);
-  
-  return null;
-}
-
 const ZoneForm = ({ loadZones }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [mapKey, setMapKey] = useState(0); // Key để force re-render map
   const [form] = Form.useForm();
   const [drawnPolygon, setDrawnPolygon] = useState(null);
   const [polygonCoordinates, setPolygonCoordinates] = useState([]);
-  const [zonesList, setZonesList] = useState([]); // Danh sách zones từ API để hiển thị trên map
   const mapRef = useRef();
   const featureGroupRef = useRef();
-
-  // Initial values được định nghĩa một lần để tránh re-render
-  const initialValues = React.useMemo(() => ({
-    type: "no_fly",
-    minAltitude: 0,
-    maxAltitude: 3000,
-    effectiveFrom: dayjs()
-  }), []);
 
   // Reset form và polygon khi đóng modal
   const resetAndCloseModal = () => {
@@ -67,35 +31,6 @@ const ZoneForm = ({ loadZones }) => {
     if (featureGroupRef.current) {
       featureGroupRef.current.clearLayers();
     }
-    // Tăng key để force re-render map khi mở lại
-    setMapKey(prev => prev + 1);
-  };
-
-  // Fetch danh sách zones từ API để hiển thị trên map
-  const fetchZonesList = async () => {
-    try {
-      const res = await fetchZonesAPI({
-        page: 1,
-        limit: 100,
-        sortBy: 'createdAt',
-        sortOrder: 'desc',
-      });
-
-      const apiZones = Array.isArray(res?.data) ? res.data : [];
-      setZonesList(apiZones);
-    } catch (error) {
-      console.error('Fetch zones error:', error);
-      setZonesList([]);
-    }
-  };
-
-  // Xử lý khi modal mở
-  const handleModalOpen = () => {
-    setIsModalOpen(true);
-    // Reset map key khi mở modal
-    setMapKey(prev => prev + 1);
-    // Fetch zones khi mở modal để hiển thị trên map
-    fetchZonesList();
   };
 
   // Xử lý khi vẽ polygon trên map
@@ -212,8 +147,6 @@ const ZoneForm = ({ loadZones }) => {
           message: "Tạo zone thành công",
           description: `Đã tạo zone "${res.name}" thành công!`
         });
-        // Refresh danh sách zones
-        await fetchZonesList();
         resetAndCloseModal();
         if (loadZones) {
           await loadZones();
@@ -261,7 +194,7 @@ const ZoneForm = ({ loadZones }) => {
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
         <h3>Quản lý Vùng Cấm</h3>
         <Button
-          onClick={handleModalOpen}
+          onClick={() => setIsModalOpen(true)}
           type="primary"
           size="large"
         >
@@ -279,24 +212,17 @@ const ZoneForm = ({ loadZones }) => {
         cancelText="HỦY"
         width={900}
         style={{ top: 20 }}
-        destroyOnClose={true}
-        afterOpenChange={(open) => {
-          // Invalidate map size sau khi modal mở hoàn toàn
-          if (open && mapRef.current) {
-            setTimeout(() => {
-              const map = mapRef.current;
-              if (map && map.invalidateSize) {
-                map.invalidateSize();
-              }
-            }, 300);
-          }
-        }}
       >
         <Form
           form={form}
           layout="vertical"
           onFinish={onFinish}
-          initialValues={initialValues}
+          initialValues={{
+            type: "no_fly",
+            minAltitude: 0,
+            maxAltitude: 3000,
+            effectiveFrom: dayjs()
+          }}
         >
           <Form.Item
             label={<span>Tên Vùng Cấm <span style={{ color: 'red' }}>*</span></span>}
@@ -340,6 +266,7 @@ const ZoneForm = ({ loadZones }) => {
             >
               <Option value="no_fly">No Fly Zone</Option>
               <Option value="restricted">Restricted Zone</Option>
+              <Option value="warning">Warning Zone</Option>
             </Select>
           </Form.Item>
 
@@ -398,65 +325,17 @@ const ZoneForm = ({ loadZones }) => {
             label={<span>Vẽ Polygon Trên Bản Đồ <span style={{ color: 'red' }}>*</span></span>}
             required
           >
-            <div style={{ border: '1px solid #d9d9d9', borderRadius: '4px', overflow: 'hidden', height: "400px", width: "100%" }}>
-              {isModalOpen && (
-                <MapContainer
-                  center={[10.7769, 106.7009]}
-                  zoom={13}
-                  style={{ height: "400px", width: "100%" }}
-                  ref={mapRef}
-                  key={`zone-form-map-${mapKey}`}
-                >
-                <MapResizeHandler isModalOpen={isModalOpen} />
+            <div style={{ border: '1px solid #d9d9d9', borderRadius: '4px', overflow: 'hidden' }}>
+              <MapContainer
+                center={[10.7769, 106.7009]}
+                zoom={13}
+                style={{ height: "400px", width: "100%" }}
+                ref={mapRef}
+              >
                 <TileLayer
                   url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
                   attribution="&copy; OpenStreetMap contributors"
                 />
-
-                {/* Marker tọa độ hiện tại */}
-                <Marker position={[10.7769, 106.7009]}>
-                  <Popup>Vị trí hiện tại: TP.HCM</Popup>
-                </Marker>
-
-                {/* Hiển thị các vùng cấm bay từ API */}
-                {zonesList.map((zone) => {
-                  const ring = zone?.geometry?.coordinates?.[0];
-                  if (!Array.isArray(ring)) return null;
-
-                  const coordinates = ring
-                    .map((pair) => {
-                      const lng = pair?.[0];
-                      const lat = pair?.[1];
-                      if (typeof lat !== 'number' || typeof lng !== 'number') return null;
-                      return [lat, lng];
-                    })
-                    .filter(Boolean);
-
-                  if (coordinates.length < 3) return null;
-
-                  // Xác định màu dựa vào type của zone
-                  const getZoneColor = (type) => {
-                    if (type === 'restricted') {
-                      return '#ffd700'; // Màu vàng cho restricted zone
-                    }
-                    return '#ff0000'; // Màu đỏ cho no_fly zone
-                  };
-
-                  const zoneColor = getZoneColor(zone.type);
-
-                  return (
-                    <Polygon
-                      key={zone._id}
-                      positions={coordinates}
-                      pathOptions={{
-                        color: zoneColor,
-                        fillColor: zoneColor,
-                        fillOpacity: 0.2,
-                        weight: 2
-                      }}
-                    />
-                  );
-                })}
 
                 {/* Hiển thị polygon đã vẽ */}
                 {drawnPolygon && polygonCoordinates.length > 0 && (
@@ -477,7 +356,16 @@ const ZoneForm = ({ loadZones }) => {
                     position="topleft"
                     onCreated={handleCreated}
                     draw={{
-                      rectangle: false,
+                      rectangle: {
+                        shapeOptions: {
+                          color: '#ff0000',
+                          fillColor: '#ff0000',
+                          fillOpacity: 0.3,
+                          weight: 2
+                        },
+                        showArea: true,
+                        showLength: true
+                      },
                       polygon: {
                         shapeOptions: {
                           color: '#ff0000',
@@ -493,15 +381,9 @@ const ZoneForm = ({ loadZones }) => {
                       marker: false,
                       polyline: false
                     }}
-                    edit={{
-                      featureGroup: null,
-                      remove: false,
-                      edit: false
-                    }}
                   />
                 </FeatureGroup>
               </MapContainer>
-              )}
             </div>
             <div style={{ marginTop: '8px', color: '#666', fontSize: '12px' }}>
               {polygonCoordinates.length > 0 ? (
@@ -515,7 +397,6 @@ const ZoneForm = ({ loadZones }) => {
               )}
             </div>
           </Form.Item>
-
         </Form>
       </Modal>
     </div>

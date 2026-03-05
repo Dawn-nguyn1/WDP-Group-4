@@ -102,12 +102,7 @@ const createZoneAPI = (zoneData) => {
     return axios.post(URL_BACKEND, zoneData);
 };
 
-const deleteZoneAPI = (id) => {
-    const URL_BACKEND = `/api/zones/${id}`;
-    return axios.delete(URL_BACKEND);
-};
-
 export  {registerUserAPI, loginUserAPI, createUserAPI,
      fetchUsersAPI, updateUserAPI, deleteUserAPI, 
      getUserDetailAPI, handleUploadFile, updateUserAvatarAPI,
-     getAccountAPI, logoutAPI, fetchZonesAPI, createZoneAPI, deleteZoneAPI};
+     getAccountAPI, logoutAPI, fetchZonesAPI, createZoneAPI};
