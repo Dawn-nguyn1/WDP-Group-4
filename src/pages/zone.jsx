@@ -12,6 +12,7 @@ const ZonePage = () => {
     const [zonesList, setZonesList] = useState([]);
     const [loadingZones, setLoadingZones] = useState(false);
     const [hoveredZoneId, setHoveredZoneId] = useState(null); // Track zone đang được hover
+    const [selectedZoneId, setSelectedZoneId] = useState(null); // Track zone được chọn (toggle)
     const reloadZonesRef = useRef(null);
 
     const handleReloadCallback = useCallback((fetchFunction) => {
@@ -123,6 +124,11 @@ const ZonePage = () => {
         });
     };
 
+    // Toggle chọn/bỏ chọn zone khi click trên map hoặc danh sách
+    const handleZoneSelect = useCallback((zoneId) => {
+        setSelectedZoneId(prev => prev === zoneId ? null : zoneId);
+    }, []);
+
     return (
         <div className="user-page-container">
             <div className="page-header">
@@ -139,6 +145,8 @@ const ZonePage = () => {
                 zonesList={zonesList}
                 hoveredZoneId={hoveredZoneId}
                 onZoneHover={setHoveredZoneId}
+                selectedZoneId={selectedZoneId}
+                onZoneSelect={handleZoneSelect}
             />
 
             {/* Danh sách vùng cấm bay */}
@@ -156,20 +164,29 @@ const ZonePage = () => {
                     </div>
                 ) : (
                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(350px, 1fr))', gap: '16px' }}>
-                        {zonesList.map((zone, index) => (
+                        {zonesList.map((zone, index) => {
+                            const isSelected = selectedZoneId === zone._id;
+                            const isHovered = hoveredZoneId === zone._id;
+                            
+                            return (
                             <div
                                 key={zone._id}
                                 style={{
                                     padding: '16px',
-                                    border: hoveredZoneId === zone._id ? '3px solid #1890ff' : '1px solid #e8e8e8',
+                                    border: isSelected 
+                                        ? '3px solid #1890ff' 
+                                        : (isHovered ? '2px solid #1890ff' : '1px solid #e8e8e8'),
                                     borderRadius: '8px',
-                                    backgroundColor: '#fafafa',
+                                    backgroundColor: isSelected ? '#f0f8ff' : '#fafafa',
                                     transition: 'all 0.3s',
-                                    boxShadow: hoveredZoneId === zone._id 
-                                        ? '0 4px 12px rgba(24, 144, 255, 0.4)' 
-                                        : '0 2px 4px rgba(0,0,0,0.05)',
-                                    transform: hoveredZoneId === zone._id ? 'translateY(-2px)' : 'translateY(0)',
-                                    cursor: 'pointer'
+                                    boxShadow: isSelected
+                                        ? '0 6px 16px rgba(24, 144, 255, 0.5)' 
+                                        : (isHovered 
+                                            ? '0 4px 12px rgba(24, 144, 255, 0.4)' 
+                                            : '0 2px 4px rgba(0,0,0,0.05)'),
+                                    transform: isSelected ? 'translateY(-3px) scale(1.02)' : (isHovered ? 'translateY(-2px)' : 'translateY(0)'),
+                                    cursor: 'pointer',
+                                    position: 'relative'
                                 }}
                                 onMouseEnter={() => {
                                     setHoveredZoneId(zone._id);
@@ -177,10 +194,37 @@ const ZonePage = () => {
                                 onMouseLeave={() => {
                                     setHoveredZoneId(null);
                                 }}
+                                onClick={() => handleZoneSelect(zone._id)}
                             >
+                                {/* Indicator cho selected zone */}
+                                {isSelected && (
+                                    <div style={{
+                                        position: 'absolute',
+                                        top: '-10px',
+                                        right: '-10px',
+                                        width: '24px',
+                                        height: '24px',
+                                        backgroundColor: '#1890ff',
+                                        borderRadius: '50%',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        color: 'white',
+                                        fontSize: '14px',
+                                        fontWeight: 'bold',
+                                        boxShadow: '0 2px 8px rgba(0,0,0,0.2)'
+                                    }}>
+                                        ✓
+                                    </div>
+                                )}
                                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '12px' }}>
                                     <div style={{ flex: 1 }}>
-                                        <div style={{ fontWeight: 'bold', fontSize: '16px', marginBottom: '6px', color: '#1890ff' }}>
+                                        <div style={{ 
+                                            fontWeight: 'bold', 
+                                            fontSize: '16px', 
+                                            marginBottom: '6px', 
+                                            color: isSelected ? '#096dd9' : '#1890ff' 
+                                        }}>
                                             {index + 1}. {zone.name}
                                         </div>
                                         {zone.description && (
@@ -230,7 +274,7 @@ const ZonePage = () => {
                                     </Button>
                                 </div>
                             </div>
-                        ))}
+                        )})}
                     </div>
                 )}
             </div>

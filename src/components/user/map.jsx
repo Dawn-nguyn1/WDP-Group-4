@@ -42,7 +42,7 @@ import { fetchZonesAPI } from "../../services/api.service";
 //   }
 // ];
 
-export default function Map({ onReloadCallback, onZoneDeleted, onDeleteZone, zonesList, hoveredZoneId, onZoneHover }) {
+export default function Map({ onReloadCallback, onZoneDeleted, onDeleteZone, zonesList, hoveredZoneId, onZoneHover, selectedZoneId, onZoneSelect }) {
   const [mapZones, setMapZones] = useState([]); // Zones để hiển thị trên map
   const mapRef = useRef();
   const featureGroupRef = useRef();
@@ -193,7 +193,7 @@ export default function Map({ onReloadCallback, onZoneDeleted, onDeleteZone, zon
             }}
             edit={{
               featureGroup: null, // Sẽ được set tự động bởi FeatureGroup
-              remove: true // Cho phép xóa
+              remove: false // Không hiển thị nút xóa trên bản đồ
             }}
           />
           {/* Thêm các polygon vào FeatureGroup để có thể edit/delete */}
@@ -208,16 +208,18 @@ export default function Map({ onReloadCallback, onZoneDeleted, onDeleteZone, zon
 
             const zoneColor = getZoneColor(zone.type);
             const isHovered = hoveredZoneId === zone.id;
+            const isSelected = selectedZoneId === zone.id;
 
             return (
               <Polygon
                 key={zone.id}
                 positions={zone.coordinates}
                 pathOptions={{
-                  color: isHovered ? '#1890ff' : zoneColor,
+                  color: isSelected ? '#1890ff' : (isHovered ? '#1890ff' : zoneColor),
                   fillColor: zoneColor,
-                  fillOpacity: isHovered ? 0.5 : 0.3,
-                  weight: isHovered ? 4 : 2
+                  fillOpacity: isSelected ? 0.6 : (isHovered ? 0.5 : 0.3),
+                  weight: isSelected ? 5 : (isHovered ? 4 : 2),
+                  dashArray: isSelected ? null : null
                 }}
                 eventHandlers={{
                   add: (e) => {
@@ -234,6 +236,11 @@ export default function Map({ onReloadCallback, onZoneDeleted, onDeleteZone, zon
                   mouseout: () => {
                     if (onZoneHover) {
                       onZoneHover(null);
+                    }
+                  },
+                  click: () => {
+                    if (onZoneSelect) {
+                      onZoneSelect(zone.id);
                     }
                   }
                 }}
