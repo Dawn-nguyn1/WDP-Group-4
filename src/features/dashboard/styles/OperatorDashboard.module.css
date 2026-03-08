@@ -1,0 +1,35 @@
+.container {
+  padding: 32px;
+  background: var(--color-bg, #f8f9fc);
+  min-height: 100vh;
+}
+
+.header {
+  margin-bottom: 24px;
+  padding: 24px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.2);
+}
+
+.title {
+  font-size: 28px;
+  font-weight: 600;
+  color: #ffffff;
+  margin-bottom: 4px;
+}
+
+.subtitle {
+  font-size: 14px;
+  color: #ffffff;
+  font-weight: 400;
+  opacity: 0.9;
+}
+
+.section {
+  margin-top: 32px;
+  padding: 24px;
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+}

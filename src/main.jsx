@@ -1,69 +1,15 @@
-import React from 'react'
-import { StrictMode } from 'react'
-import { createRoot } from 'react-dom/client'
-import App from './App.jsx'
-import {
-  createBrowserRouter,
-  Navigate,
-  RouterProvider,
-} from "react-router-dom";
-import LoginPage from './pages/login.jsx';
-import RegisterPage from './pages/register.jsx';
-import HomePage from './pages/homepage.jsx';
-import UserPage from './components/user/user.jsx';
-import { AuthWrapper } from './context/auth.context.jsx';
-import FlycamPage from './components/flycam/flycam.jsx';
-import ZonePage from './pages/zone.jsx';
+import React from "react";
+import ReactDOM from "react-dom/client";
+import { Provider } from "react-redux";
+import { RouterProvider } from "react-router-dom";
+import { store } from "./app/store";
+import router from "./app/router";
+import "./shared/styles/global.css";
 
-const router = createBrowserRouter([
-  {
-    path: "/",
-    element: <App />,
-    // errorElement: <ErrorPage />,
-    children: [
-       {
-        index: true,
-        element: <Navigate to="/login" replace />,
-      },
-      {
-        //home page
-        path: "/homepage",
-        element: <HomePage />,
-
-      },
-      {
-        //flycam management
-        path: "/flycams",
-        element: <FlycamPage/>,
-      },
-      {
-        //user management
-        path: "/users",
-        element: <UserPage/>,
-      }
-      ,
-      {
-        path: "/zones",
-        element: <ZonePage />,
-      }
-    ]
-  },
-  {
-    path: "/login",
-    element: <LoginPage />,
-  },
-  {
-    path: "/register",
-    element: <RegisterPage />,
-  },
-
-]); //khai bao router
-
-
-createRoot(document.getElementById('root')).render(
-  // <StrictMode>
-  <AuthWrapper>
-  <RouterProvider router={router} />
-  </AuthWrapper>
-  // </StrictMode>,
-)
+ReactDOM.createRoot(document.getElementById("root")).render(
+  <React.StrictMode>
+    <Provider store={store}>
+      <RouterProvider router={router} />
+    </Provider>
+  </React.StrictMode>,
+);
