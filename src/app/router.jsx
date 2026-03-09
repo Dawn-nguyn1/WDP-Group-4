@@ -22,6 +22,9 @@ import ProfilePage from "../features/users/pages/ProfilePage";
 // Zone pages (admin CRUD, operator read-only)
 import ZonePage from "../features/zones/pages/ZonePage";
 
+// Drone pages (Phase 2)
+import DronePage from "../features/drones/pages/DronePage";
+
 const router = createBrowserRouter([
   // Public routes
   {
@@ -96,10 +99,10 @@ const router = createBrowserRouter([
         element: <ProfilePage />,
       },
       // Phase 2: drones
-      // {
-      //   path: 'drones',
-      //   element: <DronePage />,
-      // },
+      {
+        path: "drones",
+        element: <DronePage />,
+      },
       // Phase 3: flight plans
       // {
       //   path: 'flight-plans',
