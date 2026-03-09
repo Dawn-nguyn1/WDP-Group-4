@@ -4,9 +4,9 @@ import { Menu, notification } from 'antd';
 import {
     UsergroupAddOutlined,
     HomeOutlined,
-    PlayCircleOutlined,
     AliwangwangOutlined,
-    LoginOutlined
+    LoginOutlined,
+    RocketOutlined
 } from '@ant-design/icons';
 
 import { useState } from 'react';
@@ -72,10 +72,15 @@ const Header = () => {
             key: 'zones',
             icon: <HomeOutlined />,
         },
+        // {
+        //     label: <Link to={"/flycams"}>Flycams</Link>,
+        //     key: 'flycams',
+        //     icon: <PlayCircleOutlined />,
+        // },
         {
-            label: <Link to={"/flycams"}>Flycams</Link>,
-            key: 'flycams',
-            icon: <PlayCircleOutlined />,
+            label: <Link to={"/flight-planning"}>Flight Planning</Link>,
+            key: 'flight-planning',
+            icon: <RocketOutlined />,
         },
 
         ...(!user?._id ? [{

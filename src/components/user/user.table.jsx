@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Table, Popconfirm, notification, Switch } from 'antd';
-import { EditOutlined, DeleteOutlined, CheckCircleOutlined, CloseCircleOutlined } from '@ant-design/icons';
+import { EditOutlined, DeleteOutlined, CheckCircleOutlined, CloseCircleOutlined, EyeOutlined } from '@ant-design/icons';
+import { useNavigate } from 'react-router-dom';
 import UpdateUserModal from './update.user.modal';
 import ViewUserDetail from './user.detail';
 import { deleteUserAPI } from '../../services/api.service';
@@ -17,6 +18,7 @@ const UserTable = (props) => {
         setPageSize 
     } = props;
 
+    const navigate = useNavigate();
     const [isModalUpdateOpen, setIsModalUpdateOpen] = useState(false);
     const [dataUpdate, setDataUpdate] = useState(null);
     const [dataDetail, setDataDetail] = useState(null);
@@ -63,8 +65,7 @@ const UserTable = (props) => {
                         href='#'
                         onClick={(e) => {
                             e.preventDefault();
-                            setDataDetail(record);
-                            setIsDetailOpen(true);
+                            navigate(`/users/${record._id}`);
                         }}
                     >
                         #{record._id.slice(-8).toUpperCase()}
@@ -146,6 +147,16 @@ const UserTable = (props) => {
             width: 120,
             render: (_, record) => (
                 <div className="action-buttons">
+                    <button
+                        className="action-btn-icon view-btn"
+                        onClick={() => {
+                            setDataDetail(record);
+                            setIsDetailOpen(true);
+                        }}
+                        title="View detail"
+                    >
+                        <EyeOutlined />
+                    </button>
                     <button
                         className="action-btn-icon edit-btn"
                         onClick={() => {

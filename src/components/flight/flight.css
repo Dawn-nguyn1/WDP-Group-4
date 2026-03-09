@@ -1,0 +1,282 @@
+/* Flight Planning Container */
+.flight-planning-container {
+    padding: 24px;
+    background: #f5f5f5;
+    min-height: 100vh;
+}
+
+/* Flight Header */
+.flight-header {
+    margin-bottom: 24px;
+    text-align: center;
+}
+
+.flight-header h2 {
+    color: #1890ff;
+    margin-bottom: 8px;
+}
+
+.flight-header p {
+    color: #666;
+    margin: 0;
+}
+
+/* Control Panel */
+.control-panel {
+    margin-bottom: 24px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.flight-info {
+    padding: 12px;
+    background: #f9f9f9;
+    border-radius: 6px;
+    border-left: 4px solid #1890ff;
+}
+
+/* Flight Content Layout */
+.flight-content {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 24px;
+    margin-bottom: 24px;
+}
+
+@media (max-width: 1200px) {
+    .flight-content {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* Map Card */
+.map-card {
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+/* Waypoints Card */
+.waypoints-card {
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    max-height: 600px;
+}
+
+/* Waypoints List */
+.waypoints-list {
+    max-height: 500px;
+    overflow-y: auto;
+}
+
+.waypoint-item {
+    padding: 12px;
+    border: 1px solid #e8e8e8;
+    border-radius: 6px;
+    margin-bottom: 8px;
+    cursor: pointer;
+    transition: all 0.3s;
+    background: white;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.waypoint-item:hover {
+    border-color: #1890ff;
+    box-shadow: 0 2px 4px rgba(24, 144, 255, 0.2);
+}
+
+.waypoint-item.selected {
+    border-color: #1890ff;
+    background: #f0f8ff;
+    box-shadow: 0 2px 8px rgba(24, 144, 255, 0.3);
+}
+
+.waypoint-info {
+    flex: 1;
+}
+
+.waypoint-name {
+    font-weight: bold;
+    margin-bottom: 4px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.waypoint-type {
+    display: inline-block;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    color: white;
+    text-align: center;
+    line-height: 20px;
+    font-size: 10px;
+    font-weight: bold;
+}
+
+.waypoint-type.start {
+    background: #52c41a;
+}
+
+.waypoint-type.end {
+    background: #ff4d4f;
+}
+
+.waypoint-type.intermediate {
+    background: #1890ff;
+}
+
+.waypoint-coords {
+    font-size: 12px;
+    color: #666;
+    font-family: monospace;
+    margin-bottom: 2px;
+}
+
+.waypoint-altitude {
+    font-size: 12px;
+    color: #999;
+}
+
+.waypoint-actions {
+    margin-left: 12px;
+}
+
+/* Custom Waypoint Marker */
+.custom-waypoint-marker {
+    background: transparent !important;
+    border: none !important;
+}
+
+/* Leaflet Popup Customization */
+.leaflet-popup-content-wrapper {
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+
+.leaflet-popup-content {
+    margin: 0;
+    padding: 0;
+}
+
+.leaflet-popup-tip {
+    background: white;
+}
+
+/* Instructions Overlay */
+.flight-instructions {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: white;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    z-index: 1000;
+    text-align: center;
+    max-width: 300px;
+}
+
+.flight-instructions h4 {
+    color: #1890ff;
+    margin-bottom: 12px;
+}
+
+.flight-instructions p {
+    color: #666;
+    margin: 0;
+    line-height: 1.5;
+}
+
+/* Drawing Mode Indicator */
+.drawing-indicator {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background: white;
+    padding: 8px 12px;
+    border-radius: 6px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+    z-index: 1000;
+    font-size: 12px;
+    color: #faad14;
+    font-weight: bold;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .flight-planning-container {
+        padding: 16px;
+    }
+    
+    .flight-content {
+        gap: 16px;
+    }
+    
+    .waypoints-card {
+        max-height: 400px;
+    }
+    
+    .waypoints-list {
+        max-height: 350px;
+    }
+}
+
+/* Animation */
+.waypoint-item {
+    animation: fadeInUp 0.3s ease-out;
+}
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Saved Paths */
+.saved-paths-card {
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.saved-paths-list {
+    max-height: 300px;
+    overflow-y: auto;
+}
+
+.saved-path-item {
+    padding: 12px;
+    border: 1px solid #e8e8e8;
+    border-radius: 6px;
+    margin-bottom: 8px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: white;
+    transition: all 0.3s;
+}
+
+.saved-path-item:hover {
+    border-color: #1890ff;
+    box-shadow: 0 2px 4px rgba(24, 144, 255, 0.2);
+}
+
+.path-info {
+    flex: 1;
+}
+
+.path-info strong {
+    display: block;
+    margin-bottom: 4px;
+}
+
+.path-info small {
+    color: #666;
+}
