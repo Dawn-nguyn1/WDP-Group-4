@@ -107,7 +107,19 @@ const deleteZoneAPI = (id) => {
     return axios.delete(URL_BACKEND);
 };
 
+// ==================== FLIGHT PLANS ====================
+const fetchFlightPlansAPI = (params = {}) => {
+    const URL_BACKEND = "/api/flight-plans";
+    return axios.get(URL_BACKEND, { params });
+};
+
+const createFlightPlanAPI = (payload) => {
+    const URL_BACKEND = "/api/flight-plans";
+    return axios.post(URL_BACKEND, payload);
+};
+
 export  {registerUserAPI, loginUserAPI, createUserAPI,
      fetchUsersAPI, updateUserAPI, deleteUserAPI, 
      getUserDetailAPI, handleUploadFile, updateUserAvatarAPI,
-     getAccountAPI, logoutAPI, fetchZonesAPI, createZoneAPI, deleteZoneAPI};
+     getAccountAPI, logoutAPI, fetchZonesAPI, createZoneAPI, deleteZoneAPI,
+     fetchFlightPlansAPI, createFlightPlanAPI};
