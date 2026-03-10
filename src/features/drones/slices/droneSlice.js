@@ -12,7 +12,7 @@ export const fetchDrones = createAsyncThunk(
   async (_, { rejectWithValue }) => {
     try {
       const response = await fetchDronesAPI();
-      return response.data; // Assuming axios interceptor or API returns the array
+      return response?.data || response;
     } catch (error) {
       return rejectWithValue(error?.message || "Failed to fetch drones");
     }
@@ -24,7 +24,7 @@ export const createDrone = createAsyncThunk(
   async (droneData, { rejectWithValue }) => {
     try {
       const response = await createDroneAPI(droneData);
-      return response;
+      return response?.data || response;
     } catch (error) {
       return rejectWithValue(error?.message || "Failed to create drone");
     }
@@ -36,7 +36,7 @@ export const getDroneDetail = createAsyncThunk(
   async (id, { rejectWithValue }) => {
     try {
       const response = await getDroneDetailAPI(id);
-      return response;
+      return response?.data || response;
     } catch (error) {
       return rejectWithValue(error?.message || "Failed to get drone detail");
     }
@@ -48,7 +48,7 @@ export const updateDrone = createAsyncThunk(
   async ({ id, data }, { rejectWithValue }) => {
     try {
       const response = await updateDroneAPI(id, data);
-      return response;
+      return response?.data || response;
     } catch (error) {
       return rejectWithValue(error?.message || "Failed to update drone");
     }
