@@ -22,6 +22,16 @@ import ProfilePage from "../features/users/pages/ProfilePage";
 // Zone pages (admin CRUD, operator read-only)
 import ZonePage from "../features/zones/pages/ZonePage";
 
+// Drone pages (Phase 2)
+import DronePage from "../features/drones/pages/DronePage";
+
+// Phase 3 pages
+import ConflictListPage from "../features/conflicts/pages/ConflictListPage";
+import ConflictDetailPage from "../features/conflicts/pages/ConflictDetailPage";
+import FlightPlanListPage from "../features/flight-plans/pages/FlightPlanListPage";
+import FlightPlanDetailPage from "../features/flight-plans/pages/FlightPlanDetailPage";
+import FlightPlanForm from "../features/flight-plans/components/FlightPlanForm";
+
 const router = createBrowserRouter([
   // Public routes
   {
@@ -63,10 +73,14 @@ const router = createBrowserRouter([
         element: <ProfilePage />,
       },
       // Phase 3: conflicts
-      // {
-      //   path: 'conflicts',
-      //   element: <ConflictListPage />,
-      // },
+      {
+        path: "conflicts",
+        element: <ConflictListPage />,
+      },
+      {
+        path: "conflicts/:id",
+        element: <ConflictDetailPage />,
+      },
     ],
   },
 
@@ -96,15 +110,27 @@ const router = createBrowserRouter([
         element: <ProfilePage />,
       },
       // Phase 2: drones
-      // {
-      //   path: 'drones',
-      //   element: <DronePage />,
-      // },
+      {
+        path: "drones",
+        element: <DronePage />,
+      },
       // Phase 3: flight plans
-      // {
-      //   path: 'flight-plans',
-      //   element: <FlightPlanListPage />,
-      // },
+      {
+        path: "flight-plans",
+        element: <FlightPlanListPage />,
+      },
+      {
+        path: "flight-plans/new",
+        element: <FlightPlanForm />,
+      },
+      {
+        path: "flight-plans/:id",
+        element: <FlightPlanDetailPage />,
+      },
+      {
+        path: "flight-plans/:id/edit",
+        element: <FlightPlanForm editingId />,
+      },
       // Phase 4: flight sessions
       // {
       //   path: 'flight-sessions',

@@ -173,7 +173,9 @@ const authSlice = createSlice({
       })
       .addCase(fetchCurrentUser.fulfilled, (state, action) => {
         state.isLoading = false;
-        state.user = action.payload;
+        // API response might be nested in user or data, or just be the object
+        state.user =
+          action.payload?.user || action.payload?.data || action.payload;
         state.isAuthenticated = true;
       })
       .addCase(fetchCurrentUser.rejected, (state, action) => {
@@ -195,7 +197,8 @@ const authSlice = createSlice({
       .addCase(updateProfile.fulfilled, (state, action) => {
         state.isLoading = false;
         // API response might be nested (e.g., { user: {...} } or just the user object)
-        state.user = action.payload.user || action.payload;
+        state.user =
+          action.payload?.user || action.payload?.data || action.payload;
       })
       .addCase(updateProfile.rejected, (state, action) => {
         state.isLoading = false;
