@@ -35,9 +35,21 @@ export const getDroneDetail = createAsyncThunk(
   "drones/getDroneDetail",
   async (id, { rejectWithValue }) => {
     try {
+      console.log('=== GET DRONE DETAIL API ===');
+      console.log('Drone ID:', id);
+      
       const response = await getDroneDetailAPI(id);
+      
+      console.log('API Response:', response);
+      console.log('Response data:', response?.data);
+      console.log('Response type:', typeof response);
+      console.log('=== END GET DRONE DETAIL ===');
+      
       return response?.data || response;
     } catch (error) {
+      console.error('GET DRONE DETAIL ERROR:', error);
+      console.error('Error response:', error?.response);
+      console.error('Error data:', error?.response?.data);
       return rejectWithValue(error?.message || "Failed to get drone detail");
     }
   },

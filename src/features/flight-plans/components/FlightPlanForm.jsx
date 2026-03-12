@@ -23,7 +23,7 @@ import {
   selectCurrentFlightPlan,
   clearCurrentPlan,
 } from "../slices/flightPlanSlice";
-import WaypointEditor from "./WaypointEditor";
+import WaypointEditorWithZones from "./WaypointEditorWithZones";
 
 const { Title, Text } = Typography;
 const { Option } = Select;
@@ -210,7 +210,7 @@ const FlightPlanForm = ({ initialValues = null, editingId = null }) => {
           <Text type="secondary" style={{ display: "block", marginBottom: 16 }}>
             Click lên bản đồ để thêm điểm Waypoint. Kéo thả marker để di chuyển.
           </Text>
-          <WaypointEditor waypoints={waypoints} setWaypoints={setWaypoints} />
+          <WaypointEditorWithZones waypoints={waypoints} setWaypoints={setWaypoints} />
         </div>
       </Card>
     </div>
