@@ -18,11 +18,25 @@ const DroneDetailDrawer = ({ droneId, visible, onClose }) => {
 
   useEffect(() => {
     if (visible && droneId) {
+      console.log('=== DRONE DRAWER OPEN ===');
+      console.log('Drone ID:', droneId);
+      console.log('Visible:', visible);
+      
       dispatch(getDroneDetail(droneId));
     } else if (!visible) {
+      console.log('=== DRONE DRAWER CLOSE ===');
       dispatch(clearCurrentDrone());
     }
   }, [visible, droneId, dispatch]);
+
+  // Debug drone data
+  useEffect(() => {
+    console.log('=== DRONE STATE UPDATE ===');
+    console.log('Loading:', loading);
+    console.log('Drone data:', drone);
+    console.log('Drone type:', typeof drone);
+    console.log('=== END DRONE STATE ===');
+  }, [drone, loading]);
 
   const getStatusColor = (status) => {
     switch (status) {

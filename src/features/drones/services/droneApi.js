@@ -9,7 +9,15 @@ export const createDroneAPI = (data) => {
 };
 
 export const getDroneDetailAPI = (id) => {
-  return axios.get(`/api/drones/${id}`);
+  console.log('=== DRONE API CALL ===');
+  console.log('Calling GET /api/drones/' + id);
+  
+  const result = axios.get(`/api/drones/${id}`);
+  
+  console.log('API call initiated:', result);
+  console.log('=== END DRONE API CALL ===');
+  
+  return result;
 };
 
 export const updateDroneAPI = (id, data) => {

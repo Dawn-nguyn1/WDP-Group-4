@@ -1,6 +1,6 @@
 import React, { useState, useCallback, useRef, useEffect } from "react";
-import { Tag, Spin, Button, Modal, notification } from "antd";
-import { DeleteOutlined, ExclamationCircleOutlined } from "@ant-design/icons";
+import { Tag, Spin, Button, Modal, notification, message } from "antd";
+import { DeleteOutlined, EditOutlined, ExclamationCircleOutlined } from "@ant-design/icons";
 import Map from "../../../shared/components/Map/Map";
 import ZoneForm from "../components/ZoneForm";
 import CheckPointForm from "../components/CheckPointForm";
@@ -17,6 +17,14 @@ const ZonePage = ({ readOnly = false }) => {
   const [selectedZoneId, setSelectedZoneId] = useState(null);
   const [drawerVisible, setDrawerVisible] = useState(false);
   const reloadZonesRef = useRef(null);
+
+  const handleZoneHover = useCallback((zoneId) => {
+    console.log('=== ZONE HOVER ===');
+    console.log('Hovered zone ID:', zoneId);
+    console.log('Current hovered zone ID:', hoveredZoneId);
+    setHoveredZoneId(zoneId);
+    console.log('=== END ZONE HOVER ===');
+  }, [hoveredZoneId]);
 
   const handleReloadCallback = useCallback((fetchFunction) => {
     if (fetchFunction && typeof fetchFunction === "function") {
@@ -92,8 +100,29 @@ const ZonePage = ({ readOnly = false }) => {
   };
 
   const handleZoneClick = (zoneId) => {
+    console.log('=== ZONE CLICK ===');
+    console.log('Clicked zone ID:', zoneId);
     setSelectedZoneId(zoneId);
     setDrawerVisible(true);
+  };
+
+  const handleMapClick = (zoneId) => {
+    console.log('=== MAP CLICK ===');
+    console.log('Clicked zone on map:', zoneId);
+    setSelectedZoneId(zoneId);
+    setHoveredZoneId(zoneId);
+  };
+
+  const handleMapClickOutside = () => {
+    console.log('=== MAP CLICK OUTSIDE ===');
+    setSelectedZoneId(null);
+    setHoveredZoneId(null);
+  };
+
+  const handleEditZone = (zone) => {
+    console.log('=== EDIT ZONE ===');
+    console.log('Zone to edit:', zone);
+    message.info('Chức năng edit zone đang phát triển');
   };
 
   return (
@@ -121,10 +150,12 @@ const ZonePage = ({ readOnly = false }) => {
       <Map
         onReloadCallback={handleReloadCallback}
         onZoneDeleted={handleZoneDeleted}
-        onDeleteZone={!readOnly ? handleDeleteZone : undefined}
+        onZoneClick={handleMapClick}
+        onMapClickOutside={handleMapClickOutside}
         zonesList={zonesList}
         hoveredZoneId={hoveredZoneId}
-        onZoneHover={setHoveredZoneId}
+        selectedZoneId={selectedZoneId}
+        onZoneHover={handleZoneHover}
       />
 
       <div
@@ -162,20 +193,32 @@ const ZonePage = ({ readOnly = false }) => {
                 style={{
                   padding: "16px",
                   border:
-                    hoveredZoneId === zone._id ?
+                    hoveredZoneId === zone._id || selectedZoneId === zone._id ?
                       "3px solid #1890ff"
                     : "1px solid #e8e8e8",
                   borderRadius: "8px",
                   backgroundColor: "#fafafa",
-                  transition: "all 0.3s",
+                  transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
                   boxShadow:
-                    hoveredZoneId === zone._id ?
-                      "0 4px 12px rgba(24, 144, 255, 0.4)"
+                    hoveredZoneId === zone._id || selectedZoneId === zone._id ?
+                      "0 8px 24px rgba(24, 144, 255, 0.3)"
                     : "0 2px 4px rgba(0,0,0,0.05)",
                   cursor: "pointer",
+                  transform: hoveredZoneId === zone._id || selectedZoneId === zone._id ? "translateY(-2px) scale(1.02)" : "translateY(0) scale(1)",
                 }}
-                onMouseEnter={() => setHoveredZoneId(zone._id)}
-                onMouseLeave={() => setHoveredZoneId(null)}
+                onMouseEnter={() => {
+                  console.log('=== ZONE CARD HOVER ENTER ===');
+                  console.log('Zone ID:', zone._id);
+                  console.log('Zone Name:', zone.name);
+                  setHoveredZoneId(zone._id);
+                }}
+                onMouseLeave={() => {
+                  console.log('=== ZONE CARD HOVER LEAVE ===');
+                  console.log('Zone ID:', zone._id);
+                  if (selectedZoneId !== zone._id) {
+                    setHoveredZoneId(null);
+                  }
+                }}
                 onClick={() => handleZoneClick(zone._id)}
               >
                 <div
@@ -261,8 +304,20 @@ const ZonePage = ({ readOnly = false }) => {
                       paddingTop: "12px",
                       borderTop: "1px solid #e8e8e8",
                       marginTop: "12px",
+                      gap: "8px",
                     }}
                   >
+                    <Button
+                      type="default"
+                      icon={<EditOutlined />}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleEditZone(zone);
+                      }}
+                      size="small"
+                    >
+                      Edit
+                    </Button>
                     <Button
                       type="primary"
                       danger
@@ -273,7 +328,7 @@ const ZonePage = ({ readOnly = false }) => {
                       }}
                       size="small"
                     >
-                      Xóa
+                      Delete
                     </Button>
                   </div>
                 )}
