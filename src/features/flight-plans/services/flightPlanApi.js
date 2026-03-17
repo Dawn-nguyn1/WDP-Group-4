@@ -29,20 +29,6 @@ export const updateFlightPlanAPI = async (id, data) => {
 };
 
 /**
- * Submit Flight Plan để kiểm tra xung đột và Approved/Rejected
- */
-export const submitFlightPlanAPI = async (id) => {
-  return await axios.post(`/api/flight-plans/${id}/submit`);
-};
-
-/**
- * Hủy Flight Plan
- */
-export const cancelFlightPlanAPI = async (id) => {
-  return await axios.post(`/api/flight-plans/${id}/cancel`);
-};
-
-/**
  * Xóa Flight Plan (chỉ DRAFT)
  */
 export const deleteFlightPlanAPI = async (id) => {
