@@ -3,6 +3,7 @@ import authReducer from "../features/auth/slices/authSlice";
 import droneReducer from "../features/drones/slices/droneSlice";
 import flightPlanReducer from "../features/flight-plans/slices/flightPlanSlice";
 import conflictReducer from "../features/conflicts/slices/conflictSlice";
+import missionReducer from "../features/missions/slices/missionSlice";
 
 export const store = configureStore({
   reducer: {
@@ -10,6 +11,7 @@ export const store = configureStore({
     drones: droneReducer,
     flightPlans: flightPlanReducer,
     conflicts: conflictReducer,
+    missions: missionReducer,
   },
   devTools: import.meta.env.DEV, // Enable Redux DevTools in development
 });

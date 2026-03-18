@@ -31,6 +31,8 @@ import ConflictDetailPage from "../features/conflicts/pages/ConflictDetailPage";
 import FlightPlanListPage from "../features/flight-plans/pages/FlightPlanListPage";
 import FlightPlanDetailPage from "../features/flight-plans/pages/FlightPlanDetailPage";
 import FlightPlanForm from "../features/flight-plans/components/FlightPlanForm";
+import MissionPage from "../features/missions/components/page/mission";
+import MissionDetail from "../features/missions/components/MissionDetail";
 
 const router = createBrowserRouter([
   // Public routes
@@ -117,19 +119,40 @@ const router = createBrowserRouter([
       // Phase 3: flight plans
       {
         path: "flight-plans",
-        element: <FlightPlanListPage />,
+        element: <ProtectedRoute allowedRoles={["FLEET_OPERATOR"]}>
+          <FlightPlanListPage />
+        </ProtectedRoute>,
       },
       {
         path: "flight-plans/new",
-        element: <FlightPlanForm />,
+        element: <ProtectedRoute allowedRoles={["FLEET_OPERATOR"]}>
+          <FlightPlanForm />
+        </ProtectedRoute>,
       },
       {
         path: "flight-plans/:id",
-        element: <FlightPlanDetailPage />,
+        element: <ProtectedRoute allowedRoles={["FLEET_OPERATOR"]}>
+          <FlightPlanDetailPage />
+        </ProtectedRoute>,
       },
       {
         path: "flight-plans/:id/edit",
-        element: <FlightPlanForm editingId />,
+        element: <ProtectedRoute allowedRoles={["FLEET_OPERATOR"]}>
+          <FlightPlanForm editingId />
+        </ProtectedRoute>,
+      },
+      // Phase 4: missions
+      {
+        path: "missions",
+        element: <ProtectedRoute allowedRoles={["FLEET_OPERATOR"]}>
+          <MissionPage />
+        </ProtectedRoute>,
+      },
+      {
+        path: "missions/:id",
+        element: <ProtectedRoute allowedRoles={["FLEET_OPERATOR"]}>
+          <MissionDetail />
+        </ProtectedRoute>,
       },
       // Phase 4: flight sessions
       // {

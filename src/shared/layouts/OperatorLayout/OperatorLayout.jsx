@@ -10,6 +10,7 @@ import {
   EnvironmentOutlined,
   UserOutlined,
   LogoutOutlined,
+  AimOutlined,
 } from "@ant-design/icons";
 import {
   selectUser,
@@ -42,6 +43,7 @@ const OperatorLayout = () => {
     if (path.includes("/operator/flight-plans")) return "flight-plans";
     if (path.includes("/operator/flight-sessions")) return "flight-sessions";
     if (path.includes("/operator/zones")) return "zones";
+    if (path.includes("/operator/missions")) return "missions";
     if (path.includes("/operator/profile")) return "profile";
     return "dashboard";
   };
@@ -66,6 +68,11 @@ const OperatorLayout = () => {
       label: <Link to="/operator/flight-sessions">Flight Sessions</Link>,
       key: "flight-sessions",
       icon: <PlayCircleOutlined />,
+    },
+    {
+      label: <Link to="/operator/missions">Missions</Link>,
+      key: "missions",
+      icon: <AimOutlined />,
     },
     {
       label: <Link to="/operator/zones">Zones</Link>,

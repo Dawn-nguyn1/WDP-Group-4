@@ -7,14 +7,12 @@ import {
   Typography,
   message,
   Select,
-  DatePicker,
   Row,
   Col,
 } from "antd";
 import { SaveOutlined, ArrowLeftOutlined } from "@ant-design/icons";
 import { useParams, useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
-import dayjs from "dayjs";
 import { fetchDrones, selectDronesList } from "../../drones/slices/droneSlice";
 import {
   createFlightPlan,
@@ -24,10 +22,10 @@ import {
   clearCurrentPlan,
 } from "../slices/flightPlanSlice";
 import WaypointEditorWithZones from "./WaypointEditorWithZones";
+import { checkPointAPI } from "../../zones/services/zoneApi";
 
 const { Title, Text } = Typography;
 const { Option } = Select;
-const { RangePicker } = DatePicker;
 
 const FlightPlanForm = ({ initialValues = null, editingId = null }) => {
   const [form] = Form.useForm();
@@ -71,14 +69,6 @@ const FlightPlanForm = ({ initialValues = null, editingId = null }) => {
       form.setFieldsValue({
         drone:
           effectiveInitialValues.drone?._id || effectiveInitialValues.drone,
-        timeRange: [
-          effectiveInitialValues.plannedStart ?
-            dayjs(effectiveInitialValues.plannedStart)
-          : null,
-          effectiveInitialValues.plannedEnd ?
-            dayjs(effectiveInitialValues.plannedEnd)
-          : null,
-        ],
         notes: effectiveInitialValues.notes,
       });
       if (effectiveInitialValues.waypoints) {
@@ -108,8 +98,6 @@ const FlightPlanForm = ({ initialValues = null, editingId = null }) => {
 
       const payload = {
         drone: values.drone,
-        plannedStart: values.timeRange[0].format(),
-        plannedEnd: values.timeRange[1].format(),
         priority: 1, // Default based on doc
         notes: values.notes,
         waypoints: waypoints,
@@ -163,7 +151,7 @@ const FlightPlanForm = ({ initialValues = null, editingId = null }) => {
       >
         <Form form={form} layout="vertical">
           <Row gutter={24}>
-            <Col span={12}>
+            <Col span={24}>
               <Form.Item
                 name="drone"
                 label="Chọn Drone"
@@ -184,15 +172,6 @@ const FlightPlanForm = ({ initialValues = null, editingId = null }) => {
                     </Option>
                   ))}
                 </Select>
-              </Form.Item>
-            </Col>
-            <Col span={12}>
-              <Form.Item
-                name="timeRange"
-                label="Thời gian dự kiến (Cất cánh - Hạ cánh)"
-                rules={[{ required: true, message: "Vui lòng chọn thời gian" }]}
-              >
-                <RangePicker showTime style={{ width: "100%" }} />
               </Form.Item>
             </Col>
           </Row>

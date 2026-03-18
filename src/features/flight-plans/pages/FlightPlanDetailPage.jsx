@@ -14,24 +14,17 @@ import {
 } from "antd";
 import {
   ArrowLeftOutlined,
-  SendOutlined,
   EditOutlined,
   DeleteOutlined,
-  StopOutlined,
   ExclamationCircleOutlined,
 } from "@ant-design/icons";
 import {
   getFlightPlanDetail,
-  submitFlightPlan,
-  cancelFlightPlan,
   deleteFlightPlan,
   selectCurrentFlightPlan,
-  selectFlightPlanConflicts,
   selectFlightPlansLoading,
   clearCurrentPlan,
 } from "../slices/flightPlanSlice";
-import ConflictViewer from "../components/ConflictViewer";
-import dayjs from "dayjs";
 import {
   MapContainer,
   TileLayer,
@@ -62,10 +55,7 @@ const FlightPlanDetailPage = () => {
   const dispatch = useDispatch();
 
   const flightPlan = useSelector(selectCurrentFlightPlan);
-  const conflicts = useSelector(selectFlightPlanConflicts);
   const loading = useSelector(selectFlightPlansLoading);
-
-  const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
     if (id) {
@@ -75,35 +65,6 @@ const FlightPlanDetailPage = () => {
       dispatch(clearCurrentPlan());
     };
   }, [dispatch, id]);
-
-  const handleSubmit = async () => {
-    setSubmitting(true);
-    try {
-      await dispatch(submitFlightPlan(id)).unwrap();
-      message.success("Đã submit kiểm tra xung đột!");
-    } catch (err) {
-      message.error(err.message || "Phát hiện xung đột hoặc có lỗi xảy ra");
-    } finally {
-      setSubmitting(false);
-    }
-  };
-
-  const handleCancel = () => {
-    confirm({
-      title: "Hủy Kế Hoạch Bay",
-      icon: <ExclamationCircleOutlined />,
-      content: "Bạn có chắc chắn muốn hủy kế hoạch bay này không?",
-      onOk: async () => {
-        try {
-          await dispatch(cancelFlightPlan(id)).unwrap();
-          message.success("Đã hủy kế hoạch bay");
-          dispatch(getFlightPlanDetail(id));
-        } catch (err) {
-          message.error("Lỗi khi hủy kế hoạch bay");
-        }
-      },
-    });
-  };
 
   const handleDelete = () => {
     confirm({
@@ -139,20 +100,18 @@ const FlightPlanDetailPage = () => {
     );
   }
 
-  const { status, drone, plannedStart, plannedEnd, waypoints, notes } =
+  const { status, drone, waypoints, notes } =
     flightPlan;
 
   const isDraft = status === "DRAFT";
   const isRejected = status === "REJECTED";
   const isApproved = status === "APPROVED";
-  const isCancelled = status === "CANCELLED";
 
   const getStatusColor = (s) =>
     ({
       DRAFT: "default",
       APPROVED: "success",
       REJECTED: "error",
-      CANCELLED: "warning",
     })[s] || "processing";
 
   const centerPosition =
@@ -194,24 +153,11 @@ const FlightPlanDetailPage = () => {
               >
                 Sửa
               </Button>
-              <Button
-                type="primary"
-                icon={<SendOutlined />}
-                onClick={handleSubmit}
-                loading={submitting}
-              >
-                Submit Kiểm Tra
-              </Button>
             </>
           )}
           {(isDraft || isRejected) && (
             <Button danger icon={<DeleteOutlined />} onClick={handleDelete}>
               Xóa
-            </Button>
-          )}
-          {isApproved && (
-            <Button danger icon={<StopOutlined />} onClick={handleCancel}>
-              Hủy Chuyến
             </Button>
           )}
         </Space>
@@ -225,14 +171,6 @@ const FlightPlanDetailPage = () => {
           <Descriptions.Item label="Drone Sử Dụng">
             <Text strong>{drone?.model || "N/A"}</Text> - {drone?.serialNumber}
           </Descriptions.Item>
-          <Descriptions.Item label="Thời Gian Bắt Đầu Dự Kiến">
-            {plannedStart ?
-              dayjs(plannedStart).format("DD/MM/YYYY HH:mm")
-            : "N/A"}
-          </Descriptions.Item>
-          <Descriptions.Item label="Thời Gian Kết Thúc Dự Kiến">
-            {plannedEnd ? dayjs(plannedEnd).format("DD/MM/YYYY HH:mm") : "N/A"}
-          </Descriptions.Item>
           <Descriptions.Item label="Số Lượng Waypoints">
             {waypoints?.length || 0} điểm
           </Descriptions.Item>
@@ -241,10 +179,6 @@ const FlightPlanDetailPage = () => {
           </Descriptions.Item>
         </Descriptions>
       </Card>
-
-      {(conflicts?.length > 0 || isApproved) && (
-        <ConflictViewer conflicts={conflicts} planStatus={status} />
-      )}
 
       <Card title="Bản đồ Waypoints" style={{ marginTop: 24 }}>
         <div

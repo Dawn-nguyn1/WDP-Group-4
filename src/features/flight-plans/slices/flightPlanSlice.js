@@ -45,28 +45,6 @@ export const updateFlightPlan = createAsyncThunk(
   },
 );
 
-export const submitFlightPlan = createAsyncThunk(
-  "flightPlans/submit",
-  async (id, { rejectWithValue }) => {
-    try {
-      return await flightPlanApi.submitFlightPlanAPI(id);
-    } catch (err) {
-      return rejectWithValue(err);
-    }
-  },
-);
-
-export const cancelFlightPlan = createAsyncThunk(
-  "flightPlans/cancel",
-  async (id, { rejectWithValue }) => {
-    try {
-      return await flightPlanApi.cancelFlightPlanAPI(id);
-    } catch (err) {
-      return rejectWithValue(err);
-    }
-  },
-);
-
 export const deleteFlightPlan = createAsyncThunk(
   "flightPlans/delete",
   async (id, { rejectWithValue }) => {
@@ -87,7 +65,6 @@ const initialState = {
     limit: 10,
   },
   currentPlan: null,
-  conflicts: [], // Chứa xung đột trả về khi submit rejected hoặc xem detail
   loading: false,
   error: null,
 };
@@ -98,7 +75,6 @@ const flightPlanSlice = createSlice({
   reducers: {
     clearCurrentPlan: (state) => {
       state.currentPlan = null;
-      state.conflicts = [];
     },
   },
   extraReducers: (builder) => {
@@ -127,39 +103,10 @@ const flightPlanSlice = createSlice({
       .addCase(getFlightPlanDetail.fulfilled, (state, action) => {
         state.loading = false;
         state.currentPlan = action.payload.flightPlan || action.payload;
-        state.conflicts = action.payload.conflicts || [];
       })
       .addCase(getFlightPlanDetail.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload?.message || "Lỗi tải chi tiết";
-      })
-
-      // Submit plan
-      .addCase(submitFlightPlan.pending, (state) => {
-        state.loading = true;
-        state.error = null;
-      })
-      .addCase(submitFlightPlan.fulfilled, (state, action) => {
-        // Phản hồi có thể là approved = true / false theo doc
-        state.loading = false;
-        if (
-          state.currentPlan &&
-          state.currentPlan._id === action.payload.flightPlan?._id
-        ) {
-          state.currentPlan = action.payload.flightPlan;
-        }
-        state.conflicts = action.payload.conflicts || [];
-      })
-      .addCase(submitFlightPlan.rejected, (state, action) => {
-        state.loading = false;
-        state.error = action.payload?.message || "Submit thất bại";
-        // TH Backend trả lỗi conflict status 400 kèm conflicts list array
-        if (action.payload?.conflicts) {
-          state.conflicts = action.payload.conflicts;
-        }
-        if (action.payload?.flightPlan && state.currentPlan) {
-          state.currentPlan = action.payload.flightPlan;
-        }
       });
   },
 });
@@ -168,7 +115,6 @@ export const { clearCurrentPlan } = flightPlanSlice.actions;
 
 export const selectFlightPlansList = (state) => state.flightPlans.list;
 export const selectCurrentFlightPlan = (state) => state.flightPlans.currentPlan;
-export const selectFlightPlanConflicts = (state) => state.flightPlans.conflicts;
 export const selectFlightPlansLoading = (state) => state.flightPlans.loading;
 
 export default flightPlanSlice.reducer;
