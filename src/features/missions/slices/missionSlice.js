@@ -6,12 +6,8 @@ export const fetchMissions = createAsyncThunk(
   async ({ page = 1, limit = 10, search = "" }, { rejectWithValue }) => {
     try {
       const response = await missionApi.fetchMissionsAPI({ page, limit, search });
-      console.log('🔍 API Response:', response);
-      console.log('🔍 Response data:', response?.data);
-      console.log('🔍 Response structure:', JSON.stringify(response, null, 2));
       return response;
     } catch (err) {
-      console.error('❌ API Error:', err);
       return rejectWithValue(err);
     }
   },
@@ -54,9 +50,13 @@ export const deleteMission = createAsyncThunk(
   "missions/delete",
   async (id, { rejectWithValue }) => {
     try {
+      console.log('🗑️ Deleting mission with ID:', id);
       await missionApi.deleteMissionAPI(id);
+      console.log('✅ Mission deleted successfully:', id);
       return id;
     } catch (err) {
+      console.error('❌ Error deleting mission:', err);
+      console.error('❌ Error response:', err.response?.data);
       return rejectWithValue(err);
     }
   },
@@ -99,27 +99,42 @@ export const startMission = createAsyncThunk(
   "missions/startMission",
   async (missionId, { rejectWithValue }) => {
     try {
-      // Mock response for testing - remove this when backend is ready
-      if (process.env.NODE_ENV === 'development') {
-        // Simulate API delay
-        await new Promise(resolve => setTimeout(resolve, 1000));
-        
-        // Mock successful response
-        return {
-          message: "Mission started successfully",
-          mission: {
-            _id: missionId,
-            name: "Test Mission",
-            description: "Test mission for start functionality",
-            status: "ACTIVE", // Changed from DRAFT to ACTIVE
-            createdAt: new Date().toISOString(),
-            updatedAt: new Date().toISOString(),
-          }
-        };
-      }
-      
-      return await missionApi.startMissionAPI(missionId);
+      console.log('🚀 Starting mission with ID:', missionId);
+      const response = await missionApi.startMissionAPI(missionId);
+      console.log('✅ Start mission response:', response);
+      return response;
     } catch (err) {
+      console.error('❌ Error starting mission:', err);
+      return rejectWithValue(err);
+    }
+  },
+);
+
+export const deleteMissionWithPlans = createAsyncThunk(
+  "missions/deleteMissionWithPlans",
+  async (missionId, { rejectWithValue }) => {
+    try {
+      console.log('🗑️ Deleting mission with plans, ID:', missionId);
+      const response = await missionApi.deleteMissionWithPlansAPI(missionId);
+      console.log('✅ Mission with plans deleted:', response);
+      return { missionId, ...response };
+    } catch (err) {
+      console.error('❌ Error deleting mission with plans:', err);
+      return rejectWithValue(err);
+    }
+  },
+);
+
+export const deleteMissionPlanFromMission = createAsyncThunk(
+  "missions/deleteMissionPlanFromMission",
+  async ({ missionId, missionPlanId }, { rejectWithValue }) => {
+    try {
+      console.log('🗑️ Deleting mission plan from mission:', { missionId, missionPlanId });
+      const response = await missionApi.deleteMissionPlanFromMissionAPI(missionId, missionPlanId);
+      console.log('✅ Mission plan deleted from mission:', response);
+      return { missionId, missionPlanId, ...response };
+    } catch (err) {
+      console.error('❌ Error deleting mission plan from mission:', err);
       return rejectWithValue(err);
     }
   },
@@ -153,13 +168,10 @@ const missionSlice = createSlice({
         state.error = null;
       })
       .addCase(fetchMissions.fulfilled, (state, action) => {
-        console.log('✅ Fulfilled - Action payload:', action.payload);
         state.loading = false;
         const missionsList = action.payload.data || action.payload || [];
         state.list = missionsList;
         state.pagination = action.payload.pagination || state.pagination;
-        console.log('✅ Updated missions list:', state.list);
-        console.log('✅ Missions list length:', state.list.length);
       })
       .addCase(fetchMissions.rejected, (state, action) => {
         state.loading = false;
@@ -277,36 +289,70 @@ const missionSlice = createSlice({
       })
       .addCase(startMission.fulfilled, (state, action) => {
         state.loading = false;
+        console.log('✅ Start mission fulfilled - payload:', action.payload);
+        
         // Update mission status to ACTIVE when started
-        if (state.currentMission) {
-          state.currentMission.mission.status = 'ACTIVE';
-        }
-        // Also update in missions list
-        const index = state.list.findIndex(m => m._id === action.payload.mission._id);
-        if (index !== -1) {
-          state.list[index] = action.payload.mission;
+        if (action.payload.mission) {
+          // Update in missions list
+          const index = state.list.findIndex(m => m._id === action.payload.mission._id);
+          if (index !== -1) {
+            state.list[index] = action.payload.mission;
+            console.log('✅ Updated mission in list:', action.payload.mission);
+          }
+          
+          // Update current mission if it's the same
+          if (state.currentMission && state.currentMission.mission?._id === action.payload.mission._id) {
+            state.currentMission.mission = action.payload.mission;
+            console.log('✅ Updated current mission:', action.payload.mission);
+          }
         }
       })
       .addCase(startMission.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload?.message || "Bắt đầu mission thất bại";
+        console.error('❌ Start mission rejected:', action.payload);
       })
 
-      // Assign mission to drone
-      .addCase(assignMissionToDrone.pending, (state) => {
+      // Delete mission with plans
+      .addCase(deleteMissionWithPlans.pending, (state) => {
         state.loading = true;
         state.error = null;
       })
-      .addCase(assignMissionToDrone.fulfilled, (state, action) => {
+      .addCase(deleteMissionWithPlans.fulfilled, (state, action) => {
         state.loading = false;
-        const index = state.list.findIndex(m => m._id === action.payload.mission._id);
-        if (index !== -1) {
-          state.list[index] = action.payload.mission;
+        // Remove mission from list
+        state.list = state.list.filter(m => m._id !== action.payload.missionId);
+        // Clear current mission if it was the deleted one
+        if (state.currentMission?.mission?._id === action.payload.missionId) {
+          state.currentMission = null;
         }
+        console.log('✅ Mission with plans removed from state');
       })
-      .addCase(assignMissionToDrone.rejected, (state, action) => {
+      .addCase(deleteMissionWithPlans.rejected, (state, action) => {
         state.loading = false;
-        state.error = action.payload?.message || "Gán mission cho drone thất bại";
+        state.error = action.payload?.message || "Xóa mission thất bại";
+        console.error('❌ Delete mission with plans rejected:', action.payload);
+      })
+
+      // Delete mission plan from mission
+      .addCase(deleteMissionPlanFromMission.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(deleteMissionPlanFromMission.fulfilled, (state, action) => {
+        state.loading = false;
+        // Remove mission plan from current mission's mission plans
+        if (state.currentMission?.missionPlans) {
+          state.currentMission.missionPlans = state.currentMission.missionPlans.filter(
+            plan => plan._id !== action.payload.missionPlanId
+          );
+        }
+        console.log('✅ Mission plan removed from current mission');
+      })
+      .addCase(deleteMissionPlanFromMission.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload?.message || "Xóa mission plan thất bại";
+        console.error('❌ Delete mission plan from mission rejected:', action.payload);
       });
   },
 });

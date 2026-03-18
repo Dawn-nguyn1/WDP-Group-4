@@ -3,7 +3,7 @@ import { Table, Select, Button, Space, Tag, Card, Typography, Spin, message, Mod
 import { EyeOutlined, EditOutlined, DeleteOutlined, ReloadOutlined, PlusOutlined, PlayCircleOutlined } from '@ant-design/icons';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
-import { getMissionDetail, selectCurrentMission, selectMissionsLoading, fetchMissions, selectMissionsList, startMission } from '../slices/missionSlice';
+import { getMissionDetail, selectCurrentMission, selectMissionsLoading, fetchMissions, selectMissionsList, startMission, deleteMissionPlanFromMission } from '../slices/missionSlice';
 import AddFlightPlanModal from '../components/AddFlightPlanModal';
 import UpdateMissionPlanModal from '../components/UpdateMissionPlanModal';
 import dayjs from 'dayjs';
@@ -50,14 +50,39 @@ const MissionPlans = () => {
     setUpdatePlanModalVisible(true);
   };
 
+  const handleDeleteMissionPlan = async (missionPlanId) => {
+    try {
+      await dispatch(deleteMissionPlanFromMission({ 
+        missionId: selectedMissionId, 
+        missionPlanId 
+      })).unwrap();
+      message.success("Xóa mission plan thành công!");
+      setDeleteModalVisible(false);
+      setDeletingPlanId(null);
+      // No need to refetch since we already removed from state
+    } catch (error) {
+      message.error("Xóa mission plan thất bại!");
+    }
+  };
+
   const handleStartMission = async () => {
     try {
-      await dispatch(startMission(selectedMissionId)).unwrap();
-      message.success("Bắt đầu mission thành công!");
+      const result = await dispatch(startMission(selectedMissionId)).unwrap();
+      console.log('🚀 Mission started successfully:', result);
+      
+      // Show success message with checks info
+      const checks = result.checks || {};
+      const checksInfo = checks.pairwiseConflicts !== undefined ? 
+        ` (Conflicts: ${checks.pairwiseConflicts}, Segments: ${checks.segmentationConflicts}, Zones: ${checks.zoneViolations})` : 
+        '';
+      
+      message.success(`Bắt đầu mission thành công!${checksInfo}`);
+      
       // Refresh mission detail to get updated status
       dispatch(getMissionDetail(selectedMissionId));
     } catch (error) {
-      message.error("Bắt đầu mission thất bại!");
+      console.error('❌ Failed to start mission:', error);
+      message.error(error.response?.data?.message || "Bắt đầu mission thất bại!");
     }
   };
 
@@ -267,11 +292,11 @@ const MissionPlans = () => {
       <Modal
         title="Xóa Mission Plan"
         open={deleteModalVisible}
-        onOk={() => {
-          message.success(`Đã xóa kế hoạch ${deletingPlanId}`);
+        onOk={() => handleDeleteMissionPlan(deletingPlanId)}
+        onCancel={() => {
           setDeleteModalVisible(false);
+          setDeletingPlanId(null);
         }}
-        onCancel={() => setDeleteModalVisible(false)}
         okText="Xóa"
         cancelText="Hủy"
         okButtonProps={{ danger: true }}

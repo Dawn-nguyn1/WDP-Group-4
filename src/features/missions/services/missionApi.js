@@ -38,3 +38,11 @@ export const updateMissionPlanAPI = (missionId, missionPlanId, data) => {
 export const startMissionAPI = (missionId) => {
   return axios.post(`/api/missions/${missionId}/start`);
 };
+
+export const deleteMissionWithPlansAPI = (missionId) => {
+  return axios.delete(`/api/missions/${missionId}/start`);
+};
+
+export const deleteMissionPlanFromMissionAPI = (missionId, missionPlanId) => {
+  return axios.delete(`/api/missions/${missionId}/plans/${missionPlanId}`);
+};

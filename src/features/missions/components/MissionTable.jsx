@@ -6,6 +6,7 @@ import { useNavigate } from "react-router-dom";
 import {
   fetchMissions,
   deleteMission,
+  deleteMissionWithPlans,
   selectMissionsList,
   selectMissionsLoading,
 } from "../slices/missionSlice";
@@ -24,20 +25,18 @@ const MissionTable = () => {
     dispatch(fetchMissions({ page: 1, limit: 10 }));
   }, [dispatch]);
 
-  // Debug Redux state
-  useEffect(() => {
-    console.log('📊 MissionTable - Redux missions:', missions);
-    console.log('📏 MissionTable - Missions length:', missions?.length);
-    console.log('⏳ MissionTable - Loading:', loading);
-  }, [missions, loading]);
-
   const handleDelete = async (id) => {
+    console.log('🗑️ [MissionTable] Attempting to delete mission:', id);
     try {
-      await dispatch(deleteMission(id)).unwrap();
+      const result = await dispatch(deleteMission(id)).unwrap();
+      console.log('✅ [MissionTable] Mission deleted successfully:', result);
       message.success("Xóa mission thành công!");
+      // Refetch to get updated list
       dispatch(fetchMissions({ page: 1, limit: 10 }));
     } catch (error) {
-      message.error("Xóa mission thất bại!");
+      console.error('❌ [MissionTable] Delete mission error:', error);
+      console.error('❌ [MissionTable] Error response:', error.response?.data);
+      message.error(error.response?.data?.message || "Xóa mission thất bại!");
     }
   };
 
