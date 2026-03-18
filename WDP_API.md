@@ -148,3 +148,119 @@ No links
 Internal server error
 
 No links
+
+
+
+
+# ################ Missions ################
+Quản lý mission và lịch thực thi plan qua MissionPlan
+
+
+
+#  POST
+/api/missions
+Tạo mission mới (chỉ FLEET_OPERATOR)
+
+
+Parameters
+Try it out
+No parameters
+
+Request body
+
+application/json
+Example Value
+Schema
+{
+  "name": "Morning Fleet Run",
+  "description": "Mission for urban delivery routes",
+  "status": "DRAFT"
+}
+Responses
+Code	Description	Links
+201	
+Mission created
+
+Media type
+
+application/json
+Controls Accept header.
+Example Value
+Schema
+{
+  "_id": "string",
+  "name": "Morning Fleet Run",
+  "description": "Mission for urban delivery routes",
+  "status": "DRAFT",
+  "createdBy": {
+    "_id": "507f1f77bcf86cd799439011",
+    "email": "user@example.com",
+    "profile": {
+      "fullName": "John Doe",
+      "avatar": "https://example.com/avatar.jpg"
+    },
+    "role": "INDIVIDUAL_OPERATOR",
+    "status": "active",
+    "createdAt": "2026-03-17T14:12:52.147Z",
+    "updatedAt": "2026-03-17T14:12:52.147Z"
+  },
+  "createdAt": "2026-03-17T14:12:52.147Z",
+  "updatedAt": "2026-03-17T14:12:52.147Z"
+}
+No links
+400	
+Validation error
+
+No links
+401	
+Unauthorized
+
+No links
+403	
+Forbidden
+
+No links
+
+
+#  GET
+/api/missions
+Danh sách mission của user hiện tại
+
+
+Parameters
+Try it out
+No parameters
+
+Responses
+Code	Description	Links
+200	
+Success
+
+Media type
+
+application/json
+Controls Accept header.
+Example Value
+Schema
+[
+  {
+    "_id": "string",
+    "name": "Morning Fleet Run",
+    "description": "Mission for urban delivery routes",
+    "status": "DRAFT",
+    "createdBy": {
+      "_id": "507f1f77bcf86cd799439011",
+      "email": "user@example.com",
+      "profile": {
+        "fullName": "John Doe",
+        "avatar": "https://example.com/avatar.jpg"
+      },
+      "role": "INDIVIDUAL_OPERATOR",
+      "status": "active",
+      "createdAt": "2026-03-17T14:14:07.711Z",
+      "updatedAt": "2026-03-17T14:14:07.711Z"
+    },
+    "createdAt": "2026-03-17T14:14:07.711Z",
+    "updatedAt": "2026-03-17T14:14:07.711Z"
+  }
+]
