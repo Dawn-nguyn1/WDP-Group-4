@@ -25,26 +25,7 @@ import {
   selectFlightPlansLoading,
   clearCurrentPlan,
 } from "../slices/flightPlanSlice";
-import {
-  MapContainer,
-  TileLayer,
-  Marker,
-  Popup,
-  Polyline,
-} from "react-leaflet";
-
-// Fix Leaflet's default icon issue in React
-import L from "leaflet";
-import icon from "leaflet/dist/images/marker-icon.png";
-import iconShadow from "leaflet/dist/images/marker-shadow.png";
-
-let DefaultIcon = L.icon({
-  iconUrl: icon,
-  shadowUrl: iconShadow,
-  iconSize: [25, 41],
-  iconAnchor: [12, 41],
-});
-L.Marker.prototype.options.icon = DefaultIcon;
+import FlightPlanMapWithZones from "../components/FlightPlanMap";
 
 const { Title, Text } = Typography;
 const { confirm } = Modal;
@@ -180,36 +161,11 @@ const FlightPlanDetailPage = () => {
         </Descriptions>
       </Card>
 
-      <Card title="Bản đồ Waypoints" style={{ marginTop: 24 }}>
-        <div
-          style={{ height: "400px", borderRadius: "8px", overflow: "hidden" }}
-        >
-          <MapContainer
-            center={centerPosition}
-            zoom={13}
-            style={{ height: "100%", width: "100%" }}
-          >
-            <TileLayer
-              attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a> contributors'
-              url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-            />
-            {waypoints?.map((wp, index) => (
-              <Marker key={index} position={[wp.latitude, wp.longitude]}>
-                <Popup>
-                  <strong>
-                    {wp.action} (WP #{wp.sequenceNumber})
-                  </strong>
-                  <br />
-                  Độ cao: {wp.altitude}m<br />
-                  Tốc độ: {wp.speed}m/s
-                </Popup>
-              </Marker>
-            ))}
-            {polylinePositions.length > 1 && (
-              <Polyline positions={polylinePositions} color="blue" />
-            )}
-          </MapContainer>
-        </div>
+      <Card title="Bản đồ Waypoints & Vùng Cấm Bay" style={{ marginTop: 24 }}>
+        <FlightPlanMapWithZones 
+          waypoints={waypoints}
+          centerPosition={centerPosition}
+        />
       </Card>
     </div>
   );
