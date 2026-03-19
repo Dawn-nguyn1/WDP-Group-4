@@ -28,7 +28,7 @@ const FlightPlanListPage = () => {
   const flightPlans = useSelector(selectFlightPlansList);
 
   useEffect(() => {
-    dispatch(fetchFlightPlans());
+    dispatch(fetchFlightPlans({ page: 1, limit: 10 }));
   }, [dispatch]);
 
   const getStatusBadgeProps = (status) => {
@@ -57,7 +57,27 @@ const FlightPlanListPage = () => {
       title: "Drone",
       key: "drone",
       dataIndex: "drone",
-      render: (drone) => (drone?.model ? drone.model : "Chưa rõ"),
+      render: (drone) => (
+        <div>
+          <div>{drone?.model || "N/A"}</div>
+          <div style={{ fontSize: "12px", color: "#999" }}>
+            {drone?.serialNumber || "N/A"}
+          </div>
+        </div>
+      ),
+    },
+    {
+      title: "Pilot",
+      key: "pilot",
+      dataIndex: "pilot",
+      render: (pilot) => (
+        <div>
+          <div>{pilot?.profile?.fullName || "N/A"}</div>
+          <div style={{ fontSize: "12px", color: "#999" }}>
+            {pilot?.email || "N/A"}
+          </div>
+        </div>
+      ),
     },
     {
       title: "Trạng thái",
@@ -66,16 +86,20 @@ const FlightPlanListPage = () => {
       render: (status) => <Badge {...getStatusBadgeProps(status)} />,
     },
     {
-      title: "Thời gian cất cánh",
-      key: "plannedStart",
-      dataIndex: "plannedStart",
-      render: (date) => (date ? dayjs(date).format("DD/MM/YYYY HH:mm") : "N/A"),
-    },
-    {
-      title: "Thời gian hạ cánh",
-      key: "plannedEnd",
-      dataIndex: "plannedEnd",
-      render: (date) => (date ? dayjs(date).format("DD/MM/YYYY HH:mm") : "N/A"),
+      title: "Conflict Status",
+      key: "conflictStatus",
+      dataIndex: "conflictStatus",
+      render: (conflictStatus) => {
+        const getColor = (status) => {
+          switch (status) {
+            case "CLEAR": return "success";
+            case "WARNING": return "warning";
+            case "CONFLICT": return "error";
+            default: return "default";
+          }
+        };
+        return <Tag color={getColor(conflictStatus)}>{conflictStatus || "N/A"}</Tag>;
+      },
     },
     {
       title: "Hành động",
