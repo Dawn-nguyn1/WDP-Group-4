@@ -21,7 +21,7 @@ import {
   selectCurrentFlightPlan,
   clearCurrentPlan,
 } from "../slices/flightPlanSlice";
-import WaypointEditorWithZones from "./WaypointEditorWithZones";
+import FlightPlansMap from "./FlightPlansMap";
 import { checkPointAPI } from "../../zones/services/zoneApi";
 
 const { Title, Text } = Typography;
@@ -40,9 +40,6 @@ const FlightPlanForm = ({ initialValues = null, editingId = null }) => {
   const drones = useSelector(selectDronesList);
   const currentPlan = useSelector(selectCurrentFlightPlan);
   const [loading, setLoading] = useState(false);
-
-  // States for Waypoint Editor
-  const [waypoints, setWaypoints] = useState([]);
 
   useEffect(() => {
     dispatch(fetchDrones());
@@ -71,51 +68,34 @@ const FlightPlanForm = ({ initialValues = null, editingId = null }) => {
           effectiveInitialValues.drone?._id || effectiveInitialValues.drone,
         notes: effectiveInitialValues.notes,
       });
-      if (effectiveInitialValues.waypoints) {
-        setWaypoints(effectiveInitialValues.waypoints);
-      }
     }
   }, [effectiveInitialValues, form]);
 
   const handleSubmit = async () => {
     try {
       const values = await form.validateFields();
-
-      if (waypoints.length < 2) {
-        message.error(
-          "Kế hoạch bay phải có ít nhất 2 waypoints (TAKEOFF và LAND).",
-        );
-        return;
-      }
-
-      const takeoff = waypoints.find((w) => w.action === "TAKEOFF");
-      const land = waypoints.find((w) => w.action === "LAND");
-      if (!takeoff || !land) {
-        message.warning("Nên có ít nhất 1 lệnh TAKEOFF và 1 lệnh LAND.");
-      }
-
       setLoading(true);
 
       const payload = {
         drone: values.drone,
-        priority: 1, // Default based on doc
         notes: values.notes,
-        waypoints: waypoints,
       };
 
       if (actualEditingId) {
-        await dispatch(
-          updateFlightPlan({ id: actualEditingId, data: payload }),
-        ).unwrap();
+        // Update existing flight plan
+        await dispatch(updateFlightPlan({ id: actualEditingId, ...payload }));
         message.success("Cập nhật kế hoạch bay thành công!");
       } else {
-        await dispatch(createFlightPlan(payload)).unwrap();
-        message.success("Tạo kế hoạch bay (DRAFT) thành công!");
+        // Create new flight plan
+        await dispatch(createFlightPlan(payload));
+        message.success("Tạo kế hoạch bay thành công!");
       }
 
+      // Navigate back to flight plans list
       navigate("/operator/flight-plans");
     } catch (error) {
-      message.error(error.message || "Đã xảy ra lỗi khi lưu kế hoạch bay");
+      console.error("Submit flight plan error:", error);
+      message.error(error?.message || "Lỗi khi lưu kế hoạch bay");
     } finally {
       setLoading(false);
     }
@@ -185,11 +165,7 @@ const FlightPlanForm = ({ initialValues = null, editingId = null }) => {
         </Form>
 
         <div style={{ marginTop: 24 }}>
-          <Title level={5}>Biên tập Waypoints</Title>
-          <Text type="secondary" style={{ display: "block", marginBottom: 16 }}>
-            Click lên bản đồ để thêm điểm Waypoint. Kéo thả marker để di chuyển.
-          </Text>
-          <WaypointEditorWithZones waypoints={waypoints} setWaypoints={setWaypoints} />
+          <FlightPlansMap />
         </div>
       </Card>
     </div>
