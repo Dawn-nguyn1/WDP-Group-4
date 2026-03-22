@@ -182,6 +182,23 @@ const WaypointEditorWithZones = ({
         .we-map-wrap {
           height: 520px;
           position: relative;
+          z-index: 1;
+        }
+
+        .we-map-wrap .leaflet-container {
+          z-index: 1;
+        }
+
+        .we-map-wrap .leaflet-control-container {
+          z-index: 2;
+        }
+
+        .we-map-wrap .leaflet-pane {
+          z-index: 1;
+        }
+
+        .we-map-wrap .leaflet-map-pane {
+          z-index: 1;
         }
 
         .we-map-hint {
