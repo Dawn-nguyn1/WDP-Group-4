@@ -1,13 +1,17 @@
 import React, { useState, useCallback, useRef, useEffect } from "react";
-import { Tag, Spin, Button, Modal, notification, message } from "antd";
-import { DeleteOutlined, EditOutlined, ExclamationCircleOutlined } from "@ant-design/icons";
+import { Tag, Spin, Button, Modal, notification, message, Input, Select, Space, Card, Pagination } from "antd";
+import { DeleteOutlined, EditOutlined, ExclamationCircleOutlined, SearchOutlined, FilterOutlined, ClearOutlined } from "@ant-design/icons";
 import Map from "../../../shared/components/Map/Map";
 import ZoneForm from "../components/ZoneForm";
 import CheckPointForm from "../components/CheckPointForm";
 import ZoneDetailDrawer from "../components/ZoneDetailDrawer";
+import ZoneEditModal from "../components/Zone.Edit.Modal";
 import { fetchZonesAPI, deleteZoneAPI } from "../services/zoneApi";
 import dayjs from "dayjs";
 import styles from "../styles/ZonePage.module.css";
+
+const { Search } = Input;
+const { Option } = Select;
 
 const ZonePage = ({ readOnly = false }) => {
   const [reloadZones, setReloadZones] = useState(null);
@@ -16,7 +20,22 @@ const ZonePage = ({ readOnly = false }) => {
   const [hoveredZoneId, setHoveredZoneId] = useState(null);
   const [selectedZoneId, setSelectedZoneId] = useState(null);
   const [drawerVisible, setDrawerVisible] = useState(false);
+  const [editModalVisible, setEditModalVisible] = useState(false);
+  const [editingZoneId, setEditingZoneId] = useState(null);
   const reloadZonesRef = useRef(null);
+
+  // Search and filter states
+  const [searchText, setSearchText] = useState('');
+  const [filterStatus, setFilterStatus] = useState('');
+  const [filterType, setFilterType] = useState('');
+  const [sortBy, setSortBy] = useState('createdAt');
+  const [sortOrder, setSortOrder] = useState('desc');
+  const [pagination, setPagination] = useState({
+    currentPage: 1,
+    totalPages: 1,
+    totalCount: 0,
+    limit: 9  // Mặc định 9 vùng cấm bay cho 1 trang
+  });
 
   const handleZoneHover = useCallback((zoneId) => {
     console.log('=== ZONE HOVER ===');
@@ -33,19 +52,50 @@ const ZonePage = ({ readOnly = false }) => {
     }
   }, []);
 
-  const fetchZonesList = async () => {
+  const fetchZonesList = async (page = 1) => {
     setLoadingZones(true);
     try {
-      const res = await fetchZonesAPI({
-        page: 1,
-        limit: 100,
-        sortBy: "createdAt",
-        sortOrder: "desc",
-      });
+      const params = {
+        page: page,
+        limit: pagination.limit,
+        sortBy: sortBy,
+        sortOrder: sortOrder,
+      };
+
+      // Add search text if exists
+      if (searchText.trim()) {
+        params.search = searchText.trim();
+      }
+
+      // Add filters if selected
+      if (filterStatus) {
+        params.status = filterStatus;
+      }
+
+      if (filterType) {
+        params.type = filterType;
+      }
+
+      console.log('🔍 Fetching zones with params:', params);
+      
+      const res = await fetchZonesAPI(params);
+      console.log('📡RESPONSE TU API:', res);
+      
       const apiZones = Array.isArray(res?.data) ? res.data : [];
       setZonesList(apiZones);
+      
+      // Update pagination if available
+      if (res?.pagination) {
+        setPagination(prev => ({
+          ...prev,
+          currentPage: res.pagination.currentPage,
+          totalPages: res.pagination.totalPages,
+          totalCount: res.pagination.totalCount,
+        }));
+      }
     } catch (error) {
-      console.error("Fetch zones error:", error);
+      console.error('❌ Fetch zones error:', error);
+      message.error('Không thể tải danh sách zones');
       setZonesList([]);
     } finally {
       setLoadingZones(false);
@@ -122,8 +172,72 @@ const ZonePage = ({ readOnly = false }) => {
   const handleEditZone = (zone) => {
     console.log('=== EDIT ZONE ===');
     console.log('Zone to edit:', zone);
-    message.info('Chức năng edit zone đang phát triển');
+    setEditingZoneId(zone._id);
+    setEditModalVisible(true);
   };
+
+  const handleEditModalCancel = () => {
+    setEditModalVisible(false);
+    setEditingZoneId(null);
+  };
+
+  const handleEditSuccess = (updatedZone) => {
+    console.log('=== EDIT SUCCESS ===');
+    console.log('Updated zone:', updatedZone);
+    // Refresh zones list
+    fetchZonesList();
+    // Refresh map zones if callback exists
+    if (reloadZonesRef.current) {
+      reloadZonesRef.current();
+    }
+  };
+
+  // Search and filter handlers
+  const handleSearch = (value) => {
+    setSearchText(value);
+    setPagination(prev => ({ ...prev, currentPage: 1 })); // Reset to first page
+  };
+
+  const handleFilterStatus = (value) => {
+    setFilterStatus(value);
+    setPagination(prev => ({ ...prev, currentPage: 1 })); // Reset to first page
+  };
+
+  const handleFilterType = (value) => {
+    setFilterType(value);
+    setPagination(prev => ({ ...prev, currentPage: 1 })); // Reset to first page
+  };
+
+  const handleSortBy = (value) => {
+    setSortBy(value);
+    setPagination(prev => ({ ...prev, currentPage: 1 })); // Reset to first page
+  };
+
+  const handleSortOrder = (value) => {
+    setSortOrder(value);
+    setPagination(prev => ({ ...prev, currentPage: 1 })); // Reset to first page
+  };
+
+  const handleClearFilters = () => {
+    setSearchText('');
+    setFilterStatus('');
+    setFilterType('');
+    setSortBy('createdAt');
+    setSortOrder('desc');
+    setPagination(prev => ({ ...prev, currentPage: 1 }));
+  };
+
+  // Pagination handler
+  const handlePageChange = (page, pageSize) => {
+    console.log('📄 Page change:', { page, pageSize });
+    setPagination(prev => ({ ...prev, currentPage: page, limit: pageSize }));
+    fetchZonesList(page);
+  };
+
+  // Fetch zones when search/filter/sort changes
+  useEffect(() => {
+    fetchZonesList(1);
+  }, [searchText, filterStatus, filterType, sortBy, sortOrder]);
 
   return (
     <div className={styles.container}>
@@ -146,6 +260,103 @@ const ZonePage = ({ readOnly = false }) => {
       <div style={{ marginBottom: "24px" }}>
         <CheckPointForm />
       </div>
+
+      {/* Search and Filter Controls */}
+      <Card style={{ marginBottom: "24px" }}>
+        <div style={{ marginBottom: "16px" }}>
+          <h3 style={{ margin: 0, fontSize: "16px", fontWeight: "bold" }}>
+            <FilterOutlined /> Tìm kiếm & Lọc
+          </h3>
+        </div>
+        
+        <Space wrap size="middle" style={{ width: "100%" }}>
+          {/* Search */}
+          <div style={{ flex: 1, minWidth: 200 }}>
+            <Search
+              placeholder="Tìm kiếm theo tên zone..."
+              allowClear
+              enterButton={<SearchOutlined />}
+              size="middle"
+              value={searchText}
+              onChange={(e) => handleSearch(e.target.value)}
+              onSearch={handleSearch}
+            />
+          </div>
+
+          {/* Status Filter */}
+          <Select
+            placeholder="Trạng thái"
+            allowClear
+            style={{ width: 120 }}
+            value={filterStatus || undefined}
+            onChange={handleFilterStatus}
+            size="middle"
+          >
+            <Option value="active">Hoạt động</Option>
+            <Option value="inactive">Không hoạt động</Option>
+            <Option value="archived">Đã lưu trữ</Option>
+          </Select>
+
+          {/* Type Filter */}
+          <Select
+            placeholder="Loại zone"
+            allowClear
+            style={{ width: 120 }}
+            value={filterType || undefined}
+            onChange={handleFilterType}
+            size="middle"
+          >
+            <Option value="no_fly">Cấm bay</Option>
+            <Option value="restricted">Hạn chế</Option>
+            <Option value="warning">Cảnh báo</Option>
+          </Select>
+
+          {/* Sort By */}
+          <Select
+            placeholder="Sắp xếp theo"
+            style={{ width: 140 }}
+            value={sortBy}
+            onChange={handleSortBy}
+            size="middle"
+          >
+            <Option value="createdAt">Ngày tạo</Option>
+            <Option value="updatedAt">Ngày cập nhật</Option>
+            <Option value="name">Tên zone</Option>
+            <Option value="type">Loại zone</Option>
+            <Option value="minAltitude">Độ cao tối thiểu</Option>
+            <Option value="maxAltitude">Độ cao tối đa</Option>
+          </Select>
+
+          {/* Sort Order */}
+          <Select
+            style={{ width: 100 }}
+            value={sortOrder}
+            onChange={handleSortOrder}
+            size="middle"
+          >
+            <Option value="desc">Giảm dần</Option>
+            <Option value="asc">Tăng dần</Option>
+          </Select>
+
+          {/* Clear Filters */}
+          <Button
+            icon={<ClearOutlined />}
+            onClick={handleClearFilters}
+            size="middle"
+          >
+            Xóa bộ lọc
+          </Button>
+        </Space>
+
+        {/* Results Summary */}
+        <div style={{ marginTop: 12, fontSize: "12px", color: "#666" }}>
+          Tìm thấy <strong>{pagination.totalCount}</strong> zones 
+          {searchText && ` cho "${searchText}"`}
+          {filterStatus && ` • Trạng thái: ${filterStatus}`}
+          {filterType && ` • Loại: ${filterType}`}
+          {` • Trang ${pagination.currentPage}/${pagination.totalPages || 1}`}
+        </div>
+      </Card>
 
       <Map
         onReloadCallback={handleReloadCallback}
@@ -185,6 +396,8 @@ const ZonePage = ({ readOnly = false }) => {
               display: "grid",
               gridTemplateColumns: "repeat(auto-fill, minmax(350px, 1fr))",
               gap: "16px",
+              maxWidth: "1200px", // Max width for 3 columns
+              margin: "0 auto" // Center the grid
             }}
           >
             {zonesList.map((zone, index) => (
@@ -204,7 +417,8 @@ const ZonePage = ({ readOnly = false }) => {
                       "0 8px 24px rgba(24, 144, 255, 0.3)"
                     : "0 2px 4px rgba(0,0,0,0.05)",
                   cursor: "pointer",
-                  transform: hoveredZoneId === zone._id || selectedZoneId === zone._id ? "translateY(-2px) scale(1.02)" : "translateY(0) scale(1)",
+                  transform: hoveredZoneId === zone._id || selectedZoneId === zone._id ? "scale(1.02)" : "scale(1)",
+                  margin: hoveredZoneId === zone._id || selectedZoneId === zone._id ? "-4px" : "0",
                 }}
                 onMouseEnter={() => {
                   console.log('=== ZONE CARD HOVER ENTER ===');
@@ -336,12 +550,52 @@ const ZonePage = ({ readOnly = false }) => {
             ))}
           </div>
         }
+
+        {/* Pagination */}
+        {pagination.totalPages > 1 && (
+          <div style={{ textAlign: "right", marginTop: "40px" }}>
+            <div style={{ display: "inline-flex", alignItems: "center", gap: "20px" }}>
+              <Pagination
+                current={pagination.currentPage}
+                total={pagination.totalCount}
+                pageSize={pagination.limit}
+                onChange={handlePageChange}
+                onShowSizeChange={handlePageChange}
+                showSizeChanger
+                showQuickJumper
+                showTotal={(total, range) => 
+                  `Hiển thị ${range[0]}-${range[1]} của ${total} zones`
+                }
+                pageSizeOptions={['9', '18', '27', '36']}
+                locale={{
+                  items_per_page: 'zones/trang',
+                  jump_to: 'Đến trang',
+                  jump_to_confirm: 'Xác nhận',
+                  page: '',
+                  prev_page: 'Trang trước',
+                  next_page: 'Trang sau',
+                  prev_5: '5 trang trước',
+                  next_5: '5 trang sau',
+                  prev_3: '3 trang trước',
+                  next_3: '3 trang sau'
+                }}
+              />
+            </div>
+          </div>
+        )}
       </div>
 
       <ZoneDetailDrawer
         zoneId={selectedZoneId}
         visible={drawerVisible}
         onClose={() => setDrawerVisible(false)}
+      />
+
+      <ZoneEditModal
+        visible={editModalVisible}
+        onCancel={handleEditModalCancel}
+        zoneId={editingZoneId}
+        onSuccess={handleEditSuccess}
       />
     </div>
   );

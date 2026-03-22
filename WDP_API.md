@@ -402,3 +402,180 @@ Schema
 {
   "message": "Failed to update zone"
 }
+
+# GET ALL ZONES
+GET
+/api/zones
+Lấy danh sách tất cả zones
+
+
+Lấy danh sách zones với các tính năng:
+
+Pagination: Phân trang với page và limit
+Search: Tìm kiếm theo tên zone
+Filter: Lọc theo status và type
+Sort: Sắp xếp theo các trường khác nhau
+Parameters
+Try it out
+Name	Description
+page
+integer
+(query)
+Số trang (bắt đầu từ 1)
+
+Default value : 1
+
+Example : 1
+
+1
+limit
+integer
+(query)
+Số lượng zones mỗi trang (tối đa 100)
+
+Default value : 10
+
+Example : 10
+
+10
+search
+string
+(query)
+Tìm kiếm theo tên zone (case-insensitive)
+
+Example : Airport
+
+Airport
+status
+string
+(query)
+Lọc theo trạng thái zone. Mặc định ẩn zones có status 'archived'
+
+Available values : active, inactive, archived
+
+Example : active
+
+
+active
+type
+string
+(query)
+Lọc theo loại zone
+
+Available values : no_fly, restricted
+
+Example : no_fly
+
+
+no_fly
+sortBy
+string
+(query)
+Trường để sắp xếp
+
+Available values : createdAt, updatedAt, name, type, minAltitude, maxAltitude
+
+Default value : createdAt
+
+Example : createdAt
+
+
+createdAt
+sortOrder
+string
+(query)
+Thứ tự sắp xếp (asc: tăng dần, desc: giảm dần)
+
+Available values : asc, desc
+
+Default value : desc
+
+Example : desc
+
+
+desc
+Responses
+Code	Description	Links
+200	
+Lấy danh sách thành công
+
+Media type
+
+application/json
+Controls Accept header.
+Example Value
+Schema
+{
+  "data": [
+    {
+      "_id": "507f1f77bcf86cd799439011",
+      "name": "Tan Son Nhat Airport",
+      "description": "No-fly zone around TSN Airport",
+      "type": "no_fly",
+      "status": "active",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              106.6297,
+              10.8231
+            ],
+            [
+              106.6397,
+              10.8231
+            ],
+            [
+              106.6397,
+              10.8331
+            ],
+            [
+              106.6297,
+              10.8331
+            ],
+            [
+              106.6297,
+              10.8231
+            ]
+          ]
+        ]
+      },
+      "minAltitude": 0,
+      "maxAltitude": 3000,
+      "createdAt": "2026-01-20T07:46:49.536Z",
+      "updatedAt": "2026-01-20T07:46:49.536Z"
+    }
+  ],
+  "pagination": {
+    "currentPage": 1,
+    "totalPages": 5,
+    "totalCount": 50,
+    "limit": 10,
+    "hasNextPage": true,
+    "hasPrevPage": false
+  }
+}
+No links
+401	
+Không được xác thực
+
+Media type
+
+application/json
+Example Value
+Schema
+{
+  "message": "Error message description"
+}
+No links
+500	
+Lỗi server
+
+Media type
+
+application/json
+Example Value
+Schema
+{
+  "message": "Failed to retrieve zones"
+}
