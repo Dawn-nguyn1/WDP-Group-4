@@ -102,7 +102,13 @@ const FlightPlanForm = ({ initialValues = null, editingId = null }) => {
   };
 
   return (
-    <div style={{ padding: 24, maxWidth: 1200, margin: "0 auto" }}>
+    <div style={{ 
+      padding: 24, 
+      width: "100%", 
+      minHeight: "100vh",
+      margin: 0,
+      boxSizing: "border-box"
+    }}>
       <Button
         type="link"
         icon={<ArrowLeftOutlined />}
@@ -112,6 +118,7 @@ const FlightPlanForm = ({ initialValues = null, editingId = null }) => {
         Quay lại danh sách
       </Button>
 
+      {/* Header Section */}
       <Card
         title={
           <Title level={4} style={{ margin: 0 }}>
@@ -124,14 +131,16 @@ const FlightPlanForm = ({ initialValues = null, editingId = null }) => {
             icon={<SaveOutlined />}
             onClick={handleSubmit}
             loading={loading}
+            size="large"
           >
-            Lưu Kế Hoạch (DRAFT)
+            {actualEditingId ? "Cập Nhật Kế Hoạch" : "Tạo Kế Hoạch Bay"}
           </Button>
         }
+        style={{ marginBottom: 16 }}
       >
         <Form form={form} layout="vertical">
           <Row gutter={24}>
-            <Col span={24}>
+            <Col span={8}>
               <Form.Item
                 name="drone"
                 label="Chọn Drone"
@@ -154,17 +163,39 @@ const FlightPlanForm = ({ initialValues = null, editingId = null }) => {
                 </Select>
               </Form.Item>
             </Col>
+            <Col span={16}>
+              <Form.Item name="notes" label="Ghi chú">
+                <Input.TextArea
+                  rows={2}
+                  placeholder="Nhập mục đích hoặc ghi chú thêm cho chuyến bay"
+                />
+              </Form.Item>
+            </Col>
           </Row>
-
-          <Form.Item name="notes" label="Ghi chú">
-            <Input.TextArea
-              rows={2}
-              placeholder="Nhập mục đích hoặc ghi chú thêm cho chuyến bay"
-            />
-          </Form.Item>
         </Form>
+      </Card>
 
-        <div style={{ marginTop: 24 }}>
+      {/* Map Section - Full Width */}
+      <Card 
+        title="Bản đồ Kế hoạch Bay" 
+        style={{ 
+          height: "700px",
+          display: "flex",
+          flexDirection: "column"
+        }}
+        bodyStyle={{ 
+          flex: 1, 
+          padding: 16,
+          display: "flex",
+          flexDirection: "column"
+        }}
+      >
+        <div style={{ 
+          flex: 1, 
+          borderRadius: "8px", 
+          overflow: "hidden",
+          position: "relative"
+        }}>
           <FlightPlansMap />
         </div>
       </Card>

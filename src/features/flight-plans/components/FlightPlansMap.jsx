@@ -186,7 +186,7 @@ const FlightPlansMap = () => {
         }
         style={{ marginBottom: 16 }}
       >
-        <div style={{ height: "500px", borderRadius: "8px", overflow: "hidden" }}>
+        <div style={{ height: "600px", width: "100%", borderRadius: "8px", overflow: "hidden" }}>
           <MapContainer
             center={[10.8231, 106.6297]}
             zoom={10}
