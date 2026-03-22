@@ -9,21 +9,13 @@ import {
   FeatureGroup,
   Polygon,
 } from "react-leaflet";
-import {
-  Button,
-  InputNumber,
-  Select,
-  Space,
-  Card,
-  Typography,
-  TimePicker,
-} from "antd";
-import { DeleteOutlined } from "@ant-design/icons";
+import { InputNumber, Select, TimePicker } from "antd";
+import { DeleteOutlined, EnvironmentOutlined, ThunderboltOutlined } from "@ant-design/icons";
 import L from "leaflet";
 import dayjs from "dayjs";
 import { fetchZonesAPI } from "../../zones/services/zoneApi";
+import { fetchFlightPlansAPI } from "../services/flightPlanApi";
 
-// Fix Leaflet's default icon issue in React
 import icon from "leaflet/dist/images/marker-icon.png";
 import iconShadow from "leaflet/dist/images/marker-shadow.png";
 
@@ -36,15 +28,17 @@ let DefaultIcon = L.icon({
 L.Marker.prototype.options.icon = DefaultIcon;
 
 const { Option } = Select;
-const { Text } = Typography;
 
 const ClickHandler = ({ onMapClick }) => {
-  useMapEvents({
-    click(e) {
-      onMapClick(e.latlng);
-    },
-  });
+  useMapEvents({ click(e) { onMapClick(e.latlng); } });
   return null;
+};
+
+const ACTION_CONFIG = {
+  TAKEOFF:  { color: "#22c55e", bg: "#f0fdf4", label: "TAKEOFF" },
+  WAYPOINT: { color: "#2563eb", bg: "#eff6ff", label: "WAYPOINT" },
+  HOVER:    { color: "#f59e0b", bg: "#fffbeb", label: "HOVER" },
+  LAND:     { color: "#ef4444", bg: "#fef2f2", label: "LAND" },
 };
 
 const WaypointEditorWithZones = ({
@@ -54,71 +48,48 @@ const WaypointEditorWithZones = ({
 }) => {
   const [mapZones, setMapZones] = useState([]);
   const [hoveredZoneId, setHoveredZoneId] = useState(null);
+  const [flightPlans, setFlightPlans] = useState([]);
+  const [selectedPlanId, setSelectedPlanId] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [showAllPaths, setShowAllPaths] = useState(false);
 
-  // Load zones from API
   const fetchZones = async () => {
     try {
-      const res = await fetchZonesAPI({
-        page: 1,
-        limit: 100,
-        sortBy: "createdAt",
-        sortOrder: "desc",
-      });
-
+      const res = await fetchZonesAPI({ page: 1, limit: 100, sortBy: "createdAt", sortOrder: "desc" });
       const apiZones = Array.isArray(res?.data) ? res.data : [];
-      const leafletZones = apiZones
-        .map((z) => {
-          const ring = z?.geometry?.coordinates?.[0];
-          if (!Array.isArray(ring)) return null;
-
-          const coordinates = ring
-            .map((pair) => {
-              const lng = pair?.[0];
-              const lat = pair?.[1];
-              if (typeof lat !== "number" || typeof lng !== "number")
-                return null;
-              return { lat, lng };
-            })
-            .filter(Boolean);
-
-          if (coordinates.length < 3) return null;
-
-          return {
-            id: z._id,
-            name: z.name,
-            description: z.description,
-            status: z.status,
-            type: z.type,
-            coordinates,
-            altitude_min: z.minAltitude,
-            altitude_max: z.maxAltitude,
-            createdAt: z.createdAt,
-            updatedAt: z.updatedAt,
-          };
-        })
-        .filter(Boolean);
-
+      const leafletZones = apiZones.map((z) => {
+        const ring = z?.geometry?.coordinates?.[0];
+        if (!Array.isArray(ring)) return null;
+        const coordinates = ring.map((pair) => {
+          const lng = pair?.[0]; const lat = pair?.[1];
+          if (typeof lat !== "number" || typeof lng !== "number") return null;
+          return { lat, lng };
+        }).filter(Boolean);
+        if (coordinates.length < 3) return null;
+        return { id: z._id, name: z.name, status: z.status, type: z.type, coordinates };
+      }).filter(Boolean);
       setMapZones(leafletZones);
-    } catch (error) {
-      console.log("Fetch zones error:", error);
-      setMapZones([]);
-    }
+    } catch { setMapZones([]); }
   };
 
-  useEffect(() => {
-    fetchZones();
-  }, []);
+  const fetchFlightPlans = async () => {
+    setLoading(true);
+    try {
+      const res = await fetchFlightPlansAPI({ page: 1, limit: 20, sortBy: "createdAt", sortOrder: "desc" });
+      setFlightPlans(Array.isArray(res?.data) ? res.data : []);
+    } catch { setFlightPlans([]); } finally { setLoading(false); }
+  };
+
+  useEffect(() => { fetchZones(); fetchFlightPlans(); }, []);
 
   const handleMapClick = (latlng) => {
     const newWaypoint = {
       sequenceNumber: waypoints.length + 1,
       latitude: latlng.lat,
       longitude: latlng.lng,
-      altitude: 50, // Default
+      altitude: 50,
       speed: 10,
-      estimatedTime: dayjs()
-        .add(waypoints.length * 10, "minutes")
-        .format("YYYY-MM-DDTHH:mm:ss"),
+      estimatedTime: dayjs().add(waypoints.length * 10, "minutes").format("YYYY-MM-DDTHH:mm:ss"),
       action: waypoints.length === 0 ? "TAKEOFF" : "WAYPOINT",
     };
     setWaypoints([...waypoints, newWaypoint]);
@@ -131,232 +102,610 @@ const WaypointEditorWithZones = ({
   };
 
   const removeWaypoint = (index) => {
-    const updated = waypoints.filter((_, i) => i !== index);
-    // Re-index
-    const reIndexed = updated.map((wp, i) => ({
-      ...wp,
-      sequenceNumber: i + 1,
-    }));
+    const reIndexed = waypoints.filter((_, i) => i !== index).map((wp, i) => ({ ...wp, sequenceNumber: i + 1 }));
     setWaypoints(reIndexed);
   };
 
   const positions = waypoints.map((wp) => [wp.latitude, wp.longitude]);
+  const getZoneColor = (type) => type === "restricted" ? "#f59e0b" : "#ef4444";
+  const selectedPlan = showAllPaths ? null : flightPlans.find(p => p._id === selectedPlanId);
 
-  // Get zone color based on type
-  const getZoneColor = (type) => {
-    if (type === "restricted") {
-      return "#ffd700"; // Màu vàng cho restricted zone
-    }
-    return "#ff0000"; // Màu đỏ cho no_fly zone
-  };
+  // Debug logging
+  console.log('🗺️ Map debug:', {
+    waypoints: waypoints,
+    waypointsLength: waypoints.length,
+    positions: positions,
+    showAllPaths,
+    selectedPlanId,
+    selectedPlan,
+    flightPlansLength: flightPlans.length
+  });
 
   return (
-    <div>
-      <div
-        style={{
-          height: "400px",
-          marginBottom: "16px",
-          borderRadius: "8px",
-          overflow: "hidden",
-        }}
-      >
-        <MapContainer
-          center={initialCenter}
-          zoom={13}
-          style={{ height: "100%", width: "100%" }}
-        >
-          <TileLayer
-            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a>'
-            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-          />
-          <ClickHandler onMapClick={handleMapClick} />
-          
-          {/* Render no-fly zones */}
-          <FeatureGroup>
-            {mapZones.map((zone) => {
-              const zoneColor = getZoneColor(zone.type);
-              const isHovered = hoveredZoneId === zone.id;
+    <>
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=Space+Mono:wght@400;700&display=swap');
 
-              return (
+        .we-root {
+          font-family: 'DM Sans', sans-serif;
+          display: flex;
+          flex-direction: column;
+        }
+
+        /* ── Map toolbar ── */
+        .we-toolbar {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          padding: 12px 20px;
+          background: #fafafa;
+          border-bottom: 1px solid #f0f1f3;
+          gap: 12px;
+          flex-wrap: wrap;
+        }
+
+        .we-stats {
+          display: flex;
+          align-items: center;
+          gap: 16px;
+        }
+
+        .we-stat-chip {
+          display: flex;
+          align-items: center;
+          gap: 6px;
+          font-size: 12px;
+          color: #6b7280;
+          font-weight: 500;
+        }
+
+        .we-stat-chip strong {
+          color: #111827;
+          font-weight: 700;
+          font-family: 'Space Mono', monospace;
+          font-size: 13px;
+        }
+
+        .we-stat-dot { width: 6px; height: 6px; border-radius: 50%; }
+
+        .we-toolbar-controls {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+        }
+
+        .we-select-sm {
+          font-size: 12px;
+        }
+
+        /* ── Map container ── */
+        .we-map-wrap {
+          height: 520px;
+          position: relative;
+        }
+
+        .we-map-hint {
+          position: absolute;
+          bottom: 12px;
+          left: 50%;
+          transform: translateX(-50%);
+          background: rgba(17,24,39,0.75);
+          backdrop-filter: blur(6px);
+          color: white;
+          font-size: 11.5px;
+          padding: 6px 14px;
+          border-radius: 20px;
+          pointer-events: none;
+          z-index: 999;
+          letter-spacing: 0.3px;
+        }
+
+        /* ── Legend ── */
+        .we-legend {
+          padding: 12px 20px;
+          border-top: 1px solid #f0f1f3;
+          border-bottom: 1px solid #f0f1f3;
+          background: #fafafa;
+          display: flex;
+          align-items: center;
+          gap: 24px;
+          flex-wrap: wrap;
+        }
+
+        .we-legend-title {
+          font-size: 11px;
+          font-weight: 700;
+          letter-spacing: 0.8px;
+          text-transform: uppercase;
+          color: #9ca3af;
+          white-space: nowrap;
+        }
+
+        .we-legend-items {
+          display: flex;
+          align-items: center;
+          gap: 16px;
+          flex-wrap: wrap;
+        }
+
+        .we-legend-item {
+          display: flex;
+          align-items: center;
+          gap: 6px;
+          font-size: 11.5px;
+          color: #4b5563;
+          font-weight: 500;
+        }
+
+        .we-legend-box {
+          width: 12px;
+          height: 12px;
+          border-radius: 3px;
+          flex-shrink: 0;
+        }
+
+        .we-legend-line {
+          width: 22px;
+          height: 2px;
+          border-radius: 2px;
+          flex-shrink: 0;
+        }
+
+        /* ── Waypoints list ── */
+        .we-wp-list {
+          padding: 16px 20px;
+          display: flex;
+          flex-direction: column;
+          gap: 10px;
+          max-height: 380px;
+          overflow-y: auto;
+        }
+
+        .we-wp-list::-webkit-scrollbar { width: 4px; }
+        .we-wp-list::-webkit-scrollbar-track { background: transparent; }
+        .we-wp-list::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 4px; }
+
+        .we-wp-empty {
+          text-align: center;
+          padding: 40px 20px;
+          color: #9ca3af;
+        }
+        .we-wp-empty-icon {
+          font-size: 32px;
+          margin-bottom: 10px;
+          opacity: 0.4;
+        }
+        .we-wp-empty-text {
+          font-size: 13px;
+          font-weight: 500;
+        }
+        .we-wp-empty-sub {
+          font-size: 12px;
+          margin-top: 4px;
+          opacity: 0.7;
+        }
+
+        /* ── Waypoint card ── */
+        .we-wp-card {
+          border: 1px solid #e8eaed;
+          border-radius: 10px;
+          background: #ffffff;
+          overflow: hidden;
+          transition: box-shadow 0.15s, border-color 0.15s;
+        }
+        .we-wp-card:hover { box-shadow: 0 2px 8px rgba(0,0,0,0.07); border-color: #d1d5db; }
+
+        .we-wp-card-header {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          padding: 10px 14px;
+          border-bottom: 1px solid #f3f4f6;
+        }
+
+        .we-wp-card-left {
+          display: flex;
+          align-items: center;
+          gap: 10px;
+        }
+
+        .we-wp-number {
+          width: 26px;
+          height: 26px;
+          border-radius: 50%;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-size: 11px;
+          font-weight: 700;
+          font-family: 'Space Mono', monospace;
+          flex-shrink: 0;
+        }
+
+        .we-wp-action-badge {
+          font-size: 10.5px;
+          font-weight: 700;
+          padding: 2px 8px;
+          border-radius: 4px;
+          letter-spacing: 0.5px;
+          text-transform: uppercase;
+        }
+
+        .we-wp-coords {
+          font-size: 11.5px;
+          color: #6b7280;
+          font-family: 'Space Mono', monospace;
+        }
+
+        .we-wp-delete-btn {
+          background: none;
+          border: none;
+          cursor: pointer;
+          color: #d1d5db;
+          padding: 4px 6px;
+          border-radius: 6px;
+          transition: all 0.15s;
+          display: flex;
+          align-items: center;
+        }
+        .we-wp-delete-btn:hover { background: #fef2f2; color: #ef4444; }
+
+        .we-wp-card-body {
+          padding: 12px 14px;
+          display: grid;
+          grid-template-columns: 130px 100px 100px 1fr;
+          gap: 12px;
+          align-items: start;
+        }
+
+        .we-field-label {
+          font-size: 10.5px;
+          font-weight: 600;
+          letter-spacing: 0.5px;
+          text-transform: uppercase;
+          color: #9ca3af;
+          margin-bottom: 4px;
+        }
+
+        .we-wp-card-body .ant-select-selector {
+          border-radius: 6px !important;
+          font-size: 12.5px !important;
+          height: 32px !important;
+        }
+
+        .we-wp-card-body .ant-input-number {
+          border-radius: 6px;
+          font-size: 12.5px;
+          width: 100%;
+        }
+
+        .we-wp-card-body .ant-input-number-input {
+          height: 30px;
+          font-size: 12.5px;
+        }
+
+        .we-wp-card-body .ant-picker {
+          border-radius: 6px;
+          height: 32px;
+          font-size: 12.5px;
+          width: 100%;
+        }
+      `}</style>
+
+      <div className="we-root">
+        {/* Toolbar */}
+        <div className="we-toolbar">
+          <div className="we-stats">
+            <div className="we-stat-chip">
+              <div className="we-stat-dot" style={{ background: "#2563eb" }} />
+              Waypoints: <strong>{waypoints?.length || 0}</strong>
+            </div>
+            <div className="we-stat-chip">
+              <div className="we-stat-dot" style={{ background: "#ef4444" }} />
+              Vùng cấm: <strong>{mapZones.length}</strong>
+            </div>
+          </div>
+
+          <div className="we-toolbar-controls">
+            <Select
+              placeholder={loading ? "Đang tải..." : "Xem kế hoạch khác"}
+              style={{ width: 200, fontSize: 12 }}
+              value={selectedPlanId}
+              onChange={setSelectedPlanId}
+              allowClear
+              size="small"
+              loading={loading}
+              disabled={loading || showAllPaths}
+            >
+              {flightPlans.map((plan) => (
+                <Option key={plan._id} value={plan._id}>
+                  {plan.name || `Kế hoạch #${plan._id?.slice(-6)}`}
+                </Option>
+              ))}
+            </Select>
+            <Select
+              style={{ width: 130 }}
+              value={showAllPaths ? "all" : "single"}
+              onChange={(v) => setShowAllPaths(v === "all")}
+              size="small"
+            >
+              <Option value="single">Một kế hoạch</Option>
+              <Option value="all">Toàn bộ</Option>
+            </Select>
+          </div>
+        </div>
+
+        {/* Map */}
+        <div className="we-map-wrap">
+          <MapContainer
+            center={initialCenter}
+            zoom={13}
+            style={{ height: "100%", width: "100%" }}
+          >
+            <TileLayer
+              attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a>'
+              url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+            />
+            <ClickHandler onMapClick={handleMapClick} />
+
+            <FeatureGroup>
+              {mapZones.map((zone) => (
                 <Polygon
                   key={zone.id}
                   positions={zone.coordinates}
                   pathOptions={{
-                    color: isHovered ? "#1890ff" : zoneColor,
-                    fillColor: zoneColor,
-                    fillOpacity: isHovered ? 0.5 : 0.3,
-                    weight: isHovered ? 4 : 2,
+                    color: hoveredZoneId === zone.id ? "#1d4ed8" : getZoneColor(zone.type),
+                    fillColor: getZoneColor(zone.type),
+                    fillOpacity: hoveredZoneId === zone.id ? 0.45 : 0.2,
+                    weight: hoveredZoneId === zone.id ? 3 : 1.5,
                   }}
                   eventHandlers={{
-                    mouseover: () => {
-                      setHoveredZoneId(zone.id);
-                    },
-                    mouseout: () => {
-                      setHoveredZoneId(null);
-                    },
+                    mouseover: () => setHoveredZoneId(zone.id),
+                    mouseout: () => setHoveredZoneId(null),
                   }}
                 />
-              );
-            })}
-          </FeatureGroup>
+              ))}
+            </FeatureGroup>
 
-          {/* Render waypoints */}
-          {waypoints.map((wp, index) => (
-            <Marker
-              key={index}
-              position={[wp.latitude, wp.longitude]}
-              draggable={true}
-              eventHandlers={{
-                dragend: (e) => {
-                  const marker = e.target;
-                  const position = marker.getLatLng();
-                  updateWaypoint(index, "latitude", position.lat);
-                  updateWaypoint(index, "longitude", position.lng);
-                },
-              }}
-            >
-              <Popup>
-                <strong>Waypoint {wp.sequenceNumber}</strong> <br />
-                {wp.action} - Alt: {wp.altitude}m
-              </Popup>
-            </Marker>
-          ))}
-          
-          {/* Render flight path */}
-          {positions.length > 1 && (
-            <Polyline positions={positions} color="blue" weight={3} />
+            {waypoints.map((wp, index) => (
+              <Marker key={index} position={[wp.latitude, wp.longitude]} draggable={true}
+                eventHandlers={{
+                  dragend: (e) => {
+                    const pos = e.target.getLatLng();
+                    updateWaypoint(index, "latitude", pos.lat);
+                    updateWaypoint(index, "longitude", pos.lng);
+                  },
+                }}
+              >
+                <Popup>
+                  <strong>#{wp.sequenceNumber} {wp.action}</strong><br />
+                  Alt: {wp.altitude}m · Speed: {wp.speed}m/s
+                </Popup>
+              </Marker>
+            ))}
+
+            {positions.length > 1 && (
+              <Polyline positions={positions} color="#ef4444" weight={2.5} dashArray="6, 10" />
+            )}
+
+            {showAllPaths ? (
+              flightPlans.map((plan) =>
+                plan.waypoints?.length > 1 && (
+                  <FeatureGroup key={plan._id}>
+                    {plan.waypoints.map((wp, index) => (
+                      <Marker
+                        key={`${plan._id}-${index}`}
+                        position={[wp.latitude, wp.longitude]}
+                        icon={L.divIcon({
+                          className: 'custom-div-icon',
+                          html: `<div style="
+                            background: ${plan.status === 'COMPLETED' ? '#22c55e' : '#2563eb'};
+                            color: white;
+                            border-radius: 50%;
+                            width: 14px;
+                            height: 14px;
+                            display: flex;
+                            align-items: center;
+                            justify-content: center;
+                            font-size: 7px;
+                            font-weight: bold;
+                            border: 2px solid white;
+                            box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+                          ">${index + 1}</div>`,
+                          iconSize: [14, 14],
+                          iconAnchor: [7, 7]
+                        })}
+                      >
+                        <Popup>
+                          <div style={{ minWidth: 140, fontSize: '12px' }}>
+                            <strong>{plan.name || `Kế hoạch #${plan._id?.slice(-6)}`}</strong>
+                            <br />
+                            <strong>WP #{wp.sequenceNumber}</strong> · {wp.action}
+                            <br />
+                            Alt: {wp.altitude}m · Speed: {wp.speed}m/s
+                          </div>
+                        </Popup>
+                      </Marker>
+                    ))}
+                    <Polyline
+                      positions={plan.waypoints.map(wp => [wp.latitude, wp.longitude])}
+                      color={plan.status === "COMPLETED" ? "#22c55e" : "#2563eb"}
+                      weight={2} opacity={0.65}
+                    />
+                  </FeatureGroup>
+                )
+              )
+            ) : (
+              selectedPlan?.waypoints?.length > 1 && (
+                <FeatureGroup>
+                  {selectedPlan.waypoints.map((wp, index) => (
+                    <Marker
+                      key={`selected-${index}`}
+                      position={[wp.latitude, wp.longitude]}
+                      icon={L.divIcon({
+                        className: 'custom-div-icon',
+                        html: `<div style="
+                          background: #2563eb;
+                          color: white;
+                          border-radius: 50%;
+                          width: 14px;
+                          height: 14px;
+                          display: flex;
+                          align-items: center;
+                          justify-content: center;
+                          font-size: 7px;
+                          font-weight: bold;
+                          border: 2px solid white;
+                          box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+                        ">${index + 1}</div>`,
+                        iconSize: [14, 14],
+                        iconAnchor: [7, 7]
+                      })}
+                    >
+                      <Popup>
+                        <div style={{ minWidth: 140, fontSize: '12px' }}>
+                          <strong>{selectedPlan.name || `Kế hoạch #${selectedPlan._id?.slice(-6)}`}</strong>
+                          <br />
+                          <strong>WP #{wp.sequenceNumber}</strong> · {wp.action}
+                          <br />
+                          Alt: {wp.altitude}m · Speed: {wp.speed}m/s
+                        </div>
+                      </Popup>
+                    </Marker>
+                  ))}
+                  <Polyline
+                    positions={selectedPlan.waypoints.map(wp => [wp.latitude, wp.longitude])}
+                    color="#2563eb" weight={2} opacity={0.7} dashArray="6, 10"
+                  />
+                </FeatureGroup>
+              )
+            )}
+          </MapContainer>
+
+          {waypoints.length === 0 && (
+            <div className="we-map-hint">
+              Click vào bản đồ để thêm waypoint
+            </div>
           )}
-        </MapContainer>
-      </div>
+        </div>
 
-      {/* Zone info */}
-      <Card size="small" style={{ marginBottom: 16 }}>
-        <Text strong style={{ display: "block", marginBottom: 8 }}>
-          Vùng cấm bay ({mapZones.length})
-        </Text>
-        <div style={{ display: "flex", gap: 16, flexWrap: "wrap" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-            <div
-              style={{
-                width: 16,
-                height: 16,
-                backgroundColor: "#ff0000",
-                border: "1px solid #ccc",
-              }}
-            />
-            <Text style={{ fontSize: 12 }}>Vùng cấm bay</Text>
-          </div>
-          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-            <div
-              style={{
-                width: 16,
-                height: 16,
-                backgroundColor: "#ffd700",
-                border: "1px solid #ccc",
-              }}
-            />
-            <Text style={{ fontSize: 12 }}>Vùng hạn chế</Text>
+        {/* Legend */}
+        <div className="we-legend">
+          <span className="we-legend-title">Chú thích</span>
+          <div className="we-legend-items">
+            <div className="we-legend-item">
+              <div className="we-legend-box" style={{ background: "#ef4444", opacity: 0.75 }} />
+              Vùng cấm bay
+            </div>
+            <div className="we-legend-item">
+              <div className="we-legend-box" style={{ background: "#f59e0b", opacity: 0.75 }} />
+              Vùng hạn chế
+            </div>
+            <div className="we-legend-item">
+              <div className="we-legend-line" style={{ background: "#ef4444" }} />
+              Tuyến đang tạo
+            </div>
+            <div className="we-legend-item">
+              <div className="we-legend-line" style={{ background: "#2563eb" }} />
+              Tuyến có sẵn
+            </div>
+            <div className="we-legend-item">
+              <div className="we-legend-line" style={{ background: "#22c55e" }} />
+              Đã hoàn thành
+            </div>
           </div>
         </div>
-      </Card>
 
-      {/* Waypoints list */}
-      <div style={{ maxHeight: "300px", overflowY: "auto" }}>
-        {waypoints.map((wp, index) => (
-          <Card key={index} size="small" style={{ marginBottom: 8 }}>
-            <div
-              style={{
-                display: "flex",
-                justifyContent: "space-between",
-                alignItems: "center",
-              }}
-            >
-              <div style={{ flex: 1 }}>
-                <Text strong>
-                  #{wp.sequenceNumber} ({wp.latitude.toFixed(4)},{" "}
-                  {wp.longitude.toFixed(4)})
-                </Text>
-              </div>
-              <Button
-                type="text"
-                danger
-                icon={<DeleteOutlined />}
-                onClick={() => removeWaypoint(index)}
-              />
+        {/* Waypoints list */}
+        <div className="we-wp-list">
+          {waypoints.length === 0 ? (
+            <div className="we-wp-empty">
+              <div className="we-wp-empty-icon">🗺️</div>
+              <div className="we-wp-empty-text">Chưa có waypoint nào</div>
+              <div className="we-wp-empty-sub">Click vào bản đồ để bắt đầu lập kế hoạch bay</div>
             </div>
+          ) : (
+            waypoints.map((wp, index) => {
+              const cfg = ACTION_CONFIG[wp.action] || ACTION_CONFIG.WAYPOINT;
+              return (
+                <div className="we-wp-card" key={index}>
+                  <div className="we-wp-card-header">
+                    <div className="we-wp-card-left">
+                      <div
+                        className="we-wp-number"
+                        style={{ background: cfg.bg, color: cfg.color }}
+                      >
+                        {wp.sequenceNumber}
+                      </div>
+                      <span
+                        className="we-wp-action-badge"
+                        style={{ background: cfg.bg, color: cfg.color }}
+                      >
+                        {cfg.label}
+                      </span>
+                      <span className="we-wp-coords">
+                        {wp.latitude.toFixed(5)}, {wp.longitude.toFixed(5)}
+                      </span>
+                    </div>
+                    <button className="we-wp-delete-btn" onClick={() => removeWaypoint(index)}>
+                      <DeleteOutlined style={{ fontSize: 13 }} />
+                    </button>
+                  </div>
 
-            <Space style={{ marginTop: 8, display: "flex", flexWrap: "wrap" }}>
-              <div>
-                <Text
-                  type="secondary"
-                  style={{ fontSize: "12px", display: "block" }}
-                >
-                  Action
-                </Text>
-                <Select
-                  value={wp.action}
-                  style={{ width: 120 }}
-                  onChange={(val) => updateWaypoint(index, "action", val)}
-                >
-                  <Option value="TAKEOFF">TAKEOFF</Option>
-                  <Option value="WAYPOINT">WAYPOINT</Option>
-                  <Option value="HOVER">HOVER</Option>
-                  <Option value="LAND">LAND</Option>
-                </Select>
-              </div>
-
-              <div>
-                <Text
-                  type="secondary"
-                  style={{ fontSize: "12px", display: "block" }}
-                >
-                  Altitude (m)
-                </Text>
-                <InputNumber
-                  value={wp.altitude}
-                  min={0}
-                  onChange={(val) => updateWaypoint(index, "altitude", val)}
-                />
-              </div>
-
-              <div>
-                <Text
-                  type="secondary"
-                  style={{ fontSize: "12px", display: "block" }}
-                >
-                  Speed (m/s)
-                </Text>
-                <InputNumber
-                  value={wp.speed}
-                  min={0}
-                  onChange={(val) => updateWaypoint(index, "speed", val)}
-                />
-              </div>
-
-              <div>
-                <Text
-                  type="secondary"
-                  style={{ fontSize: "12px", display: "block" }}
-                >
-                  Est. Time
-                </Text>
-                <TimePicker
-                  value={wp.estimatedTime ? dayjs(wp.estimatedTime) : null}
-                  onChange={(time) =>
-                    updateWaypoint(
-                      index,
-                      "estimatedTime",
-                      time ? time.format() : null,
-                    )
-                  }
-                  format="HH:mm:ss"
-                />
-              </div>
-            </Space>
-          </Card>
-        ))}
+                  <div className="we-wp-card-body">
+                    <div>
+                      <div className="we-field-label">Action</div>
+                      <Select
+                        value={wp.action}
+                        style={{ width: "100%" }}
+                        size="small"
+                        onChange={(val) => updateWaypoint(index, "action", val)}
+                      >
+                        {Object.entries(ACTION_CONFIG).map(([key, c]) => (
+                          <Option key={key} value={key}>{c.label}</Option>
+                        ))}
+                      </Select>
+                    </div>
+                    <div>
+                      <div className="we-field-label">Altitude (m)</div>
+                      <InputNumber
+                        value={wp.altitude}
+                        min={0}
+                        size="small"
+                        style={{ width: "100%" }}
+                        onChange={(val) => updateWaypoint(index, "altitude", val)}
+                      />
+                    </div>
+                    <div>
+                      <div className="we-field-label">Speed (m/s)</div>
+                      <InputNumber
+                        value={wp.speed}
+                        min={0}
+                        size="small"
+                        style={{ width: "100%" }}
+                        onChange={(val) => updateWaypoint(index, "speed", val)}
+                      />
+                    </div>
+                    <div>
+                      <div className="we-field-label">Est. Time</div>
+                      <TimePicker
+                        value={wp.estimatedTime ? dayjs(wp.estimatedTime) : null}
+                        onChange={(time) =>
+                          updateWaypoint(index, "estimatedTime", time ? time.format() : null)
+                        }
+                        format="HH:mm:ss"
+                        size="small"
+                        style={{ width: "100%" }}
+                      />
+                    </div>
+                  </div>
+                </div>
+              );
+            })
+          )}
+        </div>
       </div>
-    </div>
+    </>
   );
 };
 
