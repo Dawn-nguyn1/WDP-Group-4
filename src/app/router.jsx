@@ -30,9 +30,10 @@ import ConflictListPage from "../features/conflicts/pages/ConflictListPage";
 import ConflictDetailPage from "../features/conflicts/pages/ConflictDetailPage";
 import FlightPlanListPage from "../features/flight-plans/pages/FlightPlanListPage";
 import FlightPlanDetailPage from "../features/flight-plans/pages/FlightPlanDetailPage";
-import FlightPlanForm from "../features/flight-plans/components/FlightPlanForm";
+import FlightPlansPage from "../features/flight-plans/pages/FlightPlansPage";
 import MissionPage from "../features/missions/components/page/mission";
 import MissionDetail from "../features/missions/components/MissionDetail";
+import FlightPlanForm from "../features/flight-plans/components/FlightPlanForm";
 
 const router = createBrowserRouter([
   // Public routes

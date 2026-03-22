@@ -18,7 +18,10 @@ instance.interceptors.request.use(
 
 // Response interceptor: always return response.data
 instance.interceptors.response.use(
-  (response) => response.data,
+  (response) => {
+    console.log('📡RESPONSE TU API:', response);
+    return response.data;
+  },
   (error) => {
     // Auto redirect on 401 (token expired)
     if (error.response?.status === 401) {
