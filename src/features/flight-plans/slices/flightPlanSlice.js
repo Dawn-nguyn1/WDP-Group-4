@@ -41,8 +41,12 @@ export const createFlightPlan = createAsyncThunk(
   "flightPlans/create",
   async (data, { rejectWithValue }) => {
     try {
-      return await flightPlanApi.createFlightPlanAPI(data);
+      console.log('🚀 [createFlightPlan] Creating flight plan with data:', data);
+      const response = await flightPlanApi.createFlightPlanAPI(data);
+      console.log('✅ [createFlightPlan] API response:', response);
+      return response;
     } catch (err) {
+      console.error('❌ [createFlightPlan] API error:', err);
       return rejectWithValue(err);
     }
   },
@@ -52,8 +56,12 @@ export const updateFlightPlan = createAsyncThunk(
   "flightPlans/update",
   async ({ id, data }, { rejectWithValue }) => {
     try {
-      return await flightPlanApi.updateFlightPlanAPI(id, data);
+      console.log('🔄 [updateFlightPlan] Updating flight plan:', id, data);
+      const response = await flightPlanApi.updateFlightPlanAPI(id, data);
+      console.log('✅ [updateFlightPlan] API response:', response);
+      return response;
     } catch (err) {
+      console.error('❌ [updateFlightPlan] API error:', err);
       return rejectWithValue(err);
     }
   },
@@ -63,9 +71,12 @@ export const deleteFlightPlan = createAsyncThunk(
   "flightPlans/delete",
   async (id, { rejectWithValue }) => {
     try {
+      console.log('🗑️ [deleteFlightPlan] Deleting flight plan:', id);
       await flightPlanApi.deleteFlightPlanAPI(id);
+      console.log('✅ [deleteFlightPlan] Successfully deleted:', id);
       return id;
     } catch (err) {
+      console.error('❌ [deleteFlightPlan] API error:', err);
       return rejectWithValue(err);
     }
   },
@@ -132,6 +143,70 @@ const flightPlanSlice = createSlice({
       .addCase(getFlightPlanDetail.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload?.message || "Lỗi tải chi tiết";
+      })
+
+      // Create flight plan
+      .addCase(createFlightPlan.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(createFlightPlan.fulfilled, (state, action) => {
+        console.log('✅ [createFlightPlan] Fulfilled - Action payload:', action.payload);
+        state.loading = false;
+        // Add new flight plan to list
+        if (action.payload?.flightPlan || action.payload) {
+          state.list.unshift(action.payload.flightPlan || action.payload);
+        }
+      })
+      .addCase(createFlightPlan.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload?.message || "Lỗi tạo kế hoạch bay";
+      })
+
+      // Update flight plan
+      .addCase(updateFlightPlan.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(updateFlightPlan.fulfilled, (state, action) => {
+        console.log('✅ [updateFlightPlan] Fulfilled - Action payload:', action.payload);
+        state.loading = false;
+        // Update flight plan in list
+        if (action.payload?.flightPlan || action.payload) {
+          const updatedPlan = action.payload.flightPlan || action.payload;
+          const index = state.list.findIndex(plan => plan._id === updatedPlan._id);
+          if (index !== -1) {
+            state.list[index] = updatedPlan;
+          }
+          // Also update current plan if it's the same
+          if (state.currentPlan?._id === updatedPlan._id) {
+            state.currentPlan = updatedPlan;
+          }
+        }
+      })
+      .addCase(updateFlightPlan.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload?.message || "Lỗi cập nhật kế hoạch bay";
+      })
+
+      // Delete flight plan
+      .addCase(deleteFlightPlan.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(deleteFlightPlan.fulfilled, (state, action) => {
+        console.log('✅ [deleteFlightPlan] Fulfilled - Deleted ID:', action.payload);
+        state.loading = false;
+        // Remove from list
+        state.list = state.list.filter(plan => plan._id !== action.payload);
+        // Clear current plan if it's the deleted one
+        if (state.currentPlan?._id === action.payload) {
+          state.currentPlan = null;
+        }
+      })
+      .addCase(deleteFlightPlan.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload?.message || "Lỗi xóa kế hoạch bay";
       });
   },
 });

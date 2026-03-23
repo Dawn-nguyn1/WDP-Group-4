@@ -68,17 +68,43 @@ const FlightPlanForm = ({ initialValues = null, editingId = null }) => {
         message.error("Kế hoạch bay phải có ít nhất 2 waypoints (TAKEOFF và LAND).");
         return;
       }
+      
+      const takeoff = waypoints.find((w) => w.action === "TAKEOFF");
+      const land = waypoints.find((w) => w.action === "LAND");
+      
+      if (!takeoff) {
+        message.error("Kế hoạch bay phải có ít nhất 1 waypoint với action TAKEOFF.");
+        return;
+      }
+      
+      if (!land) {
+        message.error("Kế hoạch bay phải có ít nhất 1 waypoint với action LAND.");
+        return;
+      }
+      
+      console.log('🚀 [handleSubmit] Submitting flight plan:', {
+        drone: values.drone,
+        notes: values.notes,
+        waypoints: waypoints,
+        hasTakeoff: !!takeoff,
+        hasLand: !!land
+      });
+      
       setLoading(true);
       const payload = { drone: values.drone, notes: values.notes, waypoints };
+      
       if (actualEditingId) {
+        console.log('🔄 [handleSubmit] Updating flight plan:', actualEditingId);
         await dispatch(updateFlightPlan({ id: actualEditingId, ...payload }));
         message.success("Cập nhật kế hoạch bay thành công!");
       } else {
+        console.log('✨ [handleSubmit] Creating new flight plan');
         await dispatch(createFlightPlan(payload));
         message.success("Tạo kế hoạch bay thành công!");
       }
       navigate("/operator/flight-plans");
     } catch (error) {
+      console.error('❌ [handleSubmit] Error:', error);
       message.error(error?.message || "Lỗi khi lưu kế hoạch bay");
     } finally {
       setLoading(false);
@@ -328,8 +354,6 @@ const FlightPlanForm = ({ initialValues = null, editingId = null }) => {
 
         {/* Body */}
         <div className="fp-body">
-
-          {/* Config section */}
           <div>
             <div className="fp-section-label">Thông tin chuyến bay</div>
             <div className="fp-config-panel">
@@ -346,6 +370,10 @@ const FlightPlanForm = ({ initialValues = null, editingId = null }) => {
                       placeholder="-- Chọn Drone --"
                       style={{ width: "100%" }}
                       size="large"
+                      onChange={(value) => {
+                        console.log(' [Drone Select] Selected drone:', value);
+                        form.setFieldsValue({ drone: value });
+                      }}
                     >
                       {drones.map((drone) => (
                         <Option key={drone._id} value={drone._id}>
@@ -355,24 +383,25 @@ const FlightPlanForm = ({ initialValues = null, editingId = null }) => {
                     </Select>
                   </div>
                 </Form.Item>
-              </Form>
 
-              <div>
-                <div className="fp-field-label">Ghi chú</div>
-                <Form form={form}>
-                  <Form.Item name="notes">
+                <Form.Item name="notes">
+                  <div>
+                    <div className="fp-field-label">Ghi chú</div>
                     <textarea
                       className="fp-notes-textarea"
                       rows={2}
                       placeholder="Nhập mục đích hoặc ghi chú thêm cho chuyến bay..."
+                      onChange={(e) => {
+                        console.log(' [Notes] Updated:', e.target.value);
+                        form.setFieldsValue({ notes: e.target.value });
+                      }}
                     />
-                  </Form.Item>
-                </Form>
-              </div>
+                  </div>
+                </Form.Item>
+              </Form>
             </div>
           </div>
 
-          {/* Map section */}
           <div>
             <div className="fp-section-label">Bản đồ & Waypoints</div>
             <div className="fp-map-panel">
@@ -390,7 +419,6 @@ const FlightPlanForm = ({ initialValues = null, editingId = null }) => {
               </div>
             </div>
           </div>
-
         </div>
       </div>
     </>
