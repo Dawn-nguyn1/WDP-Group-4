@@ -46,15 +46,20 @@ const ProtectedRoute = ({ children, allowedRoles }) => {
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
-  // Check role authorization
-  if (allowedRoles && !allowedRoles.includes(userRole)) {
-    // Redirect to appropriate dashboard based on role
+  // Auto-redirect authenticated users to appropriate dashboard
+  if (userRole && !allowedRoles.includes(userRole)) {
     if (userRole === "UTM_ADMIN") {
       return <Navigate to="/admin/dashboard" replace />;
     }
     if (userRole === "FLEET_OPERATOR") {
       return <Navigate to="/operator/dashboard" replace />;
     }
+    return <Navigate to="/login" replace />;
+  }
+
+  // Check role authorization
+  if (allowedRoles && !allowedRoles.includes(userRole)) {
+    // Unauthorized access → redirect to login
     return <Navigate to="/login" replace />;
   }
 
