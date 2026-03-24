@@ -1,71 +1,75 @@
-import React from "react";
-import { Card, Col, Row, Statistic } from "antd";
-import {
-  UsergroupAddOutlined,
-  EnvironmentOutlined,
-  WarningOutlined,
-  PlayCircleOutlined,
-} from "@ant-design/icons";
-import styles from "../styles/AdminDashboard.module.css";
+import React, { useEffect } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
+import { Layout, Typography, message } from 'antd';
+import { fetchPayments, fetchRevenue, clearError } from '../slices/dashboardSlice';
+import DashboardStats from '../components/DashboardStats';
+import RevenueChart from '../components/RevenueChart';
+import PaymentTable from '../components/PaymentTable';
+import '../styles/DashboardStyles.css';
+
+const { Header, Content } = Layout;
+const { Title, Text } = Typography;
 
 const AdminDashboard = () => {
+  const dispatch = useDispatch();
+  const { payments, revenue, loading, error } = useSelector((state) => state.dashboard);
+
+  useEffect(() => {
+    // Fetch data on component mount
+    const fetchData = async () => {
+      try {
+        await Promise.all([
+          dispatch(fetchPayments()).unwrap(),
+          dispatch(fetchRevenue()).unwrap()
+        ]);
+      } catch (error) {
+        message.error('Không thể tải dữ liệu dashboard');
+      }
+    };
+
+    fetchData();
+  }, [dispatch]);
+
+  useEffect(() => {
+    if (error) {
+      message.error(error);
+      dispatch(clearError());
+    }
+  }, [error, dispatch]);
+
   return (
-    <div className={styles.container}>
-      <div className={styles.header}>
-        <h1 className={styles.title}>Admin Dashboard</h1>
-        <p className={styles.subtitle}>Overview of the UTM system</p>
-      </div>
+    <Layout className="dashboard-container">
+      <Header className="dashboard-header">
+        <div>
+          <Title level={2} className="dashboard-title">Admin Dashboard</Title>
+          <Text className="dashboard-subtitle">Quản lý và theo dõi hệ thống</Text>
+        </div>
+      </Header>
+      
+      <Content>
+        <div className="stats-row">
+          <DashboardStats 
+            payments={payments} 
+            revenue={revenue} 
+            loading={loading} 
+          />
+        </div>
 
-      <Row gutter={[24, 24]}>
-        <Col xs={24} sm={12} lg={6}>
-          <Card hoverable>
-            <Statistic
-              title="Total Users"
-              value={0}
-              prefix={<UsergroupAddOutlined />}
-              valueStyle={{ color: "#3182ce" }}
-            />
-          </Card>
-        </Col>
-        <Col xs={24} sm={12} lg={6}>
-          <Card hoverable>
-            <Statistic
-              title="Active Zones"
-              value={0}
-              prefix={<EnvironmentOutlined />}
-              valueStyle={{ color: "#16a34a" }}
-            />
-          </Card>
-        </Col>
-        <Col xs={24} sm={12} lg={6}>
-          <Card hoverable>
-            <Statistic
-              title="Active Conflicts"
-              value={0}
-              prefix={<WarningOutlined />}
-              valueStyle={{ color: "#dc2626" }}
-            />
-          </Card>
-        </Col>
-        <Col xs={24} sm={12} lg={6}>
-          <Card hoverable>
-            <Statistic
-              title="Running Sessions"
-              value={0}
-              prefix={<PlayCircleOutlined />}
-              valueStyle={{ color: "#d97706" }}
-            />
-          </Card>
-        </Col>
-      </Row>
+        <div className="chart-card">
+          <RevenueChart 
+            revenue={revenue} 
+            loading={loading} 
+          />
+        </div>
 
-      <div className={styles.section}>
-        <h2>Quick Actions</h2>
-        <p style={{ color: "#718096" }}>
-          Dashboard content will be populated in Phase 5.
-        </p>
-      </div>
-    </div>
+        <div className="payment-table-card">
+          <PaymentTable 
+            payments={payments} 
+            loading={loading} 
+          />
+        </div>
+      </Content>
+    </Layout>
   );
 };
 
