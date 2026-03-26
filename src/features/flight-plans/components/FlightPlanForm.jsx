@@ -221,27 +221,6 @@ const FlightPlanForm = ({ initialValues = null, editingId = null }) => {
           font-size: 10.5px;
           font-weight: 700;
           letter-spacing: 1.2px;
-          text-transform: uppercase;
-          color: #9ca3af;
-          margin-bottom: 10px;
-        }
-
-        /* ── Config panel ── */
-        .fp-config-panel {
-          background: #ffffff;
-          border: 1px solid #e8eaed;
-          border-radius: 12px;
-          padding: 22px 28px;
-          display: grid;
-          grid-template-columns: 280px 1fr;
-          gap: 24px;
-          align-items: start;
-        }
-
-        .fp-field-label {
-          font-size: 12px;
-          font-weight: 600;
-          color: #374151;
           margin-bottom: 6px;
           display: flex;
           align-items: center;
@@ -273,6 +252,45 @@ const FlightPlanForm = ({ initialValues = null, editingId = null }) => {
         .fp-notes-textarea:hover { border-color: #2563eb; }
         .fp-notes-textarea:focus { border-color: #2563eb; box-shadow: 0 0 0 3px rgba(37,99,235,0.1); }
         .fp-notes-textarea::placeholder { color: #9ca3af; }
+
+        /* ── Config panel ── */
+        .fp-config-panel {
+          background: #ffffff;
+          border: 1px solid #e8eaed;
+          border-radius: 12px;
+          padding: 22px 28px;
+          display: flex;
+          flex-direction: column;
+          gap: 16px;
+        }
+
+        .fp-config-row {
+          display: flex;
+          gap: 24px;
+          align-items: flex-start;
+        }
+
+        .fp-config-col {
+          flex: 1;
+        }
+
+        .fp-config-col-drone {
+          flex: 0 0 280px;
+        }
+
+        .fp-config-col-notes {
+          flex: 1;
+        }
+
+        .fp-field-label {
+          font-size: 12px;
+          font-weight: 600;
+          color: #374151;
+          margin-bottom: 6px;
+          display: flex;
+          align-items: center;
+          gap: 4px;
+        }
 
         /* ── Map panel ── */
         .fp-map-panel {
@@ -358,46 +376,51 @@ const FlightPlanForm = ({ initialValues = null, editingId = null }) => {
             <div className="fp-section-label">Thông tin chuyến bay</div>
             <div className="fp-config-panel">
               <Form form={form} layout="vertical">
-                <Form.Item
-                  name="drone"
-                  rules={[{ required: true, message: "Vui lòng chọn Drone" }]}
-                >
-                  <div>
-                    <div className="fp-field-label">
-                      Drone <span className="fp-required">*</span>
-                    </div>
-                    <Select
-                      placeholder="-- Chọn Drone --"
-                      style={{ width: "100%" }}
-                      size="large"
-                      onChange={(value) => {
-                        console.log(' [Drone Select] Selected drone:', value);
-                        form.setFieldsValue({ drone: value });
-                      }}
+                <div className="fp-config-row">
+                  <div className="fp-config-col-drone">
+                    <Form.Item
+                      name="drone"
+                      rules={[{ required: true, message: "Vui lòng chọn Drone" }]}
                     >
-                      {drones.map((drone) => (
-                        <Option key={drone._id} value={drone._id}>
-                          {drone.model} · {drone.serialNumber}
-                        </Option>
-                      ))}
-                    </Select>
+                      <div>
+                        <div className="fp-field-label">
+                          Drone <span className="fp-required">*</span>
+                        </div>
+                        <Select
+                          placeholder="-- Chọn Drone --"
+                          style={{ width: "100%" }}
+                          size="large"
+                          onChange={(value) => {
+                            console.log(' [Drone Select] Selected drone:', value);
+                            form.setFieldsValue({ drone: value });
+                          }}
+                        >
+                          {drones.map((drone) => (
+                            <Option key={drone._id} value={drone._id}>
+                              {drone.model} · {drone.serialNumber}
+                            </Option>
+                          ))}
+                        </Select>
+                      </div>
+                    </Form.Item>
                   </div>
-                </Form.Item>
-
-                <Form.Item name="notes">
-                  <div>
-                    <div className="fp-field-label">Ghi chú</div>
-                    <textarea
-                      className="fp-notes-textarea"
-                      rows={2}
-                      placeholder="Nhập mục đích hoặc ghi chú thêm cho chuyến bay..."
-                      onChange={(e) => {
-                        console.log(' [Notes] Updated:', e.target.value);
-                        form.setFieldsValue({ notes: e.target.value });
-                      }}
-                    />
+                  <div className="fp-config-col-notes">
+                    <Form.Item name="notes">
+                      <div>
+                        <div className="fp-field-label">Ghi chú</div>
+                        <textarea
+                          className="fp-notes-textarea"
+                          rows={2}
+                          placeholder="Nhập mục đích hoặc ghi chú thêm cho chuyến bay..."
+                          onChange={(e) => {
+                            console.log(' [Notes] Updated:', e.target.value);
+                            form.setFieldsValue({ notes: e.target.value });
+                          }}
+                        />
+                      </div>
+                    </Form.Item>
                   </div>
-                </Form.Item>
+                </div>
               </Form>
             </div>
           </div>

@@ -25,8 +25,54 @@ import "leaflet-draw/dist/leaflet.draw.css";
 import { createZoneAPI, fetchZonesAPI } from "../services/zoneApi";
 import dayjs from "dayjs";
 import utc from "dayjs/plugin/utc";
+import * as turf from "@turf/turf";
 
 dayjs.extend(utc);
+
+// Function to validate GeoJSON with turf
+const validateGeoJSON = (geometry) => {
+  try {
+    // Create a GeoJSON feature with the geometry
+    const feature = {
+      type: "Feature",
+      geometry: geometry,
+      properties: {}
+    };
+    
+    // Validate with turf
+    const isValid = turf.booleanValid(feature);
+    
+    if (!isValid) {
+      const errors = [];
+      // Check for self-intersection
+      if (turf.booleanSelfIntersects(feature)) {
+        errors.push("Polygon tự giao nhau (self-intersecting)");
+      }
+      
+      // Check if it's a valid polygon
+      if (geometry.type === "Polygon") {
+        const coords = geometry.coordinates[0];
+        if (coords.length < 4) {
+          errors.push("Polygon cần ít nhất 4 điểm (bao gồm điểm đóng)");
+        }
+        
+        // Check if first and last points are the same
+        const first = coords[0];
+        const last = coords[coords.length - 1];
+        if (first[0] !== last[0] || first[1] !== last[1]) {
+          errors.push("Polygon phải được đóng (điểm đầu = điểm cuối)");
+        }
+      }
+      
+      throw new Error(errors.join("; "));
+    }
+    
+    return true;
+  } catch (error) {
+    console.error("GeoJSON validation error:", error);
+    throw error;
+  }
+};
 
 const { Option } = Select;
 const { TextArea } = Input;
@@ -214,15 +260,22 @@ const ZoneForm = ({ loadZones }) => {
     }
 
     try {
+      // Validate GeoJSON with turf before sending
+      const geometry = {
+        type: "Polygon",
+        coordinates: [polygonCoordinates],
+      };
+      
+      console.log("Validating GeoJSON:", geometry);
+      validateGeoJSON(geometry);
+      console.log("GeoJSON validation passed");
+
       // Chuẩn bị dữ liệu gửi lên API
       const zoneData = {
         name: values.name,
         description: values.description || "",
         type: values.type,
-        geometry: {
-          type: "Polygon",
-          coordinates: [polygonCoordinates],
-        },
+        geometry: geometry,
         minAltitude: values.minAltitude,
         maxAltitude: values.maxAltitude,
         effectiveFrom:
@@ -255,6 +308,15 @@ const ZoneForm = ({ loadZones }) => {
       }
     } catch (error) {
       console.error("Create zone error:", error);
+
+      // Xử lý lỗi validation từ turf
+      if (error.message && error.message.includes("Polygon")) {
+        notification.error({
+          message: "Lỗi GeoJSON",
+          description: `Polygon không hợp lệ: ${error.message}`,
+        });
+        return;
+      }
 
       // Xử lý các loại lỗi khác nhau
       // Lưu ý: axios interceptor trả về error.response.data hoặc error gốc

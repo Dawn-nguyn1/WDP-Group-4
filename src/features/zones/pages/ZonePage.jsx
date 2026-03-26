@@ -256,10 +256,10 @@ const ZonePage = ({ readOnly = false }) => {
         </div>
       )}
 
-      {/* Show CheckPointForm for both roles above the map */}
-      <div style={{ marginBottom: "24px" }}>
+      {/* Show CheckPointForm for both roles above the map - HIDDEN */}
+      {/* <div style={{ marginBottom: "24px" }}>
         <CheckPointForm />
-      </div>
+      </div> */}
 
       {/* Search and Filter Controls */}
       <Card style={{ marginBottom: "24px" }}>
