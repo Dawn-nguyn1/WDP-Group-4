@@ -5,7 +5,6 @@ export const fetchFlightPlans = createAsyncThunk(
   "flightPlans/fetchAll",
   async (params = {}, { rejectWithValue }) => {
     try {
-      console.log(' [fetchFlightPlans] Calling API with params:', params);
       // API expects: page, limit, status (optional)
       const apiParams = {
         page: params.page || 1,
@@ -15,12 +14,9 @@ export const fetchFlightPlans = createAsyncThunk(
         apiParams.status = params.status;
       }
       const response = await flightPlanApi.fetchFlightPlansAPI(apiParams);
-      console.log(' [fetchFlightPlans] API response:', response);
-      console.log(' [fetchFlightPlans] Response data:', response?.data);
-      console.log(' [fetchFlightPlans] Response structure:', JSON.stringify(response, null, 2));
+     
       return response;
     } catch (err) {
-      console.error(' [fetchFlightPlans] API error:', err);
       return rejectWithValue(err);
     }
   },
@@ -110,7 +106,6 @@ const flightPlanSlice = createSlice({
         state.error = null;
       })
       .addCase(fetchFlightPlans.fulfilled, (state, action) => {
-        console.log('✅ [fetchFlightPlans] Fulfilled - Action payload:', action.payload);
         state.loading = false;
         // API mới trả về: data array và pagination object
         state.list = action.payload.data || [];
@@ -122,9 +117,7 @@ const flightPlanSlice = createSlice({
           hasNextPage: false,
           hasPrevPage: false
         };
-        console.log('📋 [fetchFlightPlans] Updated flight plans list:', state.list);
-        console.log('📄 [fetchFlightPlans] Updated pagination:', state.pagination);
-        console.log('📏 [fetchFlightPlans] List length:', state.list.length);
+      
       })
       .addCase(fetchFlightPlans.rejected, (state, action) => {
         state.loading = false;

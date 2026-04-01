@@ -9,7 +9,7 @@ import {
   FeatureGroup,
   Polygon,
 } from "react-leaflet";
-import { InputNumber, Select, TimePicker } from "antd";
+import { InputNumber, Select, TimePicker, Button, Space } from "antd";
 import { DeleteOutlined, EnvironmentOutlined, ThunderboltOutlined } from "@ant-design/icons";
 import L from "leaflet";
 import dayjs from "dayjs";
@@ -47,6 +47,7 @@ const WaypointEditorWithZones = ({
   initialCenter = [10.8231, 106.6297],
 }) => {
   const [mapZones, setMapZones] = useState([]);
+  const [zoneFilter, setZoneFilter] = useState('all'); // Bộ lọc zone types
   const [hoveredZoneId, setHoveredZoneId] = useState(null);
   const [flightPlans, setFlightPlans] = useState([]);
   const [selectedPlanId, setSelectedPlanId] = useState(null);
@@ -109,6 +110,16 @@ const WaypointEditorWithZones = ({
   const positions = waypoints.map((wp) => [wp.latitude, wp.longitude]);
   const getZoneColor = (type) => type === "restricted" ? "#f59e0b" : "#ef4444";
   const selectedPlan = showAllPaths ? null : flightPlans.find(p => p._id === selectedPlanId);
+
+  // Filter zones based on selected filter
+  const getFilteredZones = () => {
+    if (zoneFilter === 'all') return mapZones;
+    if (zoneFilter === 'no_fly') return mapZones.filter(zone => zone.type === 'no_fly');
+    if (zoneFilter === 'restricted') return mapZones.filter(zone => zone.type === 'restricted');
+    return mapZones;
+  };
+
+  const filteredZones = getFilteredZones();
 
   // Debug logging
   console.log('🗺️ Map debug:', {
@@ -454,6 +465,61 @@ const WaypointEditorWithZones = ({
 
         {/* Map */}
         <div className="we-map-wrap">
+          {/* Zone Filter Controls - positioned inside map */}
+          <div style={{
+            position: "absolute",
+            top: "5px",
+            right: "20px",
+            zIndex: 1000,
+            background: "white",
+            padding: "4px",
+            borderRadius: "6px",
+            boxShadow: "0 2px 8px rgba(0,0,0,0.15)",
+            border: "1px solid #a89e9eff"
+          }}>
+            <Space direction="vertical" size={2}>
+              <Button
+                size="small"
+                type={zoneFilter === 'all' ? 'primary' : 'default'}
+                onClick={() => setZoneFilter('all')}
+                style={{ 
+                  fontSize: "11px", 
+                  height: "24px", 
+                  minWidth: "70px",
+                  margin: "1px",
+                }}
+              >
+                Toàn bộ
+              </Button>
+              <Button
+                size="small"
+                type={zoneFilter === 'no_fly' ? 'primary' : 'default'}
+                onClick={() => setZoneFilter('no_fly')}
+                style={{ 
+                  fontSize: "11px", 
+                  height: "24px", 
+                  minWidth: "70px",
+                  margin: "1px",
+                }}
+              >
+                Cấm bay
+              </Button>
+              <Button
+                size="small"
+                type={zoneFilter === 'restricted' ? 'primary' : 'default'}
+                onClick={() => setZoneFilter('restricted')}
+                style={{ 
+                  fontSize: "11px", 
+                  height: "24px", 
+                  minWidth: "70px",
+                  margin: "1px",
+                }}
+              >
+                Hạn chế
+              </Button>
+            </Space>
+          </div>
+
           <MapContainer
             center={initialCenter}
             zoom={13}
@@ -466,7 +532,7 @@ const WaypointEditorWithZones = ({
             <ClickHandler onMapClick={handleMapClick} />
 
             <FeatureGroup>
-              {mapZones.map((zone) => (
+              {filteredZones.map((zone) => (
                 <Polygon
                   key={zone.id}
                   positions={zone.coordinates}

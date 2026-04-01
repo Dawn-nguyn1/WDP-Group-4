@@ -81,7 +81,7 @@ const FlightPlanDetailPage = () => {
     );
   }
 
-  const { status, drone, waypoints, notes } =
+  const { status, drone, waypoints, notes, _id, pilot, priority, conflictStatus, createdAt, updatedAt } =
     flightPlan;
 
   const isDraft = status === "DRAFT";
@@ -94,6 +94,13 @@ const FlightPlanDetailPage = () => {
       APPROVED: "success",
       REJECTED: "error",
     })[s] || "processing";
+
+  const getConflictStatusColor = (s) =>
+    ({
+      CLEAR: "success",
+      WARNING: "warning",
+      CONFLICT: "error",
+    })[s] || "default";
 
   const centerPosition =
     waypoints?.length > 0 ?
@@ -146,17 +153,59 @@ const FlightPlanDetailPage = () => {
 
       <Card style={{ marginBottom: 24 }}>
         <Descriptions bordered column={2}>
-          <Descriptions.Item label="Trạng Thái Hô Sơ">
+          <Descriptions.Item label="Mã Kế Hoạch">
+            <Text code>{_id}</Text>
+          </Descriptions.Item>
+          <Descriptions.Item label="Trạng Thái">
             <Badge status={getStatusColor(status)} text={status} />
+          </Descriptions.Item>
+          <Descriptions.Item label="Phi Công">
+            <Text strong>{pilot?.profile?.fullName || "N/A"}</Text> - {pilot?.email}
           </Descriptions.Item>
           <Descriptions.Item label="Drone Sử Dụng">
             <Text strong>{drone?.model || "N/A"}</Text> - {drone?.serialNumber}
           </Descriptions.Item>
+          <Descriptions.Item label="Độ Ưu Tiên">
+            <Badge count={priority} style={{ backgroundColor: priority > 0 ? '#52c41a' : '#d9d9d9' }} />
+          </Descriptions.Item>
+          <Descriptions.Item label="Trạng Thái Xung Đột">
+            <Badge status={getConflictStatusColor(conflictStatus)} text={conflictStatus} />
+          </Descriptions.Item>
           <Descriptions.Item label="Số Lượng Waypoints">
             {waypoints?.length || 0} điểm
           </Descriptions.Item>
-          <Descriptions.Item label="Ghi Chú">
+          <Descriptions.Item label="Ngày Tạo">
+            {createdAt ? new Date(createdAt).toLocaleString('vi-VN') : "N/A"}
+          </Descriptions.Item>
+          <Descriptions.Item label="Ghi Chú" span={2}>
             {notes || "Không có"}
+          </Descriptions.Item>
+        </Descriptions>
+      </Card>
+
+      {/* Drone Details Card */}
+      <Card title="Thông Tin Drone" style={{ marginBottom: 24 }}>
+        <Descriptions bordered column={2}>
+          <Descriptions.Item label="Drone ID">
+            <Text code>{drone?.droneId || "N/A"}</Text>
+          </Descriptions.Item>
+          <Descriptions.Item label="Số Seri">
+            <Text code>{drone?.serialNumber || "N/A"}</Text>
+          </Descriptions.Item>
+          <Descriptions.Item label="Model">
+            {drone?.model || "N/A"}
+          </Descriptions.Item>
+          <Descriptions.Item label="Trạng Thái">
+            <Badge status={drone?.status === 'IDLE' ? 'success' : 'processing'} text={drone?.status || "N/A"} />
+          </Descriptions.Item>
+          <Descriptions.Item label="Độ Cao Tối Đa">
+            {drone?.maxAltitude || "N/A"}m
+          </Descriptions.Item>
+          <Descriptions.Item label="Loại Chủ Sở Hữu">
+            {drone?.ownerType === 'INDIVIDUAL' ? 'Cá nhân' : drone?.ownerType || "N/A"}
+          </Descriptions.Item>
+          <Descriptions.Item label="Chủ Sở Hữu" span={2}>
+            <Text strong>{drone?.owner?.profile?.fullName || "N/A"}</Text> - {drone?.owner?.email}
           </Descriptions.Item>
         </Descriptions>
       </Card>

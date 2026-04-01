@@ -19,7 +19,7 @@ instance.interceptors.request.use(
 // Response interceptor: always return response.data
 instance.interceptors.response.use(
   (response) => {
-    console.log('📡RESPONSE TU API:', response);
+    console.log('>>>>>RESPONSE TU API<<<<<:', response);
     return response.data;
   },
   (error) => {

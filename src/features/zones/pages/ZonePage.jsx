@@ -75,11 +75,8 @@ const ZonePage = ({ readOnly = false }) => {
       if (filterType) {
         params.type = filterType;
       }
-
-      console.log('🔍 Fetching zones with params:', params);
-      
+            
       const res = await fetchZonesAPI(params);
-      console.log('📡RESPONSE TU API:', res);
       
       const apiZones = Array.isArray(res?.data) ? res.data : [];
       setZonesList(apiZones);
