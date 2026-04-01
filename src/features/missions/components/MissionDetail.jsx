@@ -77,10 +77,8 @@ const MissionDetail = () => {
         return "default";
       case "ACTIVE":
         return "processing";
-      case "COMPLETED":
-        return "success";
-      case "CANCELLED":
-        return "error";
+      case "ARCHIVED":
+        return "warning";
       default:
         return "default";
     }
@@ -103,31 +101,27 @@ const MissionDetail = () => {
 
   const missionPlanColumns = [
     {
-      title: "Flight Plan",
+      title: "Flight Plan ID",
       dataIndex: ["flightPlan", "_id"],
       key: "flightPlan",
-      render: (flightPlanId, record) => (
-        <div>
-          <Text strong>{flightPlanId?.slice(-8) || "N/A"}</Text>
-          <br />
-          <Text type="secondary" style={{ fontSize: "12px" }}>
-            Drone: {record.flightPlan?.drone?.model || "N/A"}
-          </Text>
-        </div>
+      render: (flightPlanId) => (
+        <Text code>{flightPlanId?.slice(-8) || "N/A"}</Text>
       ),
     },
     {
       title: "Drone",
-      dataIndex: ["flightPlan", "drone", "serialNumber"],
+      dataIndex: ["flightPlan", "drone"],
       key: "drone",
-      render: (serialNumber, record) => (
-        <div>
-          <Text strong>{serialNumber || "N/A"}</Text>
-          <br />
-          <Text type="secondary" style={{ fontSize: "12px" }}>
-            {record.flightPlan?.drone?.model || "N/A"}
-          </Text>
-        </div>
+      render: (drone) => (
+        <Text code>{typeof drone === 'string' ? drone.slice(-8) : drone?._id?.slice(-8) || "N/A"}</Text>
+      ),
+    },
+    {
+      title: "Pilot",
+      dataIndex: ["flightPlan", "pilot"],
+      key: "pilot",
+      render: (pilot) => (
+        <Text code>{typeof pilot === 'string' ? pilot.slice(-8) : pilot?._id?.slice(-8) || "N/A"}</Text>
       ),
     },
     {
@@ -216,6 +210,9 @@ const MissionDetail = () => {
 
       <Card style={{ marginBottom: 24 }}>
         <Descriptions bordered column={2}>
+          <Descriptions.Item label="ID Mission">
+            <Text code>{missionData?._id}</Text>
+          </Descriptions.Item>
           <Descriptions.Item label="Tên Mission">
             <Text strong>{missionData?.name || "N/A"}</Text>
           </Descriptions.Item>
@@ -226,13 +223,7 @@ const MissionDetail = () => {
             {missionData?.description || "Không có"}
           </Descriptions.Item>
           <Descriptions.Item label="Người tạo">
-            <div>
-              <Text strong>{missionData?.createdBy?.profile?.fullName || "N/A"}</Text>
-              <br />
-              <Text type="secondary" style={{ fontSize: "12px" }}>
-                {missionData?.createdBy?.email || "N/A"}
-              </Text>
-            </div>
+            <Text code>{missionData?.createdBy}</Text>
           </Descriptions.Item>
           <Descriptions.Item label="Ngày tạo">
             {missionData?.createdAt

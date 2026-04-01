@@ -18,10 +18,12 @@ const MissionPlans = () => {
   const [addPlanModalVisible, setAddPlanModalVisible] = useState(false);
   const [updatePlanModalVisible, setUpdatePlanModalVisible] = useState(false);
   const [editingPlanId, setEditingPlanId] = useState(null);
-  
+  const [flightPlanDetailVisible, setFlightPlanDetailVisible] = useState(false);
+  const [selectedFlightPlanId, setSelectedFlightPlanId] = useState(null);
+
   const dispatch = useDispatch();
   const navigate = useNavigate();
-  
+
   const missionData = useSelector(selectCurrentMission);
   const loading = useSelector(selectMissionsLoading);
   const missionsList = useSelector(selectMissionsList);
@@ -42,7 +44,8 @@ const MissionPlans = () => {
   };
 
   const handleViewFlightPlan = (flightPlanId) => {
-    navigate(`/operator/flight-plans/${flightPlanId}`);
+    setSelectedFlightPlanId(flightPlanId);
+    setFlightPlanDetailVisible(true);
   };
 
   const handleEditMissionPlan = (missionPlanId) => {
@@ -87,15 +90,13 @@ const MissionPlans = () => {
   };
 
   const canStartMission = (missionStatus) => {
-    return missionStatus === "DRAFT" || missionStatus === "CANCELLED";
+    return missionStatus === "DRAFT" || missionStatus === "ARCHIVED";
   };
 
   const getStatusColor = (status) => {
     switch (status) {
       case 'SCHEDULED': return 'processing';
       case 'IN_PROGRESS': return 'warning';
-      case 'COMPLETED': return 'success';
-      case 'CANCELLED': return 'error';
       default: return 'default';
     }
   };
@@ -117,14 +118,7 @@ const MissionPlans = () => {
       key: 'mission',
       render: (missionId, record) => (
         <div>
-          <Button
-            type="link"
-            size="small"
-            icon={<EyeOutlined />}
-            onClick={() => handleViewMissionDetail(missionId)}
-          >
-            {missionId?.slice(-8) || 'N/A'}
-          </Button>
+          <Text strong>{missionId || 'N/A'}</Text>
           <br />
           <Text type="secondary" style={{ fontSize: '12px' }}>
             {record.missionName || 'Mission Name'}
@@ -144,7 +138,7 @@ const MissionPlans = () => {
             icon={<EyeOutlined />}
             onClick={() => handleViewFlightPlan(flightPlanId)}
           >
-            {flightPlanId?.slice(-8) || 'N/A'}
+            {flightPlanId || 'N/A'}
           </Button>
           <br />
           <Text type="secondary" style={{ fontSize: '12px' }}>
@@ -192,14 +186,6 @@ const MissionPlans = () => {
       key: 'actions',
       render: (_, record) => (
         <Space>
-          <Button
-            type="link"
-            icon={<EyeOutlined />}
-            size="small"
-            onClick={() => handleViewMissionDetail(record.mission)}
-          >
-            Chi tiết
-          </Button>
           <Button
             type="link"
             icon={<EditOutlined />}
@@ -333,6 +319,28 @@ const MissionPlans = () => {
           }
         }}
       />
+
+      {/* Flight Plan Detail Modal */}
+      <Modal
+        title="Chi tiết Flight Plan"
+        open={flightPlanDetailVisible}
+        onCancel={() => {
+          setFlightPlanDetailVisible(false);
+          setSelectedFlightPlanId(null);
+        }}
+        footer={null}
+        width={800}
+      >
+        {selectedFlightPlanId && (
+          <div>
+            <Text>Flight Plan ID: {selectedFlightPlanId}</Text>
+            {/* Add more flight plan details here */}
+            <div style={{ marginTop: 16 }}>
+              <Text type="secondary">Nội dung chi tiết flight plan sẽ được hiển thị ở đây...</Text>
+            </div>
+          </div>
+        )}
+      </Modal>
     </div>
   );
 };

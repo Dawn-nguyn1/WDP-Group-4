@@ -6,7 +6,6 @@ import {
   DashboardOutlined,
   RocketOutlined,
   SendOutlined,
-  PlayCircleOutlined,
   EnvironmentOutlined,
   UserOutlined,
   LogoutOutlined,
@@ -41,7 +40,6 @@ const OperatorLayout = () => {
     const path = location.pathname;
     if (path.includes("/operator/drones")) return "drones";
     if (path.includes("/operator/flight-plans")) return "flight-plans";
-    if (path.includes("/operator/flight-sessions")) return "flight-sessions";
     if (path.includes("/operator/zones")) return "zones";
     if (path.includes("/operator/missions")) return "missions";
     if (path.includes("/operator/profile")) return "profile";
@@ -63,11 +61,6 @@ const OperatorLayout = () => {
       label: <Link to="/operator/flight-plans">Flight Plans</Link>,
       key: "flight-plans",
       icon: <SendOutlined />,
-    },
-    {
-      label: <Link to="/operator/flight-sessions">Flight Sessions</Link>,
-      key: "flight-sessions",
-      icon: <PlayCircleOutlined />,
     },
     {
       label: <Link to="/operator/missions">Missions</Link>,

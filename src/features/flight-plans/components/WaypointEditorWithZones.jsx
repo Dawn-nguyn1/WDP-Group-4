@@ -9,7 +9,7 @@ import {
   FeatureGroup,
   Polygon,
 } from "react-leaflet";
-import { InputNumber, Select, TimePicker } from "antd";
+import { InputNumber, Select, TimePicker, Button, Space } from "antd";
 import { DeleteOutlined, EnvironmentOutlined, ThunderboltOutlined } from "@ant-design/icons";
 import L from "leaflet";
 import dayjs from "dayjs";
@@ -47,6 +47,7 @@ const WaypointEditorWithZones = ({
   initialCenter = [10.8231, 106.6297],
 }) => {
   const [mapZones, setMapZones] = useState([]);
+  const [zoneFilter, setZoneFilter] = useState('all'); // Bộ lọc zone types
   const [hoveredZoneId, setHoveredZoneId] = useState(null);
   const [flightPlans, setFlightPlans] = useState([]);
   const [selectedPlanId, setSelectedPlanId] = useState(null);
@@ -90,7 +91,7 @@ const WaypointEditorWithZones = ({
       altitude: 50,
       speed: 10,
       estimatedTime: dayjs().add(waypoints.length * 10, "minutes").format("YYYY-MM-DDTHH:mm:ss"),
-      action: waypoints.length === 0 ? "TAKEOFF" : "WAYPOINT",
+      action: waypoints.length === 0 ? "TAKEOFF" : (waypoints.length === 1 ? "LAND" : "WAYPOINT"),
     };
     setWaypoints([...waypoints, newWaypoint]);
   };
@@ -110,16 +111,15 @@ const WaypointEditorWithZones = ({
   const getZoneColor = (type) => type === "restricted" ? "#f59e0b" : "#ef4444";
   const selectedPlan = showAllPaths ? null : flightPlans.find(p => p._id === selectedPlanId);
 
-  // Debug logging
-  console.log('🗺️ Map debug:', {
-    waypoints: waypoints,
-    waypointsLength: waypoints.length,
-    positions: positions,
-    showAllPaths,
-    selectedPlanId,
-    selectedPlan,
-    flightPlansLength: flightPlans.length
-  });
+  // Filter zones based on selected filter
+  const getFilteredZones = () => {
+    if (zoneFilter === 'all') return mapZones;
+    if (zoneFilter === 'no_fly') return mapZones.filter(zone => zone.type === 'no_fly');
+    if (zoneFilter === 'restricted') return mapZones.filter(zone => zone.type === 'restricted');
+    return mapZones;
+  };
+
+  const filteredZones = getFilteredZones();
 
   return (
     <>
@@ -454,6 +454,61 @@ const WaypointEditorWithZones = ({
 
         {/* Map */}
         <div className="we-map-wrap">
+          {/* Zone Filter Controls - positioned inside map */}
+          <div style={{
+            position: "absolute",
+            top: "5px",
+            right: "20px",
+            zIndex: 1000,
+            background: "white",
+            padding: "4px",
+            borderRadius: "6px",
+            boxShadow: "0 2px 8px rgba(0,0,0,0.15)",
+            border: "1px solid #a89e9eff"
+          }}>
+            <Space direction="vertical" size={2}>
+              <Button
+                size="small"
+                type={zoneFilter === 'all' ? 'primary' : 'default'}
+                onClick={() => setZoneFilter('all')}
+                style={{ 
+                  fontSize: "11px", 
+                  height: "24px", 
+                  minWidth: "70px",
+                  margin: "1px",
+                }}
+              >
+                Toàn bộ
+              </Button>
+              <Button
+                size="small"
+                type={zoneFilter === 'no_fly' ? 'primary' : 'default'}
+                onClick={() => setZoneFilter('no_fly')}
+                style={{ 
+                  fontSize: "11px", 
+                  height: "24px", 
+                  minWidth: "70px",
+                  margin: "1px",
+                }}
+              >
+                Cấm bay
+              </Button>
+              <Button
+                size="small"
+                type={zoneFilter === 'restricted' ? 'primary' : 'default'}
+                onClick={() => setZoneFilter('restricted')}
+                style={{ 
+                  fontSize: "11px", 
+                  height: "24px", 
+                  minWidth: "70px",
+                  margin: "1px",
+                }}
+              >
+                Hạn chế
+              </Button>
+            </Space>
+          </div>
+
           <MapContainer
             center={initialCenter}
             zoom={13}
@@ -466,7 +521,7 @@ const WaypointEditorWithZones = ({
             <ClickHandler onMapClick={handleMapClick} />
 
             <FeatureGroup>
-              {mapZones.map((zone) => (
+              {filteredZones.map((zone) => (
                 <Polygon
                   key={zone.id}
                   positions={zone.coordinates}
@@ -485,7 +540,29 @@ const WaypointEditorWithZones = ({
             </FeatureGroup>
 
             {waypoints.map((wp, index) => (
-              <Marker key={index} position={[wp.latitude, wp.longitude]} draggable={true}
+              <Marker 
+                key={index} 
+                position={[wp.latitude, wp.longitude]} 
+                draggable={true}
+                icon={L.divIcon({
+                  className: 'custom-div-icon',
+                  html: `<div style="
+                    background: ${wp.action === 'TAKEOFF' ? '#22c55e' : wp.action === 'LAND' ? '#ef4444' : wp.action === 'HOVER' ? '#f59e0b' : '#2563eb'};
+                    color: white;
+                    border-radius: 50%;
+                    width: 20px;
+                    height: 20px;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    font-size: 10px;
+                    font-weight: bold;
+                    border: 2px solid white;
+                    box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+                  ">${wp.sequenceNumber}</div>`,
+                  iconSize: [20, 20],
+                  iconAnchor: [10, 10]
+                })}
                 eventHandlers={{
                   dragend: (e) => {
                     const pos = e.target.getLatLng();
@@ -496,7 +573,7 @@ const WaypointEditorWithZones = ({
               >
                 <Popup>
                   <strong>#{wp.sequenceNumber} {wp.action}</strong><br />
-                  Alt: {wp.altitude}m · Speed: {wp.speed}m/s
+                  Alt: {wp.altitude}m
                 </Popup>
               </Marker>
             ))}
@@ -539,7 +616,7 @@ const WaypointEditorWithZones = ({
                             <br />
                             <strong>WP #{wp.sequenceNumber}</strong> · {wp.action}
                             <br />
-                            Alt: {wp.altitude}m · Speed: {wp.speed}m/s
+                            Alt: {wp.altitude}m
                           </div>
                         </Popup>
                       </Marker>
@@ -585,7 +662,7 @@ const WaypointEditorWithZones = ({
                           <br />
                           <strong>WP #{wp.sequenceNumber}</strong> · {wp.action}
                           <br />
-                          Alt: {wp.altitude}m · Speed: {wp.speed}m/s
+                          Alt: {wp.altitude}m
                         </div>
                       </Popup>
                     </Marker>
@@ -693,7 +770,8 @@ const WaypointEditorWithZones = ({
                         onChange={(val) => updateWaypoint(index, "altitude", val)}
                       />
                     </div>
-                    <div>
+                    {/* Temporarily hidden - Speed and Estimate Time */}
+                    {/* <div>
                       <div className="we-field-label">Speed (m/s)</div>
                       <InputNumber
                         value={wp.speed}
@@ -704,7 +782,7 @@ const WaypointEditorWithZones = ({
                       />
                     </div>
                     <div>
-                      <div className="we-field-label">Est. Time</div>
+                      <div className="we-field-label">Estimate Time</div>
                       <TimePicker
                         value={wp.estimatedTime ? dayjs(wp.estimatedTime) : null}
                         onChange={(time) =>
@@ -714,7 +792,7 @@ const WaypointEditorWithZones = ({
                         size="small"
                         style={{ width: "100%" }}
                       />
-                    </div>
+                    </div> */}
                   </div>
                 </div>
               );

@@ -86,6 +86,16 @@ const UpdateMissionPlanModal = ({ visible, missionId, missionPlanId, onClose, on
               required: true,
               message: 'Vui lòng chọn thời gian bắt đầu',
             },
+            ({ getFieldValue }) => ({
+              validator(_, value) {
+                if (!value) return Promise.resolve();
+                const now = dayjs();
+                if (value.isBefore(now)) {
+                  return Promise.reject(new Error('Thời gian bắt đầu không thể là quá khứ!'));
+                }
+                return Promise.resolve();
+              },
+            }),
           ]}
         >
           <DatePicker
@@ -103,6 +113,16 @@ const UpdateMissionPlanModal = ({ visible, missionId, missionPlanId, onClose, on
               required: true,
               message: 'Vui lòng chọn thời gian kết thúc',
             },
+            ({ getFieldValue }) => ({
+              validator(_, value) {
+                if (!value) return Promise.resolve();
+                const plannedStart = getFieldValue('plannedStart');
+                if (plannedStart && value.isBefore(plannedStart)) {
+                  return Promise.reject(new Error('Thời gian kết thúc phải lớn hơn hoặc bằng thời gian bắt đầu!'));
+                }
+                return Promise.resolve();
+              },
+            }),
           ]}
         >
           <DatePicker
@@ -141,8 +161,6 @@ const UpdateMissionPlanModal = ({ visible, missionId, missionPlanId, onClose, on
         >
           <Select placeholder="Chọn trạng thái">
             <Option value="SCHEDULED">Lên lịch</Option>
-            <Option value="IN_PROGRESS">Đang thực hiện</Option>
-            <Option value="COMPLETED">Hoàn thành</Option>
             <Option value="CANCELLED">Đã hủy</Option>
           </Select>
         </Form.Item>

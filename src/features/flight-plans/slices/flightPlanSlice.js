@@ -5,7 +5,6 @@ export const fetchFlightPlans = createAsyncThunk(
   "flightPlans/fetchAll",
   async (params = {}, { rejectWithValue }) => {
     try {
-      console.log(' [fetchFlightPlans] Calling API with params:', params);
       // API expects: page, limit, status (optional)
       const apiParams = {
         page: params.page || 1,
@@ -15,12 +14,9 @@ export const fetchFlightPlans = createAsyncThunk(
         apiParams.status = params.status;
       }
       const response = await flightPlanApi.fetchFlightPlansAPI(apiParams);
-      console.log(' [fetchFlightPlans] API response:', response);
-      console.log(' [fetchFlightPlans] Response data:', response?.data);
-      console.log(' [fetchFlightPlans] Response structure:', JSON.stringify(response, null, 2));
+     
       return response;
     } catch (err) {
-      console.error(' [fetchFlightPlans] API error:', err);
       return rejectWithValue(err);
     }
   },
@@ -41,9 +37,7 @@ export const createFlightPlan = createAsyncThunk(
   "flightPlans/create",
   async (data, { rejectWithValue }) => {
     try {
-      console.log('🚀 [createFlightPlan] Creating flight plan with data:', data);
       const response = await flightPlanApi.createFlightPlanAPI(data);
-      console.log('✅ [createFlightPlan] API response:', response);
       return response;
     } catch (err) {
       console.error('❌ [createFlightPlan] API error:', err);
@@ -56,9 +50,7 @@ export const updateFlightPlan = createAsyncThunk(
   "flightPlans/update",
   async ({ id, data }, { rejectWithValue }) => {
     try {
-      console.log('🔄 [updateFlightPlan] Updating flight plan:', id, data);
       const response = await flightPlanApi.updateFlightPlanAPI(id, data);
-      console.log('✅ [updateFlightPlan] API response:', response);
       return response;
     } catch (err) {
       console.error('❌ [updateFlightPlan] API error:', err);
@@ -71,9 +63,7 @@ export const deleteFlightPlan = createAsyncThunk(
   "flightPlans/delete",
   async (id, { rejectWithValue }) => {
     try {
-      console.log('🗑️ [deleteFlightPlan] Deleting flight plan:', id);
       await flightPlanApi.deleteFlightPlanAPI(id);
-      console.log('✅ [deleteFlightPlan] Successfully deleted:', id);
       return id;
     } catch (err) {
       console.error('❌ [deleteFlightPlan] API error:', err);
@@ -110,7 +100,6 @@ const flightPlanSlice = createSlice({
         state.error = null;
       })
       .addCase(fetchFlightPlans.fulfilled, (state, action) => {
-        console.log('✅ [fetchFlightPlans] Fulfilled - Action payload:', action.payload);
         state.loading = false;
         // API mới trả về: data array và pagination object
         state.list = action.payload.data || [];
@@ -122,9 +111,7 @@ const flightPlanSlice = createSlice({
           hasNextPage: false,
           hasPrevPage: false
         };
-        console.log('📋 [fetchFlightPlans] Updated flight plans list:', state.list);
-        console.log('📄 [fetchFlightPlans] Updated pagination:', state.pagination);
-        console.log('📏 [fetchFlightPlans] List length:', state.list.length);
+      
       })
       .addCase(fetchFlightPlans.rejected, (state, action) => {
         state.loading = false;
@@ -151,7 +138,6 @@ const flightPlanSlice = createSlice({
         state.error = null;
       })
       .addCase(createFlightPlan.fulfilled, (state, action) => {
-        console.log('✅ [createFlightPlan] Fulfilled - Action payload:', action.payload);
         state.loading = false;
         // Add new flight plan to list
         if (action.payload?.flightPlan || action.payload) {
@@ -169,7 +155,6 @@ const flightPlanSlice = createSlice({
         state.error = null;
       })
       .addCase(updateFlightPlan.fulfilled, (state, action) => {
-        console.log('✅ [updateFlightPlan] Fulfilled - Action payload:', action.payload);
         state.loading = false;
         // Update flight plan in list
         if (action.payload?.flightPlan || action.payload) {
@@ -195,7 +180,6 @@ const flightPlanSlice = createSlice({
         state.error = null;
       })
       .addCase(deleteFlightPlan.fulfilled, (state, action) => {
-        console.log('✅ [deleteFlightPlan] Fulfilled - Deleted ID:', action.payload);
         state.loading = false;
         // Remove from list
         state.list = state.list.filter(plan => plan._id !== action.payload);

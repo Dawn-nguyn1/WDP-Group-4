@@ -8,43 +8,8 @@ import {
   useMapEvents,
 } from "react-leaflet";
 import { fetchZonesAPI } from "../../../features/zones/services/zoneApi";
+import { Button, Select, Space } from "antd";
 
-//fake map data from BE
-// Hard code data test - 2 vùng cấm bay polygon 4 đỉnh
-// const mockNoFlyZones = [
-//   {
-//     id: 1,
-//     type: 'polygon',
-//     name: 'Vùng cấm bay 1',
-//     description: 'Vùng cấm bay đa giác 4 đỉnh',
-//     status: 'active',
-//     coordinates: [
-//       { lat: 10.7800, lng: 106.6900 },
-//       { lat: 10.7850, lng: 106.6950 },
-//       { lat: 10.7800, lng: 106.7000 },
-//       { lat: 10.7750, lng: 106.6950 }
-//     ],
-//     altitude_min: 0,
-//     altitude_max: 500,
-//     area: 250000
-//   },
-//   {
-//     id: 2,
-//     type: 'polygon',
-//     name: 'Vùng cấm bay 2',
-//     description: 'Vùng cấm bay đa giác 4 đỉnh',
-//     status: 'active',
-//     coordinates: [
-//       { lat: 10.7700, lng: 106.7100 },
-//       { lat: 10.7750, lng: 106.7150 },
-//       { lat: 10.7700, lng: 106.7200 },
-//       { lat: 10.7650, lng: 106.7150 }
-//     ],
-//     altitude_min: 0,
-//     altitude_max: 400,
-//     area: 200000
-//   }
-// ];
 
 const MapEvents = ({ onMapClickOutside }) => {
   useMapEvents({
@@ -69,6 +34,7 @@ export default function Map({
   onZoneHover,
 }) {
   const [mapZones, setMapZones] = useState([]); // Zones để hiển thị trên map
+  const [zoneFilter, setZoneFilter] = useState('all'); // Bộ lọc zone types
   const mapRef = useRef();
 
   // Load mock data khi component mount
@@ -138,6 +104,16 @@ export default function Map({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []); // Chỉ chạy một lần khi mount
 
+  // Filter zones based on selected filter
+  const getFilteredZones = () => {
+    if (zoneFilter === 'all') return mapZones;
+    if (zoneFilter === 'no_fly') return mapZones.filter(zone => zone.type === 'no_fly');
+    if (zoneFilter === 'restricted') return mapZones.filter(zone => zone.type === 'restricted');
+    return mapZones;
+  };
+
+  const filteredZones = getFilteredZones();
+
   return (
     <div>
       <div
@@ -151,12 +127,79 @@ export default function Map({
         <p>Số lượng vùng cấm bay: {mapZones.length}</p>
       </div>
 
-      <MapContainer
-        center={[10.7769, 106.7009]}
-        zoom={13}
-        style={{ height: "500px", width: "100%" }}
-        ref={mapRef}
-      >
+      {/* Map wrapper with controlled height */}
+      <div style={{ 
+        height: "800px", 
+        width: "100%", 
+        position: "relative",
+        border: "1px solid #d9d9d9",
+        borderRadius: "8px",
+        overflow: "hidden"
+      }}>
+        {/* Zone Filter Controls - positioned inside map */}
+        <div style={{
+          position: "absolute",
+          top: "5px",
+          right: "20px",
+          zIndex: 1000,
+          background: "white",
+          padding: "4px",
+          borderRadius: "6px",
+          boxShadow: "0 2px 8px rgba(0,0,0,0.15)",
+          border: "1px solid #a89e9eff"
+        }}>
+          <Space direction="vertical" size={2}>
+            <Button
+              size="small"
+              type={zoneFilter === 'all' ? 'primary' : 'default'}
+              onClick={() => setZoneFilter('all')}
+              style={{ 
+                fontSize: "11px", 
+                height: "24px", 
+                minWidth: "70px",
+                margin: "1px",
+              }}
+            >
+              Toàn bộ
+            </Button>
+            <Button
+              size="small"
+              type={zoneFilter === 'no_fly' ? 'primary' : 'default'}
+              onClick={() => setZoneFilter('no_fly')}
+              style={{ 
+                fontSize: "11px", 
+                height: "24px", 
+                minWidth: "70px",
+                margin: "1px",
+              }}
+            >
+              Cấm bay
+            </Button>
+            <Button
+              size="small"
+              type={zoneFilter === 'restricted' ? 'primary' : 'default'}
+              onClick={() => setZoneFilter('restricted')}
+              style={{ 
+                fontSize: "11px", 
+                height: "24px", 
+                minWidth: "70px",
+                margin: "1px",
+              }}
+            >
+              Hạn chế
+            </Button>
+          </Space>
+        </div>
+
+        <MapContainer
+          center={[10.7769, 106.7009]}
+          zoom={13}
+          style={{ 
+            height: "100%", 
+            width: "100%"
+          }}
+          ref={mapRef}
+        >
         <TileLayer
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
           attribution="&copy; OpenStreetMap contributors"
@@ -170,7 +213,7 @@ export default function Map({
         <MapEvents onMapClickOutside={onMapClickOutside} />
 
         {/* Render các polygon zones */}
-        {mapZones.map((zone) => {
+        {filteredZones.map((zone) => {
           // Xác định màu dựa vào type của zone
           const getZoneColor = (type) => {
             if (type === "restricted") {
@@ -220,6 +263,7 @@ export default function Map({
           );
         })}
       </MapContainer>
+      </div>
     </div>
   );
 }

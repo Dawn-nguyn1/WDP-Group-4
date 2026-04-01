@@ -146,6 +146,7 @@ const ZoneForm = ({ loadZones }) => {
         limit: 100,
         sortBy: "createdAt",
         sortOrder: "desc",
+        status: "active", 
       });
 
       const apiZones = Array.isArray(res?.data) ? res.data : [];

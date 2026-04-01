@@ -58,19 +58,16 @@ const MissonDetail = () => {
         return "default";
       case "ACTIVE":
         return "processing";
-      case "COMPLETED":
-        return "success";
-      case "CANCELLED":
-        return "error";
+      case "ARCHIVED":
+        return "warning";
       default:
         return "default";
     }
   };
 
   const canStartMission = (missionStatus) => {
-    return missionStatus === "DRAFT" || missionStatus === "CANCELLED";
+    return missionStatus === "DRAFT" || missionStatus === "ARCHIVED";
   };
-
   return (
     <div style={{ padding: '24px' }}>
       <div style={{ marginBottom: '24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -113,10 +110,20 @@ const MissonDetail = () => {
                 </Tag>
               </Descriptions.Item>
               <Descriptions.Item label="Người tạo">
-                {mission.mission?.createdBy?.profile?.fullName || 'N/A'}
+                {(() => {
+                  // createdBy là string ID, nên lấy thông tin từ drone owner trong mission plan đầu tiên
+                  const firstPlan = mission.missionPlans?.[0];
+                  const droneOwner = firstPlan?.flightPlan?.drone?.owner;
+                  return droneOwner?.profile?.fullName || 'N/A';
+                })()}
               </Descriptions.Item>
               <Descriptions.Item label="Email người tạo">
-                {mission.mission?.createdBy?.email || 'N/A'}
+                {(() => {
+                  // createdBy là string ID, nên lấy thông tin từ drone owner trong mission plan đầu tiên
+                  const firstPlan = mission.missionPlans?.[0];
+                  const droneOwner = firstPlan?.flightPlan?.drone?.owner;
+                  return droneOwner?.email || 'N/A';
+                })()}
               </Descriptions.Item>
               <Descriptions.Item label="Ngày tạo">
                 {mission.mission?.createdAt ? new Date(mission.mission.createdAt).toLocaleString('vi-VN') : 'N/A'}
@@ -135,15 +142,27 @@ const MissonDetail = () => {
                 pagination={false}
                 columns={[
                   {
-                    title: 'Flight Plan',
-                    dataIndex: ['flightPlan', '_id'],
-                    key: 'flightPlan',
-                    render: (flightPlanId, record) => (
+                    title: 'Drone',
+                    key: 'drone',
+                    render: (_, record) => (
                       <div>
-                        <Text strong>{flightPlanId?.slice(-8) || 'N/A'}</Text>
+                        <Text strong>{record.flightPlan?.drone?.serialNumber || 'N/A'}</Text>
                         <br />
                         <Text type="secondary" style={{ fontSize: '12px' }}>
-                          Drone: {record.flightPlan?.drone?.serialNumber || 'N/A'}
+                          {record.flightPlan?.drone?.model || 'N/A'}
+                        </Text>
+                      </div>
+                    ),
+                  },
+                  {
+                    title: 'Pilot',
+                    key: 'pilot',
+                    render: (_, record) => (
+                      <div>
+                        <Text strong>Bạn (bản thân)</Text>
+                        <br />
+                        <Text type="secondary" style={{ fontSize: '12px' }}>
+                          {record.flightPlan?.drone?.owner?.profile?.fullName || 'N/A'}
                         </Text>
                       </div>
                     ),

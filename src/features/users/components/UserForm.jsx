@@ -21,17 +21,10 @@ const UserForm = (props) => {
         status: values.status,
       });
 
-      if (res && res.user && res.user._id) {
+      if (res && res.data && res.data.user && res.data.user._id) {
         notification.success({
           message: "Create user",
-          description: `Tạo user "${res.user.profile?.fullName || res.user.email}" thành công!`,
-        });
-        resetAndCloseModal();
-        await loadUser();
-      } else if (res && res._id) {
-        notification.success({
-          message: "Create user",
-          description: `Tạo user thành công!`,
+          description: `Tạo user "${res.data.user.profile?.fullName || res.data.user.email}" thành công!`,
         });
         resetAndCloseModal();
         await loadUser();

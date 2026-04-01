@@ -5,6 +5,7 @@ import {
   DeleteOutlined,
   CheckCircleOutlined,
   CloseCircleOutlined,
+  EyeOutlined,
 } from "@ant-design/icons";
 import UpdateUserModal from "./UpdateUserModal";
 import ViewUserDetail from "./UserDetail";
@@ -146,6 +147,16 @@ const UserTable = (props) => {
       width: 120,
       render: (_, record) => (
         <div className="action-buttons">
+          <button
+            className="action-btn-icon view-btn"
+            onClick={() => {
+              setDataDetail(record);
+              setIsDetailOpen(true);
+            }}
+            title="View Details"
+          >
+            <EyeOutlined />
+          </button>
           <button
             className="action-btn-icon edit-btn"
             onClick={() => {
