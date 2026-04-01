@@ -38,8 +38,8 @@ const UpdateUserModal = (props) => {
         status: values.status,
       });
 
-      if (res && (res.user || res._id)) {
-        const user = res.user || res;
+      if (res && res.data && res.data.user) {
+        const user = res.data.user;
         notification.success({
           message: "Update user",
           description: `Cập nhật user "${user.profile?.fullName || user.email}" thành công!`,

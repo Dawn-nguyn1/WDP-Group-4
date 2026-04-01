@@ -9,6 +9,7 @@ import {
   Modal,
   Badge,
   Tooltip,
+  message,
 } from "antd";
 import {
   PlusOutlined,
@@ -70,7 +71,8 @@ const DronePage = () => {
       onOk: () => {
         dispatch(deleteDrone(id))
           .unwrap()
-          .then(() => {
+          .then((result) => {
+            message.success(result?.message || "Xóa drone thành công");
             dispatch(fetchDrones());
           });
       },

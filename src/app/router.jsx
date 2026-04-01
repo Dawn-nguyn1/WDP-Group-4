@@ -18,6 +18,7 @@ import OperatorDashboard from "../features/dashboard/pages/OperatorDashboard";
 // User pages
 import UserPage from "../features/users/pages/UserPage";
 import ProfilePage from "../features/users/pages/ProfilePage";
+import UserDetailPage from "../features/users/pages/UserDetailPage";
 
 // Zone pages (admin CRUD, operator read-only)
 import ZonePage from "../features/zones/pages/ZonePage";
@@ -66,6 +67,10 @@ const router = createBrowserRouter([
       {
         path: "users",
         element: <UserPage />,
+      },
+      {
+        path: "users/:id",
+        element: <UserDetailPage />,
       },
       {
         path: "zones",
