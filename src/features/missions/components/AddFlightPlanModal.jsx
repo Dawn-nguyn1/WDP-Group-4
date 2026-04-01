@@ -47,7 +47,7 @@ const AddFlightPlanModal = ({ visible, missionId, onClose, onSuccess }) => {
       if (onSuccess) onSuccess();
       if (onClose) onClose();
     } catch (error) {
-      message.error('Thêm flight plan vào mission thất bại!');
+      message.error(error?.error?.message || error?.message || 'Thêm flight plan vào mission thất bại!');
     } finally {
       setLoading(false);
     }

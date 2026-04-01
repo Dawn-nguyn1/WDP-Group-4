@@ -77,8 +77,12 @@ export const addFlightPlanToMission = createAsyncThunk(
   "missions/addFlightPlanToMission",
   async ({ missionId, data }, { rejectWithValue }) => {
     try {
-      return await missionApi.addFlightPlanToMissionAPI(missionId, data);
+      console.log('🚀 Adding flight plan to mission:', { missionId, data });
+      const response = await missionApi.addFlightPlanToMissionAPI(missionId, data);
+      console.log('✅ Flight plan added to mission - API response:', response);
+      return response;
     } catch (err) {
+      console.error('❌ Add flight plan to mission failed:', err);
       return rejectWithValue(err);
     }
   },
@@ -250,6 +254,7 @@ const missionSlice = createSlice({
       })
       .addCase(addFlightPlanToMission.fulfilled, (state, action) => {
         state.loading = false;
+        console.log('📝 Mission plan creation fulfilled - payload:', action.payload);
         // Refresh current mission to include new mission plan
         if (state.currentMission && state.currentMission.missionPlans) {
           state.currentMission.missionPlans.push(action.payload);
@@ -258,6 +263,13 @@ const missionSlice = createSlice({
       .addCase(addFlightPlanToMission.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload?.message || "Thêm flight plan vào mission thất bại";
+        console.error('❌ Add flight plan to mission rejected:', action.payload);
+        console.error('❌ Full error details:', {
+          message: action.payload?.message,
+          status: action.payload?.response?.status,
+          data: action.payload?.response?.data,
+          error: action.payload
+        });
       })
 
       // Update mission plan

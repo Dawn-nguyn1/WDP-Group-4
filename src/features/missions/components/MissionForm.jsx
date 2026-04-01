@@ -22,7 +22,7 @@ const MissionForm = ({ onClose, onSuccess }) => {
       if (onSuccess) onSuccess();
       if (onClose) onClose();
     } catch (error) {
-      message.error("Tạo mission thất bại!");
+      message.error(error?.message || "Tạo mission thất bại!");
     } finally {
       setLoading(false);
     }
