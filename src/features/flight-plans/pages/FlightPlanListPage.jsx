@@ -9,12 +9,14 @@ import {
   Tag,
   Tooltip,
 } from "antd";
-import { PlusOutlined, EyeOutlined } from "@ant-design/icons";
+import { PlusOutlined, EyeOutlined, DeleteOutlined } from "@ant-design/icons";
 import { useDispatch, useSelector } from "react-redux";
+import { Modal, message } from "antd";
 import {
   fetchFlightPlans,
   selectFlightPlansList,
   selectFlightPlansLoading,
+  deleteFlightPlan,
 } from "../slices/flightPlanSlice";
 import dayjs from "dayjs";
 import { useNavigate } from "react-router-dom";
@@ -31,19 +33,25 @@ const FlightPlanListPage = () => {
     dispatch(fetchFlightPlans({ page: 1, limit: 10 }));
   }, [dispatch]);
 
-  const getStatusBadgeProps = (status) => {
-    switch (status) {
-      case "DRAFT":
-        return { status: "default", text: "DRAFT" };
-      case "APPROVED":
-        return { status: "success", text: "APPROVED" };
-      case "REJECTED":
-        return { status: "error", text: "REJECTED" };
-      case "CANCELLED":
-        return { status: "warning", text: "CANCELLED" };
-      default:
-        return { status: "processing", text: status };
-    }
+  const handleDeleteFlightPlan = (record) => {
+    Modal.confirm({
+      title: "Xác nhận xóa kế hoạch bay",
+      content: `Bạn có chắc chắn muốn xóa kế hoạch bay "${record._id?.slice(-6).toUpperCase()}"? Kế hoạch sẽ được chuyển sang trạng thái INACTIVE và không thể sử dụng trong mission.`,
+      okText: "Xóa",
+      okType: "danger",
+      cancelText: "Hủy",
+      onOk: async () => {
+        try {
+          await dispatch(deleteFlightPlan(record._id)).unwrap();
+          message.success("Xóa kế hoạch bay thành công!");
+          // Refresh list
+          dispatch(fetchFlightPlans({ page: 1, limit: 10 }));
+        } catch (error) {
+          console.error("Delete flight plan error:", error);
+          message.error(error?.message || "Xóa kế hoạch bay thất bại!");
+        }
+      },
+    });
   };
 
   const columns = [
@@ -80,12 +88,6 @@ const FlightPlanListPage = () => {
       ),
     },
     {
-      title: "Trạng thái",
-      key: "status",
-      dataIndex: "status",
-      render: (status) => <Badge {...getStatusBadgeProps(status)} />,
-    },
-    {
       title: "Conflict Status",
       key: "conflictStatus",
       dataIndex: "conflictStatus",
@@ -113,6 +115,16 @@ const FlightPlanListPage = () => {
               onClick={(e) => {
                 e.stopPropagation();
                 navigate(`/operator/flight-plans/${record._id}`);
+              }}
+            />
+          </Tooltip>
+          <Tooltip title="Xóa kế hoạch bay">
+            <Button
+              type="text"
+              icon={<DeleteOutlined style={{ color: "#ff4d4f" }} />}
+              onClick={(e) => {
+                e.stopPropagation();
+                handleDeleteFlightPlan(record);
               }}
             />
           </Tooltip>
