@@ -155,11 +155,6 @@ const router = createBrowserRouter([
           <MissionDetail />
         </ProtectedRoute>,
       },
-      // Phase 4: flight sessions
-      // {
-      //   path: 'flight-sessions',
-      //   element: <FlightSessionListPage />,
-      // },
     ],
   },
 

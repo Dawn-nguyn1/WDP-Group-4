@@ -261,6 +261,28 @@ const ZonePage = ({ readOnly = false }) => {
         <CheckPointForm />
       </div> */}
 
+      {/* Map Container */}
+      <Card 
+        style={{ 
+          marginBottom: "24px",
+          borderRadius: "8px",
+          boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
+          border: "1px solid #d9d9d9"
+        }}
+        bodyStyle={{ padding: "0" }}
+      >
+        <Map
+          onReloadCallback={handleReloadCallback}
+          onZoneDeleted={handleZoneDeleted}
+          onZoneClick={handleMapClick}
+          onMapClickOutside={handleMapClickOutside}
+          zonesList={zonesList}
+          hoveredZoneId={hoveredZoneId}
+          selectedZoneId={selectedZoneId}
+          onZoneHover={handleZoneHover}
+        />
+      </Card>
+
       {/* Search and Filter Controls */}
       <Card style={{ marginBottom: "24px" }}>
         <div style={{ marginBottom: "16px" }}>
@@ -357,17 +379,6 @@ const ZonePage = ({ readOnly = false }) => {
           {` • Trang ${pagination.currentPage}/${pagination.totalPages || 1}`}
         </div>
       </Card>
-
-      <Map
-        onReloadCallback={handleReloadCallback}
-        onZoneDeleted={handleZoneDeleted}
-        onZoneClick={handleMapClick}
-        onMapClickOutside={handleMapClickOutside}
-        zonesList={zonesList}
-        hoveredZoneId={hoveredZoneId}
-        selectedZoneId={selectedZoneId}
-        onZoneHover={handleZoneHover}
-      />
 
       <div
         style={{
