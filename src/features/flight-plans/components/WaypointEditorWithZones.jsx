@@ -573,7 +573,7 @@ const WaypointEditorWithZones = ({
               >
                 <Popup>
                   <strong>#{wp.sequenceNumber} {wp.action}</strong><br />
-                  Alt: {wp.altitude}m · Speed: {wp.speed}m/s
+                  Alt: {wp.altitude}m
                 </Popup>
               </Marker>
             ))}
@@ -616,7 +616,7 @@ const WaypointEditorWithZones = ({
                             <br />
                             <strong>WP #{wp.sequenceNumber}</strong> · {wp.action}
                             <br />
-                            Alt: {wp.altitude}m · Speed: {wp.speed}m/s
+                            Alt: {wp.altitude}m
                           </div>
                         </Popup>
                       </Marker>
@@ -662,7 +662,7 @@ const WaypointEditorWithZones = ({
                           <br />
                           <strong>WP #{wp.sequenceNumber}</strong> · {wp.action}
                           <br />
-                          Alt: {wp.altitude}m · Speed: {wp.speed}m/s
+                          Alt: {wp.altitude}m
                         </div>
                       </Popup>
                     </Marker>
@@ -770,7 +770,8 @@ const WaypointEditorWithZones = ({
                         onChange={(val) => updateWaypoint(index, "altitude", val)}
                       />
                     </div>
-                    <div>
+                    {/* Temporarily hidden - Speed and Estimate Time */}
+                    {/* <div>
                       <div className="we-field-label">Speed (m/s)</div>
                       <InputNumber
                         value={wp.speed}
@@ -791,7 +792,7 @@ const WaypointEditorWithZones = ({
                         size="small"
                         style={{ width: "100%" }}
                       />
-                    </div>
+                    </div> */}
                   </div>
                 </div>
               );
