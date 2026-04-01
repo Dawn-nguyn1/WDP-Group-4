@@ -759,7 +759,7 @@ const WaypointEditorWithZones = ({
                       />
                     </div>
                     <div>
-                      <div className="we-field-label">Est. Time</div>
+                      <div className="we-field-label">Estimate Time</div>
                       <TimePicker
                         value={wp.estimatedTime ? dayjs(wp.estimatedTime) : null}
                         onChange={(time) =>

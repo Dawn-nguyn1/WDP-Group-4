@@ -99,7 +99,7 @@ const DroneForm = ({ visible, onCancel, onSuccess, editingDrone }) => {
           >
             <Select>
               <Option value="IDLE">IDLE (Rảnh rỗi)</Option>
-              <Option value="IN_FLIGHT">IN_FLIGHT (Đang bay)</Option>
+              <Option value="FLYING">FLYING (Đang bay)</Option>
               <Option value="MAINTENANCE">MAINTENANCE (Bảo trì)</Option>
             </Select>
           </Form.Item>

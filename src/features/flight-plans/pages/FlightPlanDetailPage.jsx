@@ -195,18 +195,6 @@ const FlightPlanDetailPage = () => {
           <Descriptions.Item label="Model">
             {drone?.model || "N/A"}
           </Descriptions.Item>
-          <Descriptions.Item label="Trạng Thái">
-            <Badge status={drone?.status === 'IDLE' ? 'success' : 'processing'} text={drone?.status || "N/A"} />
-          </Descriptions.Item>
-          <Descriptions.Item label="Độ Cao Tối Đa">
-            {drone?.maxAltitude || "N/A"}m
-          </Descriptions.Item>
-          <Descriptions.Item label="Loại Chủ Sở Hữu">
-            {drone?.ownerType === 'INDIVIDUAL' ? 'Cá nhân' : drone?.ownerType || "N/A"}
-          </Descriptions.Item>
-          <Descriptions.Item label="Chủ Sở Hữu" span={2}>
-            <Text strong>{drone?.owner?.profile?.fullName || "N/A"}</Text> - {drone?.owner?.email}
-          </Descriptions.Item>
         </Descriptions>
       </Card>
 

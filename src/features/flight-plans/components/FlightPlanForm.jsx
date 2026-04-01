@@ -99,6 +99,20 @@ const FlightPlanForm = ({ initialValues = null, editingId = null }) => {
         return;
       }
       
+      const selectedDroneId = form.getFieldValue("drone");
+      const selectedDrone = drones.find((d) => d._id === selectedDroneId);
+      if (selectedDrone && selectedDrone.status !== "IDLE") {
+        message.error(`Drone đang ở trạng thái ${selectedDrone.status}. Chỉ drone ở trạng thái IDLE mới có thể tạo kế hoạch bay.`);
+        return;
+      }
+      
+      const payload = {
+        drone: form.getFieldValue("drone"),
+        notes: notes,
+        priority: priority,
+        waypoints: waypoints,
+      };
+      
       setLoading(true);
       
       if (actualEditingId) {
