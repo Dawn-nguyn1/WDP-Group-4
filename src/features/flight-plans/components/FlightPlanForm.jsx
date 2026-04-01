@@ -106,6 +106,15 @@ const FlightPlanForm = ({ initialValues = null, editingId = null }) => {
         return;
       }
       
+      // Check altitude validation against drone maxAltitude
+      if (selectedDrone) {
+        const invalidWaypoint = waypoints.find(wp => wp.altitude > selectedDrone.maxAltitude);
+        if (invalidWaypoint) {
+          message.error(`Waypoint #${invalidWaypoint.sequenceNumber}: altitude ${invalidWaypoint.altitude} exceeds drone maxAltitude ${selectedDrone.maxAltitude}.`);
+          return;
+        }
+      }
+      
       const payload = {
         drone: form.getFieldValue("drone"),
         notes: notes,
