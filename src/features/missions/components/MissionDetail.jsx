@@ -77,10 +77,8 @@ const MissionDetail = () => {
         return "default";
       case "ACTIVE":
         return "processing";
-      case "COMPLETED":
-        return "success";
-      case "CANCELLED":
-        return "error";
+      case "ARCHIVED":
+        return "warning";
       default:
         return "default";
     }

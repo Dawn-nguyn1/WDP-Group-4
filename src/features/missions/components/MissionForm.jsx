@@ -60,8 +60,7 @@ const MissionForm = ({ onClose, onSuccess }) => {
           <Select placeholder="Chọn trạng thái">
             <Option value="DRAFT">Bản nháp</Option>
             <Option value="ACTIVE">Kích hoạt</Option>
-            <Option value="COMPLETED">Hoàn thành</Option>
-            <Option value="CANCELLED">Đã hủy</Option>
+            <Option value="ARCHIVED">Lưu trữ</Option>
           </Select>
         </Form.Item>
 

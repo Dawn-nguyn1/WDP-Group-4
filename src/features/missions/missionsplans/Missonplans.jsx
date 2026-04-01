@@ -87,15 +87,13 @@ const MissionPlans = () => {
   };
 
   const canStartMission = (missionStatus) => {
-    return missionStatus === "DRAFT" || missionStatus === "CANCELLED";
+    return missionStatus === "DRAFT" || missionStatus === "ARCHIVED";
   };
 
   const getStatusColor = (status) => {
     switch (status) {
       case 'SCHEDULED': return 'processing';
       case 'IN_PROGRESS': return 'warning';
-      case 'COMPLETED': return 'success';
-      case 'CANCELLED': return 'error';
       default: return 'default';
     }
   };
