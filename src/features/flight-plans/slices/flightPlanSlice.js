@@ -37,9 +37,7 @@ export const createFlightPlan = createAsyncThunk(
   "flightPlans/create",
   async (data, { rejectWithValue }) => {
     try {
-      console.log('🚀 [createFlightPlan] Creating flight plan with data:', data);
       const response = await flightPlanApi.createFlightPlanAPI(data);
-      console.log('✅ [createFlightPlan] API response:', response);
       return response;
     } catch (err) {
       console.error('❌ [createFlightPlan] API error:', err);
@@ -52,9 +50,7 @@ export const updateFlightPlan = createAsyncThunk(
   "flightPlans/update",
   async ({ id, data }, { rejectWithValue }) => {
     try {
-      console.log('🔄 [updateFlightPlan] Updating flight plan:', id, data);
       const response = await flightPlanApi.updateFlightPlanAPI(id, data);
-      console.log('✅ [updateFlightPlan] API response:', response);
       return response;
     } catch (err) {
       console.error('❌ [updateFlightPlan] API error:', err);
@@ -67,9 +63,7 @@ export const deleteFlightPlan = createAsyncThunk(
   "flightPlans/delete",
   async (id, { rejectWithValue }) => {
     try {
-      console.log('🗑️ [deleteFlightPlan] Deleting flight plan:', id);
       await flightPlanApi.deleteFlightPlanAPI(id);
-      console.log('✅ [deleteFlightPlan] Successfully deleted:', id);
       return id;
     } catch (err) {
       console.error('❌ [deleteFlightPlan] API error:', err);
@@ -144,7 +138,6 @@ const flightPlanSlice = createSlice({
         state.error = null;
       })
       .addCase(createFlightPlan.fulfilled, (state, action) => {
-        console.log('✅ [createFlightPlan] Fulfilled - Action payload:', action.payload);
         state.loading = false;
         // Add new flight plan to list
         if (action.payload?.flightPlan || action.payload) {
@@ -162,7 +155,6 @@ const flightPlanSlice = createSlice({
         state.error = null;
       })
       .addCase(updateFlightPlan.fulfilled, (state, action) => {
-        console.log('✅ [updateFlightPlan] Fulfilled - Action payload:', action.payload);
         state.loading = false;
         // Update flight plan in list
         if (action.payload?.flightPlan || action.payload) {
@@ -188,7 +180,6 @@ const flightPlanSlice = createSlice({
         state.error = null;
       })
       .addCase(deleteFlightPlan.fulfilled, (state, action) => {
-        console.log('✅ [deleteFlightPlan] Fulfilled - Deleted ID:', action.payload);
         state.loading = false;
         // Remove from list
         state.list = state.list.filter(plan => plan._id !== action.payload);

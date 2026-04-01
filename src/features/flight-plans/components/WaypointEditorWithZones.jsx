@@ -121,17 +121,6 @@ const WaypointEditorWithZones = ({
 
   const filteredZones = getFilteredZones();
 
-  // Debug logging
-  console.log('🗺️ Map debug:', {
-    waypoints: waypoints,
-    waypointsLength: waypoints.length,
-    positions: positions,
-    showAllPaths,
-    selectedPlanId,
-    selectedPlan,
-    flightPlansLength: flightPlans.length
-  });
-
   return (
     <>
       <style>{`

@@ -29,6 +29,8 @@ const FlightPlanForm = ({ initialValues = null, editingId = null }) => {
   const navigate = useNavigate();
   const { id } = useParams();
 
+ 
+
   const actualEditingId =
     editingId === true || editingId === "true" ? id : editingId;
 
@@ -36,6 +38,8 @@ const FlightPlanForm = ({ initialValues = null, editingId = null }) => {
   const currentPlan = useSelector(selectCurrentFlightPlan);
   const [loading, setLoading] = useState(false);
   const [waypoints, setWaypoints] = useState([]);
+  const [notes, setNotes] = useState("");
+   const [priority, setPriority] = useState(1);
 
   useEffect(() => { dispatch(fetchDrones()); }, [dispatch]);
 
@@ -49,12 +53,26 @@ const FlightPlanForm = ({ initialValues = null, editingId = null }) => {
   const effectiveInitialValues =
     initialValues || (actualEditingId ? currentPlan : null);
 
+     useEffect(() => {
+  if (effectiveInitialValues) {
+    form.setFieldsValue({
+      drone: effectiveInitialValues.drone?._id || effectiveInitialValues.drone,
+    });
+    setNotes(effectiveInitialValues.notes || "");
+    setPriority(effectiveInitialValues.priority ?? 1);  // ← đọc đúng field top-level
+    if (effectiveInitialValues.waypoints) {
+      setWaypoints(effectiveInitialValues.waypoints);
+    }
+  }
+}, [effectiveInitialValues, form]);
+
   useEffect(() => {
     if (effectiveInitialValues) {
       form.setFieldsValue({
         drone: effectiveInitialValues.drone?._id || effectiveInitialValues.drone,
-        notes: effectiveInitialValues.notes,
       });
+      setNotes(effectiveInitialValues.notes || "");
+      setPriority(effectiveInitialValues.priority ?? 1);
       if (effectiveInitialValues.waypoints) {
         setWaypoints(effectiveInitialValues.waypoints);
       }
@@ -63,7 +81,6 @@ const FlightPlanForm = ({ initialValues = null, editingId = null }) => {
 
   const handleSubmit = async () => {
     try {
-      const values = await form.validateFields();
       if (waypoints.length < 2) {
         message.error("Kế hoạch bay phải có ít nhất 2 waypoints (TAKEOFF và LAND).");
         return;
@@ -82,29 +99,17 @@ const FlightPlanForm = ({ initialValues = null, editingId = null }) => {
         return;
       }
       
-      console.log('🚀 [handleSubmit] Submitting flight plan:', {
-        drone: values.drone,
-        notes: values.notes,
-        waypoints: waypoints,
-        hasTakeoff: !!takeoff,
-        hasLand: !!land
-      });
-      
       setLoading(true);
-      const payload = { drone: values.drone, notes: values.notes, waypoints };
       
       if (actualEditingId) {
-        console.log('🔄 [handleSubmit] Updating flight plan:', actualEditingId);
-        await dispatch(updateFlightPlan({ id: actualEditingId, ...payload }));
+await dispatch(updateFlightPlan({ id: actualEditingId, data: payload }));
         message.success("Cập nhật kế hoạch bay thành công!");
       } else {
-        console.log('✨ [handleSubmit] Creating new flight plan');
         await dispatch(createFlightPlan(payload));
         message.success("Tạo kế hoạch bay thành công!");
       }
       navigate("/operator/flight-plans");
     } catch (error) {
-      console.error('❌ [handleSubmit] Error:', error);
       message.error(error?.message || "Lỗi khi lưu kế hoạch bay");
     } finally {
       setLoading(false);
@@ -391,7 +396,6 @@ const FlightPlanForm = ({ initialValues = null, editingId = null }) => {
                           style={{ width: "100%" }}
                           size="large"
                           onChange={(value) => {
-                            console.log(' [Drone Select] Selected drone:', value);
                             form.setFieldsValue({ drone: value });
                           }}
                         >
@@ -404,7 +408,21 @@ const FlightPlanForm = ({ initialValues = null, editingId = null }) => {
                       </div>
                     </Form.Item>
                   </div>
+                  <div className="fp-config-col" style={{flex: "0 0 140px"}}>
+                    <div className="fp-field-label">Độ ưu tiên</div>
+                    <Select
+                      value={priority}
+                      style={{ width: "100%" }}
+                      size="large"
+                      onChange={(v) => setPriority(v)}
+                    >
+                      <Option value={1}>Thường</Option>
+                      <Option value={5}>Ưu tiên</Option>
+                      <Option value={10}>Khẩn cấp</Option>
+                    </Select>
+                  </div>
                   <div className="fp-config-col-notes">
+                    
                     <Form.Item name="notes">
                       <div>
                         <div className="fp-field-label">Ghi chú</div>
@@ -412,10 +430,8 @@ const FlightPlanForm = ({ initialValues = null, editingId = null }) => {
                           className="fp-notes-textarea"
                           rows={2}
                           placeholder="Nhập mục đích hoặc ghi chú thêm cho chuyến bay..."
-                          onChange={(e) => {
-                            console.log(' [Notes] Updated:', e.target.value);
-                            form.setFieldsValue({ notes: e.target.value });
-                          }}
+                          value={notes}
+                          onChange={(e) => setNotes(e.target.value)}
                         />
                       </div>
                     </Form.Item>
