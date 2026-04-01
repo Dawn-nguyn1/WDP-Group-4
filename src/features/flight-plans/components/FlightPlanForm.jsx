@@ -422,21 +422,7 @@ await dispatch(updateFlightPlan({ id: actualEditingId, data: payload }));
                       </div>
                     </Form.Item>
                   </div>
-                  <div className="fp-config-col" style={{flex: "0 0 140px"}}>
-                    <div className="fp-field-label">Độ ưu tiên</div>
-                    <Select
-                      value={priority}
-                      style={{ width: "100%" }}
-                      size="large"
-                      onChange={(v) => setPriority(v)}
-                    >
-                      <Option value={1}>Thường</Option>
-                      <Option value={5}>Ưu tiên</Option>
-                      <Option value={10}>Khẩn cấp</Option>
-                    </Select>
-                  </div>
                   <div className="fp-config-col-notes">
-                    
                     <Form.Item name="notes">
                       <div>
                         <div className="fp-field-label">Ghi chú</div>

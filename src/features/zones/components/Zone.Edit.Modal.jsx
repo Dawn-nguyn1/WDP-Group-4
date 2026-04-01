@@ -232,10 +232,32 @@ const ZoneEditModal = ({ visible, onCancel, zoneId, onSuccess }) => {
             <Form.Item
               label="Hiệu lực đến"
               name="effectiveTo"
+              rules={[
+                ({ getFieldValue }) => ({
+                  validator(_, value) {
+                    if (!value) {
+                      return Promise.resolve();
+                    }
+                    const effectiveFrom = getFieldValue('effectiveFrom');
+                    if (effectiveFrom && new Date(value) < new Date(effectiveFrom)) {
+                      return Promise.reject(new Error('Hiệu lực đến phải lớn hơn hoặc bằng hiệu lực từ!'));
+                    }
+                    return Promise.resolve();
+                  },
+                }),
+              ]}
             >
               <Input 
                 type="datetime-local" 
                 style={{ width: '100%' }}
+                onChange={(e) => {
+                  const value = e.target.value;
+                  if (!value) return;
+                  const effectiveFrom = form.getFieldValue('effectiveFrom');
+                  if (effectiveFrom && new Date(value) < new Date(effectiveFrom)) {
+                    message.warning('Hiệu lực đến phải lớn hơn hoặc bằng hiệu lực từ!');
+                  }
+                }}
               />
             </Form.Item>
           </Col>

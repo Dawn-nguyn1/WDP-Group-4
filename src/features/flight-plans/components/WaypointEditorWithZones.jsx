@@ -91,7 +91,7 @@ const WaypointEditorWithZones = ({
       altitude: 50,
       speed: 10,
       estimatedTime: dayjs().add(waypoints.length * 10, "minutes").format("YYYY-MM-DDTHH:mm:ss"),
-      action: waypoints.length === 0 ? "TAKEOFF" : "WAYPOINT",
+      action: waypoints.length === 0 ? "TAKEOFF" : (waypoints.length === 1 ? "LAND" : "WAYPOINT"),
     };
     setWaypoints([...waypoints, newWaypoint]);
   };
@@ -540,7 +540,29 @@ const WaypointEditorWithZones = ({
             </FeatureGroup>
 
             {waypoints.map((wp, index) => (
-              <Marker key={index} position={[wp.latitude, wp.longitude]} draggable={true}
+              <Marker 
+                key={index} 
+                position={[wp.latitude, wp.longitude]} 
+                draggable={true}
+                icon={L.divIcon({
+                  className: 'custom-div-icon',
+                  html: `<div style="
+                    background: ${wp.action === 'TAKEOFF' ? '#22c55e' : wp.action === 'LAND' ? '#ef4444' : wp.action === 'HOVER' ? '#f59e0b' : '#2563eb'};
+                    color: white;
+                    border-radius: 50%;
+                    width: 20px;
+                    height: 20px;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    font-size: 10px;
+                    font-weight: bold;
+                    border: 2px solid white;
+                    box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+                  ">${wp.sequenceNumber}</div>`,
+                  iconSize: [20, 20],
+                  iconAnchor: [10, 10]
+                })}
                 eventHandlers={{
                   dragend: (e) => {
                     const pos = e.target.getLatLng();

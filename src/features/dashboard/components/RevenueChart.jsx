@@ -154,7 +154,9 @@ const RevenueChart = ({ revenue, loading }) => {
 };
 
 const clickableCardStyle = {
-  border: '1px solid #d9d9d9',
+  borderWidth: '1px',
+  borderStyle: 'solid',
+  borderColor: '#d9d9d9',
   borderRadius: 8,
   padding: '12px 14px',
   cursor: 'pointer',
