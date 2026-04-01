@@ -26,7 +26,6 @@ const ZoneEditModal = ({ visible, onCancel, zoneId, onSuccess }) => {
         name: response.name,
         description: response.description,
         type: response.type,
-        status: response.status,
         minAltitude: response.minAltitude,
         maxAltitude: response.maxAltitude,
         effectiveFrom: response.effectiveFrom ? new Date(response.effectiveFrom).toISOString().slice(0, 16) : null,
@@ -49,7 +48,6 @@ const ZoneEditModal = ({ visible, onCancel, zoneId, onSuccess }) => {
         name: values.name,
         description: values.description,
         type: values.type,
-        status: values.status,
         minAltitude: values.minAltitude,
         maxAltitude: values.maxAltitude,
       };
@@ -124,7 +122,6 @@ const ZoneEditModal = ({ visible, onCancel, zoneId, onSuccess }) => {
         onFinish={handleSubmit}
         initialValues={{
           type: 'no_fly',
-          status: 'active',
         }}
       >
         <Row gutter={16}>
@@ -168,19 +165,7 @@ const ZoneEditModal = ({ visible, onCancel, zoneId, onSuccess }) => {
         </Form.Item>
 
         <Row gutter={16}>
-          <Col span={8}>
-            <Form.Item
-              label="Trạng thái"
-              name="status"
-              rules={[{ required: true, message: 'Vui lòng chọn trạng thái!' }]}
-            >
-              <Select placeholder="Chọn trạng thái">
-                <Option value="active">Hoạt động</Option>
-                <Option value="inactive">Không hoạt động</Option>
-              </Select>
-            </Form.Item>
-          </Col>
-          <Col span={8}>
+          <Col span={12}>
             <Form.Item
               label="Độ cao tối thiểu (m)"
               name="minAltitude"
@@ -197,7 +182,7 @@ const ZoneEditModal = ({ visible, onCancel, zoneId, onSuccess }) => {
               />
             </Form.Item>
           </Col>
-          <Col span={8}>
+          <Col span={12}>
             <Form.Item
               label="Độ cao tối đa (m)"
               name="maxAltitude"
