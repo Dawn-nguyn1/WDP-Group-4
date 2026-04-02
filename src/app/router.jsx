@@ -27,8 +27,8 @@ import ZonePage from "../features/zones/pages/ZonePage";
 import DronePage from "../features/drones/pages/DronePage";
 
 // Phase 3 pages
-import ConflictListPage from "../features/conflicts/pages/ConflictListPage";
-import ConflictDetailPage from "../features/conflicts/pages/ConflictDetailPage";
+// import ConflictListPage from "../features/conflicts/pages/ConflictListPage";
+// import ConflictDetailPage from "../features/conflicts/pages/ConflictDetailPage";
 import FlightPlanListPage from "../features/flight-plans/pages/FlightPlanListPage";
 import FlightPlanDetailPage from "../features/flight-plans/components/FlightPlanDetail";
 import MissionPage from "../features/missions/components/page/mission";
@@ -79,15 +79,15 @@ const router = createBrowserRouter([
         path: "profile",
         element: <ProfilePage />,
       },
-      // Phase 3: conflicts
-      {
-        path: "conflicts",
-        element: <ConflictListPage />,
-      },
-      {
-        path: "conflicts/:id",
-        element: <ConflictDetailPage />,
-      },
+      // Phase 3: conflicts - HIDDEN
+      // {
+      //   path: "conflicts",
+      //   element: <ConflictListPage />,
+      // },
+      // {
+      //   path: "conflicts/:id",
+      //   element: <ConflictDetailPage />,
+      // },
     ],
   },
 

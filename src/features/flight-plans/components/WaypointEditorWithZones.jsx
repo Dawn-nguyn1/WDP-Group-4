@@ -76,7 +76,7 @@ const WaypointEditorWithZones = ({
   const fetchFlightPlans = async () => {
     setLoading(true);
     try {
-      const res = await fetchFlightPlansAPI({ page: 1, limit: 20, sortBy: "createdAt", sortOrder: "desc" });
+      const res = await fetchFlightPlansAPI({ page: 1, limit: 20, sortBy: "createdAt", sortOrder: "desc", status: "ACTIVE" });
       setFlightPlans(Array.isArray(res?.data) ? res.data : []);
     } catch { setFlightPlans([]); } finally { setLoading(false); }
   };
