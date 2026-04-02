@@ -8,7 +8,7 @@ import {
   Polyline,
   useMapEvents,
 } from "react-leaflet";
-import { fetchZonesAPI } from "../../../features/zones/services/zoneApi";
+import { fetchZonesAPI } from "../../zones/services/zoneApi";
 
 // Fix Leaflet's default icon issue in React
 import L from "leaflet";
