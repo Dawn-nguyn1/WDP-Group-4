@@ -3,6 +3,7 @@ import { Table, Button, Space, Tag, Modal, message, Popconfirm, Input } from "an
 import { EditOutlined, DeleteOutlined, PlusOutlined, EyeOutlined } from "@ant-design/icons";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
+import listStyles from "../../../shared/styles/listPages.module.css";
 import {
   fetchMissions,
   deleteMission,
@@ -100,11 +101,14 @@ const MissionTable = () => {
       title: "Trạng thái",
       dataIndex: "status",
       key: "status",
-      render: (status) => (
-        <Tag color={getStatusColor(status)}>
-          {status}
-        </Tag>
-      ),
+      render: (status) => {
+        const isActive = status === "ACTIVE";
+        return (
+          <span className={`${listStyles.statusBadge} ${isActive ? listStyles.statusActive : listStyles.statusInactive}`}>
+            {status}
+          </span>
+        );
+      },
     },
     {
       title: "Ngày tạo",
@@ -132,22 +136,20 @@ const MissionTable = () => {
       key: "actions",
       render: (_, record) => (
         <Space>
-          <Button
-            type="link"
-            icon={<EyeOutlined />}
-            size="small"
+          <button
+            className={`${listStyles.actionButton} ${listStyles.actionButtonView}`}
             onClick={() => handleViewDetail(record._id)}
+            title="Xem"
           >
-            Xem
-          </Button>
-          <Button
-            type="link"
-            icon={<EditOutlined />}
-            size="small"
+            <EyeOutlined />
+          </button>
+          <button
+            className={`${listStyles.actionButton} ${listStyles.actionButtonEdit}`}
             onClick={() => handleEdit(record._id)}
+            title="Sửa"
           >
-            Sửa
-          </Button>
+            <EditOutlined />
+          </button>
           <Popconfirm
             title="Xóa mission?"
             description="Bạn có chắc muốn xóa mission này?"
@@ -155,14 +157,12 @@ const MissionTable = () => {
             okText="Xóa"
             cancelText="Hủy"
           >
-            <Button
-              type="link"
-              danger
-              icon={<DeleteOutlined />}
-              size="small"
+            <button
+              className={`${listStyles.actionButton} ${listStyles.actionButtonDelete}`}
+              title="Xóa"
             >
-              Xóa
-            </Button>
+              <DeleteOutlined />
+            </button>
           </Popconfirm>
         </Space>
       ),
@@ -170,15 +170,17 @@ const MissionTable = () => {
   ];
 
   return (
-    <div>
-      <div style={{ marginBottom: 16, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-        <h2>Danh sách Missions</h2>
-        <Input.Search
-          placeholder="Tìm theo tên mission"
-          allowClear
-          style={{ width: 250 }}
-          onChange={(e) => setSearchText(e.target.value)}
-        />
+    <div className={listStyles.tableCard} style={{ padding: '24px' }}>
+      <div className={listStyles.pageHeader} style={{ marginBottom: '24px' }}>
+        <h2 style={{ margin: 0, color: 'white' }}>Danh sách Missions</h2>
+        <div className={listStyles.pageHeaderRight}>
+          <Input.Search
+            placeholder="Tìm theo tên mission"
+            allowClear
+            className={listStyles.searchInput}
+            onChange={(e) => setSearchText(e.target.value)}
+          />
+        </div>
       </div>
       
       <Table
