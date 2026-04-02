@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from "react";
-import { Table, Button, Space, Tag, Modal, message, Popconfirm } from "antd";
+import React, { useEffect, useState, useMemo } from "react";
+import { Table, Button, Space, Tag, Modal, message, Popconfirm, Input } from "antd";
 import { EditOutlined, DeleteOutlined, PlusOutlined, EyeOutlined } from "@ant-design/icons";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
@@ -20,10 +20,20 @@ const MissionTable = () => {
   const loading = useSelector(selectMissionsLoading);
   const [editModalVisible, setEditModalVisible] = useState(false);
   const [editingMissionId, setEditingMissionId] = useState(null);
+  const [searchText, setSearchText] = useState("");
 
   useEffect(() => {
     dispatch(fetchMissions({ page: 1, limit: 10 }));
   }, [dispatch]);
+
+  const filteredMissions = useMemo(() => {
+    if (!searchText) return missions;
+    
+    const searchLower = searchText.toLowerCase();
+    return missions.filter(mission => 
+      mission.name?.toLowerCase().includes(searchLower)
+    );
+  }, [missions, searchText]);
 
   const handleDelete = async (id) => {
     console.log('🗑️ [MissionTable] Attempting to delete mission:', id);
@@ -101,6 +111,8 @@ const MissionTable = () => {
       dataIndex: "createdAt",
       key: "createdAt",
       render: (date) => dayjs(date).format("DD/MM/YYYY HH:mm"),
+      sorter: (a, b) => new Date(a.createdAt) - new Date(b.createdAt),
+      sortDirections: ['descend', 'ascend'],
     },
     {
       title: "Người tạo",
@@ -159,17 +171,23 @@ const MissionTable = () => {
 
   return (
     <div>
-      <div style={{ marginBottom: 16 }}>
+      <div style={{ marginBottom: 16, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
         <h2>Danh sách Missions</h2>
+        <Input.Search
+          placeholder="Tìm theo tên mission"
+          allowClear
+          style={{ width: 250 }}
+          onChange={(e) => setSearchText(e.target.value)}
+        />
       </div>
       
       <Table
         columns={columns}
-        dataSource={missions}
+        dataSource={filteredMissions}
         loading={loading}
         rowKey="_id"
         pagination={{
-          total: missions.length,
+          total: filteredMissions.length,
           pageSize: 10,
           showSizeChanger: false,
           showQuickJumper: true,

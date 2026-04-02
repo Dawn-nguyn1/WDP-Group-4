@@ -458,6 +458,14 @@ const ZoneForm = ({ loadZones }) => {
                   min: 0,
                   message: "Độ cao tối thiểu phải >= 0!",
                 },
+                {
+                  validator: (_, value) => {
+                    if (value < 0) {
+                      return Promise.reject("Độ cao tối thiểu không được âm!");
+                    }
+                    return Promise.resolve();
+                  },
+                },
               ]}
               style={{ flex: 1 }}
             >
@@ -481,7 +489,19 @@ const ZoneForm = ({ loadZones }) => {
                   required: true,
                   message: "Độ cao tối đa không được để trống!",
                 },
-                { type: "number", min: 0, message: "Độ cao tối đa phải >= 0!" },
+                { 
+                  type: "number", 
+                  min: 0, 
+                  message: "Độ cao tối đa phải >= 0!" 
+                },
+                {
+                  validator: (_, value) => {
+                    if (value < 0) {
+                      return Promise.reject("Độ cao tối đa không được âm!");
+                    }
+                    return Promise.resolve();
+                  },
+                },
               ]}
               style={{ flex: 1 }}
             >

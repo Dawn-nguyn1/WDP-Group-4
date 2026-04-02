@@ -30,7 +30,7 @@ import DronePage from "../features/drones/pages/DronePage";
 import ConflictListPage from "../features/conflicts/pages/ConflictListPage";
 import ConflictDetailPage from "../features/conflicts/pages/ConflictDetailPage";
 import FlightPlanListPage from "../features/flight-plans/pages/FlightPlanListPage";
-import FlightPlanDetailPage from "../features/flight-plans/pages/FlightPlanDetailPage";
+import FlightPlanDetailPage from "../features/flight-plans/components/FlightPlanDetail";
 import MissionPage from "../features/missions/components/page/mission";
 import MissionDetail from "../features/missions/components/MissionDetail";
 import FlightPlanForm from "../features/flight-plans/components/FlightPlanForm";

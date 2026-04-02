@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useMemo } from "react";
 import {
   Card,
   Table,
@@ -10,6 +10,7 @@ import {
   Badge,
   Tooltip,
   message,
+  Input,
 } from "antd";
 import {
   PlusOutlined,
@@ -32,6 +33,7 @@ import dayjs from "dayjs";
 
 const { Title } = Typography;
 const { confirm } = Modal;
+const { Search } = Input;
 
 const DronePage = () => {
   const dispatch = useDispatch();
@@ -40,6 +42,7 @@ const DronePage = () => {
 
   const [formVisible, setFormVisible] = useState(false);
   const [editingDrone, setEditingDrone] = useState(null);
+  const [searchText, setSearchText] = useState("");
 
   const [drawerVisible, setDrawerVisible] = useState(false);
   const [selectedDroneId, setSelectedDroneId] = useState(null);
@@ -84,6 +87,16 @@ const DronePage = () => {
     setDrawerVisible(true);
   };
 
+  const filteredDrones = useMemo(() => {
+    if (!searchText) return drones;
+    
+    const searchLower = searchText.toLowerCase();
+    return drones.filter(drone => 
+      drone.serialNumber?.toLowerCase().includes(searchLower) ||
+      drone.model?.toLowerCase().includes(searchLower)
+    );
+  }, [drones, searchText]);
+
   const columns = [
     {
       title: "Số Serial",
@@ -119,6 +132,8 @@ const DronePage = () => {
       dataIndex: "createdAt",
       key: "createdAt",
       render: (date) => dayjs(date).format("DD/MM/YYYY"),
+      sorter: (a, b) => new Date(a.createdAt) - new Date(b.createdAt),
+      sortDirections: ['descend', 'ascend'],
     },
     {
       title: "Thao tác",
@@ -163,15 +178,23 @@ const DronePage = () => {
             <Title level={4} style={{ margin: 0 }}>
               Quản lý Drone
             </Title>
-            <Button type="primary" icon={<PlusOutlined />} onClick={handleAdd}>
-              Thêm Drone
-            </Button>
+            <Space>
+              <Search
+                placeholder="Tìm theo serial hoặc model"
+                allowClear
+                style={{ width: 250 }}
+                onChange={(e) => setSearchText(e.target.value)}
+              />
+              <Button type="primary" icon={<PlusOutlined />} onClick={handleAdd}>
+                Thêm Drone
+              </Button>
+            </Space>
           </div>
         }
       >
         <Table
           columns={columns}
-          dataSource={drones}
+          dataSource={filteredDrones}
           rowKey="_id"
           loading={loading}
           pagination={{ pageSize: 10 }}
