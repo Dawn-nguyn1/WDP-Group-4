@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useMemo } from "react";
 import {
   Card,
   Table,
@@ -8,6 +8,7 @@ import {
   Typography,
   Tag,
   Tooltip,
+  Input,
 } from "antd";
 import { PlusOutlined, EyeOutlined, DeleteOutlined } from "@ant-design/icons";
 import { useDispatch, useSelector } from "react-redux";
@@ -22,16 +23,28 @@ import dayjs from "dayjs";
 import { useNavigate } from "react-router-dom";
 
 const { Title } = Typography;
+const { Search } = Input;
 
 const FlightPlanListPage = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const loading = useSelector(selectFlightPlansLoading);
   const flightPlans = useSelector(selectFlightPlansList);
+  const [searchText, setSearchText] = useState("");
 
   useEffect(() => {
-    dispatch(fetchFlightPlans({ page: 1, limit: 10 }));
+    dispatch(fetchFlightPlans({ page: 1, limit: 10, status: 'ACTIVE' }));
   }, [dispatch]);
+
+  const filteredFlightPlans = useMemo(() => {
+    if (!searchText) return flightPlans;
+    
+    const searchLower = searchText.toLowerCase();
+    return flightPlans.filter(plan => 
+      plan.drone?.serialNumber?.toLowerCase().includes(searchLower) ||
+      plan.drone?.model?.toLowerCase().includes(searchLower)
+    );
+  }, [flightPlans, searchText]);
 
   const handleDeleteFlightPlan = (record) => {
     Modal.confirm({
@@ -45,7 +58,7 @@ const FlightPlanListPage = () => {
           await dispatch(deleteFlightPlan(record._id)).unwrap();
           message.success("Xóa kế hoạch bay thành công!");
           // Refresh list
-          dispatch(fetchFlightPlans({ page: 1, limit: 10 }));
+          dispatch(fetchFlightPlans({ page: 1, limit: 10, status: 'ACTIVE' }));
         } catch (error) {
           console.error("Delete flight plan error:", error);
           message.error(error?.message || "Xóa kế hoạch bay thất bại!");
@@ -147,19 +160,27 @@ const FlightPlanListPage = () => {
             <Title level={4} style={{ margin: 0 }}>
               Quản lý Kế Hoạch Bay (Flight Plans)
             </Title>
-            <Button
-              type="primary"
-              icon={<PlusOutlined />}
-              onClick={() => navigate("/operator/flight-plans/new")}
-            >
-              Tạo Kế Hoạch Bay
-            </Button>
+            <Space>
+              <Search
+                placeholder="Tìm theo serial hoặc model drone"
+                allowClear
+                style={{ width: 250 }}
+                onChange={(e) => setSearchText(e.target.value)}
+              />
+              <Button
+                type="primary"
+                icon={<PlusOutlined />}
+                onClick={() => navigate("/operator/flight-plans/new")}
+              >
+                Tạo Kế Hoạch Bay
+              </Button>
+            </Space>
           </div>
         }
       >
         <Table
           columns={columns}
-          dataSource={flightPlans}
+          dataSource={filteredFlightPlans}
           rowKey="_id"
           loading={loading}
           pagination={{ pageSize: 10 }}
