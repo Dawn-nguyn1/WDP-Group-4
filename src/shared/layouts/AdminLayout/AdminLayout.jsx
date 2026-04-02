@@ -6,7 +6,7 @@ import {
   DashboardOutlined,
   UsergroupAddOutlined,
   EnvironmentOutlined,
-  WarningOutlined,
+  // WarningOutlined,
   UserOutlined,
   LogoutOutlined,
 } from "@ant-design/icons";
@@ -40,7 +40,7 @@ const AdminLayout = () => {
     const path = location.pathname;
     if (path.includes("/admin/users")) return "users";
     if (path.includes("/admin/zones")) return "zones";
-    if (path.includes("/admin/conflicts")) return "conflicts";
+    // if (path.includes("/admin/conflicts")) return "conflicts";
     if (path.includes("/admin/profile")) return "profile";
     return "dashboard";
   };
@@ -61,11 +61,12 @@ const AdminLayout = () => {
       key: "zones",
       icon: <EnvironmentOutlined />,
     },
-    {
-      label: <Link to="/admin/conflicts">Conflicts</Link>,
-      key: "conflicts",
-      icon: <WarningOutlined />,
-    },
+    // Conflicts - HIDDEN
+    // {
+    //   label: <Link to="/admin/conflicts">Conflicts</Link>,
+    //   key: "conflicts",
+    //   icon: <WarningOutlined />,
+    // },
     { type: "divider" },
     {
       label: <Link to="/admin/profile">Profile</Link>,
