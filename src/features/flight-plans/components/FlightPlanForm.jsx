@@ -7,6 +7,7 @@ import {
   Row,
   Col,
   message,
+  InputNumber,
 } from "antd";
 import { SaveOutlined, ArrowLeftOutlined, RocketOutlined } from "@ant-design/icons";
 import { useParams, useNavigate } from "react-router-dom";
@@ -29,8 +30,6 @@ const FlightPlanForm = ({ initialValues = null, editingId = null }) => {
   const navigate = useNavigate();
   const { id } = useParams();
 
- 
-
   const actualEditingId =
     editingId === true || editingId === "true" ? id : editingId;
 
@@ -39,7 +38,9 @@ const FlightPlanForm = ({ initialValues = null, editingId = null }) => {
   const [loading, setLoading] = useState(false);
   const [waypoints, setWaypoints] = useState([]);
   const [notes, setNotes] = useState("");
-   const [priority, setPriority] = useState(1);
+  const [priority, setPriority] = useState(1);
+  const [batteryPercentageUsed, setBatteryPercentageUsed] = useState(100);
+  const [estimatedFlightTime, setEstimatedFlightTime] = useState(1);
 
   useEffect(() => { dispatch(fetchDrones()); }, [dispatch]);
 
@@ -53,18 +54,20 @@ const FlightPlanForm = ({ initialValues = null, editingId = null }) => {
   const effectiveInitialValues =
     initialValues || (actualEditingId ? currentPlan : null);
 
-     useEffect(() => {
-  if (effectiveInitialValues) {
-    form.setFieldsValue({
-      drone: effectiveInitialValues.drone?._id || effectiveInitialValues.drone,
-    });
-    setNotes(effectiveInitialValues.notes || "");
-    setPriority(effectiveInitialValues.priority ?? 1);  // ← đọc đúng field top-level
-    if (effectiveInitialValues.waypoints) {
-      setWaypoints(effectiveInitialValues.waypoints);
+  useEffect(() => {
+    if (effectiveInitialValues) {
+      form.setFieldsValue({
+        drone: effectiveInitialValues.drone?._id || effectiveInitialValues.drone,
+      });
+      setNotes(effectiveInitialValues.notes || "");
+      setPriority(effectiveInitialValues.priority ?? 1);  // ← đọc đúng field top-level
+      setBatteryPercentageUsed(effectiveInitialValues.batteryPercentageUsed ?? 100);
+      setEstimatedFlightTime(effectiveInitialValues.estimatedFlightTime ?? 1);
+      if (effectiveInitialValues.waypoints) {
+        setWaypoints(effectiveInitialValues.waypoints);
+      }
     }
-  }
-}, [effectiveInitialValues, form]);
+  }, [effectiveInitialValues, form]);
 
   useEffect(() => {
     if (effectiveInitialValues) {
@@ -73,6 +76,8 @@ const FlightPlanForm = ({ initialValues = null, editingId = null }) => {
       });
       setNotes(effectiveInitialValues.notes || "");
       setPriority(effectiveInitialValues.priority ?? 1);
+      setBatteryPercentageUsed(effectiveInitialValues.batteryPercentageUsed ?? 100);
+      setEstimatedFlightTime(effectiveInitialValues.estimatedFlightTime ?? 1);
       if (effectiveInitialValues.waypoints) {
         setWaypoints(effectiveInitialValues.waypoints);
       }
@@ -81,6 +86,26 @@ const FlightPlanForm = ({ initialValues = null, editingId = null }) => {
 
   const handleSubmit = async () => {
     try {
+      // 1. Validate Drone selection
+      const selectedDroneId = form.getFieldValue("drone");
+      if (!selectedDroneId) {
+        message.error("Vui lòng chọn drone để tạo kế hoạch bay!");
+        return;
+      }
+      
+      const selectedDrone = drones.find((d) => d._id === selectedDroneId);
+      if (!selectedDrone) {
+        message.error("Drone được chọn không tồn tại!");
+        return;
+      }
+      
+      // 2. Validate Drone status
+      if (selectedDrone.status !== "IDLE") {
+        message.error(`Drone đang ở trạng thái ${selectedDrone.status}. Chỉ drone ở trạng thái IDLE mới có thể tạo kế hoạch bay.`);
+        return;
+      }
+      
+      // 3. Validate Waypoints
       if (waypoints.length < 2) {
         message.error("Kế hoạch bay phải có ít nhất 2 waypoints (TAKEOFF và LAND).");
         return;
@@ -99,33 +124,85 @@ const FlightPlanForm = ({ initialValues = null, editingId = null }) => {
         return;
       }
       
-      const selectedDroneId = form.getFieldValue("drone");
-      const selectedDrone = drones.find((d) => d._id === selectedDroneId);
-      if (selectedDrone && selectedDrone.status !== "IDLE") {
-        message.error(`Drone đang ở trạng thái ${selectedDrone.status}. Chỉ drone ở trạng thái IDLE mới có thể tạo kế hoạch bay.`);
+      // 4. Validate Waypoint sequence numbers
+      const sequenceNumbers = waypoints.map(w => w.sequenceNumber);
+      const uniqueSequences = [...new Set(sequenceNumbers)];
+      if (sequenceNumbers.length !== uniqueSequences.length) {
+        message.error("Waypoint sequence numbers phải là duy nhất!");
         return;
       }
       
-      // Check altitude validation against drone maxAltitude
-      if (selectedDrone) {
-        const invalidWaypoint = waypoints.find(wp => wp.altitude > selectedDrone.maxAltitude);
-        if (invalidWaypoint) {
-          message.error(`Waypoint #${invalidWaypoint.sequenceNumber}: altitude ${invalidWaypoint.altitude} exceeds drone maxAltitude ${selectedDrone.maxAltitude}.`);
-          return;
-        }
+      // 5. Validate Waypoint coordinates
+      const invalidCoords = waypoints.find(wp => 
+        !wp.latitude || !wp.longitude || 
+        wp.latitude < -90 || wp.latitude > 90 ||
+        wp.longitude < -180 || wp.longitude > 180
+      );
+      if (invalidCoords) {
+        message.error(`Waypoint #${invalidCoords.sequenceNumber}: tọa độ không hợp lệ!`);
+        return;
       }
       
+      // 6. Validate Altitude
+      const invalidAltitude = waypoints.find(wp => 
+        !wp.altitude || wp.altitude <= 0 || wp.altitude > 20000
+      );
+      if (invalidAltitude) {
+        message.error(`Waypoint #${invalidAltitude.sequenceNumber}: altitude phải > 0 và ≤ 20000m!`);
+        return;
+      }
+      
+      // 7. Validate altitude against drone maxAltitude
+      const invalidMaxAltitude = waypoints.find(wp => wp.altitude > selectedDrone.maxAltitude);
+      if (invalidMaxAltitude) {
+        message.error(`Waypoint #${invalidMaxAltitude.sequenceNumber}: altitude ${invalidMaxAltitude.altitude} exceeds drone maxAltitude ${selectedDrone.maxAltitude}.`);
+        return;
+      }
+      
+      // 8. Validate Priority
+      if (!priority || priority < 0 || priority > 10) {
+        message.error("Ưu tiên phải từ 0 đến 10!");
+        return;
+      }
+      
+      // 9. Validate Battery Percentage
+      if (batteryPercentageUsed === null || batteryPercentageUsed === undefined || 
+          batteryPercentageUsed < 0 || batteryPercentageUsed > 100) {
+        message.error("Pin dự kiến sử dụng phải từ 0% đến 100%!");
+        return;
+      }
+      
+      // 10. Validate Estimated Flight Time
+      if (!estimatedFlightTime || estimatedFlightTime <= 0 || estimatedFlightTime > 1440) {
+        message.error("Thời gian bay dự kiến phải > 0 phút và ≤ 1440 phút (24 giờ)!");
+        return;
+      }
+      
+      // 11. Validate Waypoint actions
+      const validActions = ["TAKEOFF", "WAYPOINT", "LAND"];
+      const invalidAction = waypoints.find(wp => !validActions.includes(wp.action));
+      if (invalidAction) {
+        message.error(`Waypoint #${invalidAction.sequenceNumber}: action "${invalidAction.action}" không hợp lệ!`);
+        return;
+      }
+      
+      // 12. Final validation - all required fields present
       const payload = {
-        drone: form.getFieldValue("drone"),
-        notes: notes,
+        drone: selectedDroneId,
+        notes: notes || "",
         priority: priority,
         waypoints: waypoints,
+        batteryPercentageUsed: batteryPercentageUsed,
+        estimatedFlightTime: estimatedFlightTime,
       };
+      
+      // Log payload for debugging
+      console.log('🚀 [FlightPlanForm] Submitting payload:', payload);
       
       setLoading(true);
       
       if (actualEditingId) {
-await dispatch(updateFlightPlan({ id: actualEditingId, data: payload }));
+        await dispatch(updateFlightPlan({ id: actualEditingId, data: payload }));
         message.success("Cập nhật kế hoạch bay thành công!");
       } else {
         await dispatch(createFlightPlan(payload));
@@ -441,6 +518,43 @@ await dispatch(updateFlightPlan({ id: actualEditingId, data: payload }));
                           placeholder="Nhập mục đích hoặc ghi chú thêm cho chuyến bay..."
                           value={notes}
                           onChange={(e) => setNotes(e.target.value)}
+                        />
+                      </div>
+                    </Form.Item>
+                  </div>
+                </div>
+                <div className="fp-config-row" style={{ marginTop: 16 }}>
+                  <div className="fp-config-col-drone">
+                    <Form.Item>
+                      <div>
+                        <div className="fp-field-label">
+                          Pin dự kiến sử dụng (%)
+                        </div>
+                        <InputNumber
+                          min={0}
+                          max={100}
+                          value={batteryPercentageUsed}
+                          onChange={(value) => setBatteryPercentageUsed(value ?? 100)}
+                          style={{ width: "100%" }}
+                          size="large"
+                          placeholder="100"
+                        />
+                      </div>
+                    </Form.Item>
+                  </div>
+                  <div className="fp-config-col-notes">
+                    <Form.Item>
+                      <div>
+                        <div className="fp-field-label">
+                          Thời gian bay dự kiến (phút)
+                        </div>
+                        <InputNumber
+                          min={1}
+                          value={estimatedFlightTime}
+                          onChange={(value) => setEstimatedFlightTime(value ?? 1)}
+                          style={{ width: "100%" }}
+                          size="large"
+                          placeholder="1"
                         />
                       </div>
                     </Form.Item>

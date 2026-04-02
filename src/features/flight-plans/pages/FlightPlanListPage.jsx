@@ -30,7 +30,7 @@ const FlightPlanListPage = () => {
   const flightPlans = useSelector(selectFlightPlansList);
 
   useEffect(() => {
-    dispatch(fetchFlightPlans({ page: 1, limit: 10 }));
+    dispatch(fetchFlightPlans({ page: 1, limit: 10, status: 'ACTIVE' }));
   }, [dispatch]);
 
   const handleDeleteFlightPlan = (record) => {
@@ -45,7 +45,7 @@ const FlightPlanListPage = () => {
           await dispatch(deleteFlightPlan(record._id)).unwrap();
           message.success("Xóa kế hoạch bay thành công!");
           // Refresh list
-          dispatch(fetchFlightPlans({ page: 1, limit: 10 }));
+          dispatch(fetchFlightPlans({ page: 1, limit: 10, status: 'ACTIVE' }));
         } catch (error) {
           console.error("Delete flight plan error:", error);
           message.error(error?.message || "Xóa kế hoạch bay thất bại!");
