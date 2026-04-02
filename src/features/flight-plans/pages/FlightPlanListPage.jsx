@@ -13,12 +13,8 @@ import {
 import { PlusOutlined, EyeOutlined, DeleteOutlined } from "@ant-design/icons";
 import { useDispatch, useSelector } from "react-redux";
 import { Modal, message } from "antd";
-import {
-  fetchFlightPlans,
-  selectFlightPlansList,
-  selectFlightPlansLoading,
-  deleteFlightPlan,
-} from "../slices/flightPlanSlice";
+import listStyles from "../../../shared/styles/listPages.module.css";
+import { fetchFlightPlans, selectFlightPlansList, selectFlightPlansLoading, deleteFlightPlan, } from "../slices/flightPlanSlice";
 import dayjs from "dayjs";
 import { useNavigate } from "react-router-dom";
 
@@ -72,7 +68,7 @@ const FlightPlanListPage = () => {
       title: "Chuyến bay",
       key: "id",
       dataIndex: "_id",
-      render: (id) => <Tag>{id.substring(id.length - 6).toUpperCase()}</Tag>,
+      render: (id) => <strong>{id.substring(id.length - 6).toUpperCase()}</strong>,
     },
     {
       title: "Drone",
@@ -105,15 +101,12 @@ const FlightPlanListPage = () => {
       key: "conflictStatus",
       dataIndex: "conflictStatus",
       render: (conflictStatus) => {
-        const getColor = (status) => {
-          switch (status) {
-            case "CLEAR": return "success";
-            case "WARNING": return "warning";
-            case "CONFLICT": return "error";
-            default: return "default";
-          }
-        };
-        return <Tag color={getColor(conflictStatus)}>{conflictStatus || "N/A"}</Tag>;
+        const isClear = conflictStatus === "CLEAR";
+        return (
+          <span className={`${listStyles.statusBadge} ${isClear ? listStyles.statusActive : listStyles.statusInactive}`}>
+            {conflictStatus || "N/A"}
+          </span>
+        );
       },
     },
     {
@@ -122,24 +115,26 @@ const FlightPlanListPage = () => {
       render: (_, record) => (
         <Space size="middle">
           <Tooltip title="Xem chi tiết">
-            <Button
-              type="text"
-              icon={<EyeOutlined style={{ color: "#1677ff" }} />}
+            <button
+              className={`${listStyles.actionButton} ${listStyles.actionButtonView}`}
               onClick={(e) => {
                 e.stopPropagation();
                 navigate(`/operator/flight-plans/${record._id}`);
               }}
-            />
+            >
+              <EyeOutlined />
+            </button>
           </Tooltip>
           <Tooltip title="Xóa kế hoạch bay">
-            <Button
-              type="text"
-              icon={<DeleteOutlined style={{ color: "#ff4d4f" }} />}
+            <button
+              className={`${listStyles.actionButton} ${listStyles.actionButtonDelete}`}
               onClick={(e) => {
                 e.stopPropagation();
                 handleDeleteFlightPlan(record);
               }}
-            />
+            >
+              <DeleteOutlined />
+            </button>
           </Tooltip>
         </Space>
       ),
@@ -147,37 +142,29 @@ const FlightPlanListPage = () => {
   ];
 
   return (
-    <div style={{ padding: 24 }}>
-      <Card
-        title={
-          <div
-            style={{
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center",
-            }}
-          >
-            <Title level={4} style={{ margin: 0 }}>
-              Quản lý Kế Hoạch Bay (Flight Plans)
-            </Title>
-            <Space>
-              <Search
-                placeholder="Tìm theo serial hoặc model drone"
-                allowClear
-                style={{ width: 250 }}
-                onChange={(e) => setSearchText(e.target.value)}
-              />
-              <Button
-                type="primary"
-                icon={<PlusOutlined />}
-                onClick={() => navigate("/operator/flight-plans/new")}
-              >
-                Tạo Kế Hoạch Bay
-              </Button>
-            </Space>
+    <div className={listStyles.pageContainer}>
+      <Card className={listStyles.tableCard}>
+        <div className={listStyles.pageHeader}>
+          <Title level={4}>
+            Quản lý Kế Hoạch Bay
+          </Title>
+          <div className={listStyles.pageHeaderRight}>
+            <Search
+              placeholder="Tìm theo serial hoặc model drone"
+              allowClear
+              className={listStyles.searchInput}
+              onChange={(e) => setSearchText(e.target.value)}
+            />
+            <Button 
+              className={listStyles.createButtonBlue} 
+              icon={<PlusOutlined />}
+              onClick={() => navigate("/operator/flight-plans/new")}
+            >
+              Tạo Kế Hoạch Bay
+            </Button>
           </div>
-        }
-      >
+        </div>
+
         <Table
           columns={columns}
           dataSource={filteredFlightPlans}

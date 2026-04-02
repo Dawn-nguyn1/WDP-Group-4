@@ -1,0 +1,398 @@
+/* ==================== SHARED STYLES FOR LIST PAGES ==================== */
+/* Drone, Flight Plan, Mission, Mission Plans List Pages */
+
+/* ==================== PAGE CONTAINER ==================== */
+.pageContainer {
+  background: #f8f9fc;
+  padding: 32px;
+  min-height: 100vh;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+}
+
+/* ==================== HEADER ==================== */
+.pageHeader {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-radius: 12px;
+  padding: 24px 32px;
+  margin-bottom: 24px;
+  color: white;
+  box-shadow: 0 4px 20px rgba(102, 126, 234, 0.3);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.pageHeader h4 {
+  margin: 0 !important;
+  color: white !important;
+  font-weight: 600;
+  font-size: 24px;
+}
+
+.pageHeaderRight {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+/* ==================== SEARCH INPUT ==================== */
+.searchInput {
+  width: 280px !important;
+}
+
+.searchInput input {
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  background: rgba(255, 255, 255, 0.15);
+  color: white;
+  transition: all 0.3s ease;
+}
+
+.searchInput input::placeholder {
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.searchInput input:hover,
+.searchInput input:focus {
+  background: rgba(255, 255, 255, 0.25);
+  border-color: rgba(255, 255, 255, 0.5);
+}
+
+/* ==================== CREATE BUTTON ==================== */
+.createButton {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border: none;
+  border-radius: 8px;
+  padding: 10px 20px;
+  font-weight: 500;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+}
+
+.createButton:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+  background: linear-gradient(135deg, #5a67d8 0%, #6b46c1 100%);
+}
+
+.createButton:active {
+  transform: translateY(0);
+}
+
+/* ==================== CREATE BUTTON BLUE VARIANT ==================== */
+.createButtonBlue {
+  background: #3b82f6;
+  border: none;
+  border-radius: 8px;
+  padding: 10px 20px;
+  font-weight: 500;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3);
+  color: white;
+}
+
+.createButtonBlue:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 15px rgba(59, 130, 246, 0.4);
+  background: #2563eb;
+}
+
+.createButtonBlue:active {
+  transform: translateY(0);
+}
+
+/* ==================== TABLE CARD ==================== */
+.tableCard {
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+  overflow: hidden;
+  transition: box-shadow 0.3s ease;
+}
+
+.tableCard:hover {
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.12);
+}
+
+/* ==================== TABLE STYLING ==================== */
+.customTable {
+  border-radius: 12px;
+}
+
+.customTable :global(.ant-table) {
+  border-radius: 12px;
+}
+
+.customTable :global(.ant-table-thead > tr > th) {
+  background: linear-gradient(135deg, #f8f9fc 0%, #edf2f7 100%);
+  font-weight: 600;
+  color: #4a5568;
+  border-bottom: 2px solid #e2e8f0;
+  padding: 16px 24px;
+}
+
+.customTable :global(.ant-table-tbody > tr:hover > td) {
+  background: #f8f9fc;
+}
+
+.customTable :global(.ant-table-tbody > tr > td) {
+  padding: 16px 24px;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+/* ==================== AVATAR SYSTEM ==================== */
+.avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  font-size: 14px;
+  color: white;
+  text-transform: uppercase;
+}
+
+.avatarBlue {
+  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3);
+}
+
+.avatarOrange {
+  background: linear-gradient(135deg, #f97316 0%, #ea580c 100%);
+  box-shadow: 0 2px 8px rgba(249, 115, 22, 0.3);
+}
+
+.avatarPurple {
+  background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+  box-shadow: 0 2px 8px rgba(139, 92, 246, 0.3);
+}
+
+.avatarRed {
+  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+  box-shadow: 0 2px 8px rgba(239, 68, 68, 0.3);
+}
+
+.avatarTeal {
+  background: linear-gradient(135deg, #14b8a6 0%, #0d9488 100%);
+  box-shadow: 0 2px 8px rgba(20, 184, 166, 0.3);
+}
+
+.avatarPink {
+  background: linear-gradient(135deg, #ec4899 0%, #db2777 100%);
+  box-shadow: 0 2px 8px rgba(236, 72, 153, 0.3);
+}
+
+/* ==================== STATUS BADGES ==================== */
+.statusBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.statusBadge::before {
+  content: '';
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+
+.statusActive {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.statusActive::before {
+  background: #22c55e;
+}
+
+.statusInactive {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+.statusInactive::before {
+  background: #ef4444;
+}
+
+/* ==================== ACTION BUTTONS ==================== */
+.actionButton {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.actionButtonView {
+  background: #e0f2fe;
+  color: #0369a1;
+}
+
+.actionButtonView:hover {
+  background: #bae6fd;
+  transform: scale(1.05);
+}
+
+.actionButtonEdit {
+  background: #fef3c7;
+  color: #b45309;
+}
+
+.actionButtonEdit:hover {
+  background: #fde68a;
+  transform: scale(1.05);
+}
+
+.actionButtonDelete {
+  background: #fee2e2;
+  color: #dc2626;
+}
+
+.actionButtonDelete:hover {
+  background: #fecaca;
+  transform: scale(1.05);
+}
+
+/* ==================== PAGINATION ==================== */
+.customPagination {
+  display: flex;
+  justify-content: flex-end;
+  padding: 16px 24px;
+  border-top: 1px solid #f1f5f9;
+}
+
+.customPagination :global(.ant-pagination-item) {
+  border-radius: 6px;
+  border-color: #e2e8f0;
+  transition: all 0.2s ease;
+}
+
+.customPagination :global(.ant-pagination-item:hover) {
+  border-color: #667eea;
+  color: #667eea;
+}
+
+.customPagination :global(.ant-pagination-item-active) {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-color: #667eea;
+  color: white !important;
+}
+
+.customPagination :global(.ant-pagination-item-active a) {
+  color: white !important;
+}
+
+.customPagination :global(.ant-pagination-prev),
+.customPagination :global(.ant-pagination-next) {
+  border-radius: 6px;
+}
+
+/* ==================== LOADING STATES ==================== */
+.loadingContainer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 64px;
+}
+
+.loadingDots {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.loadingDot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  animation: bounce 1.4s infinite ease-in-out both;
+}
+
+.loadingDot:nth-child(1) {
+  animation-delay: -0.32s;
+}
+
+.loadingDot:nth-child(2) {
+  animation-delay: -0.16s;
+}
+
+@keyframes bounce {
+  0%, 80%, 100% {
+    transform: scale(0);
+    opacity: 0.5;
+  }
+  40% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.loadingText {
+  color: #667eea;
+  font-weight: 500;
+}
+
+/* ==================== EMPTY STATE ==================== */
+.emptyState {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 64px;
+  text-align: center;
+}
+
+.emptyStateIcon {
+  font-size: 64px;
+  color: #cbd5e1;
+  margin-bottom: 16px;
+}
+
+.emptyStateTitle {
+  font-size: 18px;
+  font-weight: 600;
+  color: #4a5568;
+  margin-bottom: 8px;
+}
+
+.emptyStateDescription {
+  color: #718096;
+  font-size: 14px;
+}
+
+/* ==================== RESPONSIVE ==================== */
+@media (max-width: 768px) {
+  .pageContainer {
+    padding: 16px;
+  }
+
+  .pageHeader {
+    flex-direction: column;
+    gap: 16px;
+    padding: 20px 24px;
+  }
+
+  .pageHeader h4 {
+    font-size: 20px;
+  }
+
+  .searchInput {
+    width: 100% !important;
+  }
+
+  .tableCard {
+    border-radius: 8px;
+  }
+}

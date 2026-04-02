@@ -28,7 +28,7 @@ import {
 } from "../slices/droneSlice";
 import DroneForm from "../components/DroneForm";
 import DroneDetailDrawer from "../components/DroneDetailDrawer";
-import styles from "../styles/DronePage.module.css";
+import listStyles from "../../../shared/styles/listPages.module.css";
 import dayjs from "dayjs";
 
 const { Title } = Typography;
@@ -114,11 +114,12 @@ const DronePage = () => {
       dataIndex: "status",
       key: "status",
       render: (status) => {
-        let color = "default";
-        if (status === "IDLE") color = "success";
-        if (status === "IN_FLIGHT") color = "processing";
-        if (status === "MAINTENANCE") color = "error";
-        return <Badge status={color} text={status} />;
+        const isActive = status === "IDLE";
+        return (
+          <span className={`${listStyles.statusBadge} ${isActive ? listStyles.statusActive : listStyles.statusInactive}`}>
+            {status}
+          </span>
+        );
       },
     },
     {
@@ -141,29 +142,31 @@ const DronePage = () => {
       render: (_, record) => (
         <Space size="middle">
           <Tooltip title="Xem chi tiết">
-            <Button
-              type="text"
-              icon={<EyeOutlined />}
+            <button
+              className={`${listStyles.actionButton} ${listStyles.actionButtonView}`}
               onClick={(e) => {
                 e.stopPropagation();
                 handleRowClick(record);
               }}
-            />
+            >
+              <EyeOutlined />
+            </button>
           </Tooltip>
           <Tooltip title="Chỉnh sửa">
-            <Button
-              type="text"
-              icon={<EditOutlined style={{ color: "#1677ff" }} />}
+            <button
+              className={`${listStyles.actionButton} ${listStyles.actionButtonEdit}`}
               onClick={(e) => handleEdit(record, e)}
-            />
+            >
+              <EditOutlined />
+            </button>
           </Tooltip>
           <Tooltip title="Xóa">
-            <Button
-              type="text"
-              danger
-              icon={<DeleteOutlined />}
+            <button
+              className={`${listStyles.actionButton} ${listStyles.actionButtonDelete}`}
               onClick={(e) => handleDelete(record._id, e)}
-            />
+            >
+              <DeleteOutlined />
+            </button>
           </Tooltip>
         </Space>
       ),
@@ -171,27 +174,29 @@ const DronePage = () => {
   ];
 
   return (
-    <div className={styles.container}>
-      <Card
-        title={
-          <div className={styles.header}>
-            <Title level={4} style={{ margin: 0 }}>
-              Quản lý Drone
-            </Title>
-            <Space>
-              <Search
-                placeholder="Tìm theo serial hoặc model"
-                allowClear
-                style={{ width: 250 }}
-                onChange={(e) => setSearchText(e.target.value)}
-              />
-              <Button type="primary" icon={<PlusOutlined />} onClick={handleAdd}>
-                Thêm Drone
-              </Button>
-            </Space>
+    <div className={listStyles.pageContainer}>
+      <Card className={listStyles.tableCard}>
+        <div className={listStyles.pageHeader}>
+          <Title level={4}>
+            Quản lý Drone
+          </Title>
+          <div className={listStyles.pageHeaderRight}>
+            <Search
+              placeholder="Tìm theo serial hoặc model"
+              allowClear
+              className={listStyles.searchInput}
+              onChange={(e) => setSearchText(e.target.value)}
+            />
+            <Button 
+              className={listStyles.createButtonBlue} 
+              icon={<PlusOutlined />} 
+              onClick={handleAdd}
+            >
+              Thêm Drone
+            </Button>
           </div>
-        }
-      >
+        </div>
+
         <Table
           columns={columns}
           dataSource={filteredDrones}
