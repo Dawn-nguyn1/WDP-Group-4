@@ -81,7 +81,7 @@ const SimulationControl = ({ currentMission, currentRun }) => {
             htmlType="submit"
             icon={<PlayCircleOutlined />}
             loading={isStarting}
-            disabled={!currentMission || isRunning || isStoppingState || isCompleted}
+            disabled={!currentMission || isRunning || isStoppingState}
             className="w-1/2 mr-2"
           >
             Start Simulation

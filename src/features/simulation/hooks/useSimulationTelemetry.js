@@ -7,27 +7,44 @@ export function useSimulationTelemetry(currentRun, token) {
   useEffect(() => {
     // If no active run or missing wsUrl/token, do not connect
     if (!currentRun?.runId || !currentRun?.options?.wsUrl || !token) {
+      console.log('🔌 [WS] Skipping connect - missing data:', {
+        runId: currentRun?.runId,
+        wsUrl: currentRun?.options?.wsUrl,
+        hasToken: !!token,
+        status: currentRun?.status
+      });
       return;
     }
 
     if (!['RUNNING', 'STOPPING'].includes(currentRun.status)) {
+      console.log('🔌 [WS] Skipping connect - status not active:', currentRun.status);
       return;
     }
 
     const { wsUrl } = currentRun.options;
     const { missionId } = currentRun;
 
-    // Khởi tạo socket.io client
+    console.log('🔌 [WS] Attempting connection to:', wsUrl, 'for mission:', missionId);
+
+    // Khởi tạo socket.io client - dùng polling trước (ổn định), rồi upgrade lên websocket
     const socket = io(wsUrl, {
-      transports: ['websocket', 'polling'],
-      auth: { token }, // gửi theo auth hoặc query tùy BE setup
-      query: { token }
+      transports: ['polling', 'websocket'],
+      upgrade: true,
+      auth: { token },
+      query: { token },
+      reconnection: true,
+      reconnectionAttempts: 10,
+      reconnectionDelay: 500,
     });
 
     socket.on('connect', () => {
-      console.log('✅ Connected to Simulation Telemetry WebSocket');
-      // Đăng ký nhận telemetry và alert cho mission hiện tại
+      console.log('✅ [WS] Connected to WebSocket at:', wsUrl);
+      console.log('✅ [WS] Joining watch_session with missionId:', missionId);
       socket.emit('watch_session', { contextId: missionId });
+    });
+
+    socket.on('connect_error', (err) => {
+      console.error('❌ [WS] Connection error:', err.message);
     });
 
     socket.on('disconnect', () => {
@@ -35,7 +52,7 @@ export function useSimulationTelemetry(currentRun, token) {
     });
 
     socket.on('telemetry', (payload) => {
-      // payload: { droneId, sessionId, lat, lng, alt, speed, heading, batteryLevel, timestamp }
+      console.log('📡 [WS] Telemetry received:', payload.droneId, 'lat:', payload.lat, 'lng:', payload.lng);
       setDronesLiveProps((prev) => ({
         ...prev,
         [payload.droneId]: {

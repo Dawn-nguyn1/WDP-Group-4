@@ -130,41 +130,52 @@ const SimulationMap = ({
 
 
         {/* Render danh sách Drone đang bay */}
-        {Object.entries(dronesLiveProps).map(([droneId, props]) => {
-          if (!props.lat || !props.lng) return null;
+        {(() => {
+          const entries = Object.entries(dronesLiveProps);
+          console.log('🗺️ [Map] dronesLiveProps entries:', entries.length, dronesLiveProps);
+          return entries.map(([droneId, props]) => {
+            if (!props.lat || !props.lng) {
+              console.log('🗺️ [Map] Skipping drone - no lat/lng:', droneId, props);
+              return null;
+            }
 
-          // Drone đỏ (nhấp nháy) nếu có alert, xanh nếu bình thường
-          const isAlert = !!props.alertText;
-          const bgClass = isAlert ? 'bg-red-500 animate-pulse' : 'bg-blue-500';
+            const isAlert = !!props.alertText;
 
-          // Tạo icon emoji bằng thẻ div
-          const iconHtml = `
-            <div class="flex items-center justify-center w-8 h-8 rounded-full shadow-lg border-2 border-white ${bgClass}" 
-                 style="transform: rotate(${props.heading || 0}deg); transition: transform 0.3s ease;">
-              <span class="text-xl" style="transform: rotate(-${props.heading || 0}deg);">🚁</span>
-            </div>
-          `;
+            // Chấm tròn CSS thuần - trắng khi bình thường, đỏ khi alert
+            const dotColor = isAlert ? '#ef4444' : '#ffffff';
+            const borderColor = isAlert ? '#fca5a5' : '#3b82f6';
+            const iconHtml = `
+              <div style="
+                width: 16px;
+                height: 16px;
+                background: ${dotColor};
+                border: 3px solid ${borderColor};
+                border-radius: 50%;
+                box-shadow: 0 0 6px rgba(0,0,0,0.5);
+              "></div>
+            `;
 
-          const droneIcon = L.divIcon({
-            html: iconHtml,
-            className: '', // reset default leaflet class
-            iconSize: [32, 32],
-            iconAnchor: [16, 16],
+            const droneIcon = L.divIcon({
+              html: iconHtml,
+              className: '',
+              iconSize: [16, 16],
+              iconAnchor: [8, 8],
+            });
+
+            return (
+              <Marker key={droneId} position={[props.lat, props.lng]} icon={droneIcon}>
+                <Tooltip direction="top" offset={[0, -10]} opacity={1} permanent={isAlert}>
+                  <div style={{ fontSize: '11px' }}>
+                    <strong>Drone {droneId.slice(-6).toUpperCase()}</strong><br />
+                    📡 {Number(props.lat).toFixed(5)}, {Number(props.lng).toFixed(5)}<br />
+                    Spd: {Math.round(props.speed || 0)} m/s | Alt: {Math.round(props.alt || 0)}m
+                    {isAlert && <div style={{ color: 'red', fontWeight: 'bold', marginTop: '2px' }}>⚠️ {props.alertText}</div>}
+                  </div>
+                </Tooltip>
+              </Marker>
+            );
           });
-
-          return (
-            <Marker key={droneId} position={[props.lat, props.lng]} icon={droneIcon}>
-              <Tooltip direction="top" offset={[0, -16]} opacity={1} permanent={isAlert}>
-                <div className="text-xs">
-                  <strong>{droneId.slice(-6)}</strong><br />
-                  Spd: {Math.round(props.speed || 0)} m/s<br />
-                  Alt: {Math.round(props.alt || 0)} m
-                  {isAlert && <div className="text-red-500 font-bold mt-1">⚠️ {props.alertText}</div>}
-                </div>
-              </Tooltip>
-            </Marker>
-          );
-        })}
+        })()}
       </MapContainer>
     </div>
   );
