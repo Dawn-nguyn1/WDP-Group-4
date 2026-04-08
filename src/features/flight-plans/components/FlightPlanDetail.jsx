@@ -25,7 +25,7 @@ import {
   selectFlightPlansLoading,
   clearCurrentPlan,
 } from "../slices/flightPlanSlice";
-import FlightPlanMapWithZones from "../components/FlightPlanMapDetail";
+import FlightPlanMapWithZones from "./FlightPlanMapDetail";
 
 const { Title, Text } = Typography;
 const { confirm } = Modal;
