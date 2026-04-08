@@ -9,10 +9,8 @@ import {
 import { fetchMissions, selectMissionsList, selectMissionsLoading } from "../../missions/slices/missionSlice";
 import SimulationControl from "../components/SimulationControl";
 import SimulationLogConsole from "../components/SimulationLogConsole";
-
-// If using leaflet:
-// import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
-// map integration is basic for now as requested. 
+import SimulationMap from "../components/SimulationMap";
+import { useSimulationTelemetry } from "../hooks/useSimulationTelemetry";
 
 const { Content } = Layout;
 const { Option } = Select;
@@ -59,6 +57,10 @@ const SimulationDashboard = () => {
   const selectedMission = missions?.find(m => m._id === selectedMissionId);
   
   const isSimulationActive = currentRun && ["RUNNING", "STOPPING"].includes(currentRun.status);
+
+  // Lắng nghe Telemetry qua WebSocket
+  const token = localStorage.getItem("access_token");
+  const { dronesLiveProps } = useSimulationTelemetry(currentRun, token);
 
   return (
     <Layout className="h-full bg-gray-50">
@@ -107,25 +109,11 @@ const SimulationDashboard = () => {
           </Col>
           
           <Col xs={24} lg={16}>
-             {/* Map Placeholder */}
-             <div className="bg-gray-200 h-[300px] rounded-lg shadow-sm mb-4 flex items-center justify-center border border-gray-300 relative overflow-hidden">
-                <div className="text-center">
-                  <div className="text-gray-500 mb-2">Map View</div>
-                  {selectedMission ? (
-                    <div className="text-sm text-gray-600">
-                      Map will display route for Mission: <strong>{selectedMission.name}</strong>
-                    </div>
-                  ) : (
-                    <div className="text-sm text-gray-500">Select a mission to view map</div>
-                  )}
-                </div>
-                {/* 
-                 For a full map implementation:
-                 <MapContainer bounds={...} ... >
-                   <TileLayer url="..." />
-                   // Render Flight Plans
-                 </MapContainer>
-                */}
+             <div className="bg-white rounded-lg shadow-sm mb-4 p-2 relative overflow-hidden">
+                <SimulationMap 
+                  currentMission={selectedMission}
+                  dronesLiveProps={dronesLiveProps}
+                />
             </div>
 
             <SimulationLogConsole currentRun={currentRun} />
