@@ -73,32 +73,32 @@ export function useSimulationTelemetry(currentRun, token) {
     if (!currentRun?.logs) return;
 
     // Check last line of log for deviation
-    const deviationLogs = currentRun.logs.filter(l => 
-        l.message && l.message.includes('ALERT DEVIATION')
+    const deviationLogs = currentRun.logs.filter(l =>
+      l.message && l.message.includes('ALERT DEVIATION')
     );
 
     if (deviationLogs.length > 0) {
       // Phân tích log để gắn alert cho drone, ví dụ: "⚠️  [...d79ec4] ALERT DEVIATION: ..."
       // Extract droneId from log message if possible
       deviationLogs.forEach(log => {
-         const match = log.message.match(/\[([^\]]+)\] ALERT DEVIATION/);
-         if (match) {
-            const shortDroneId = match[1].replace('...', '');
-            // update any droneId that ends with shortDroneId
-            setDronesLiveProps(prev => {
-               const newProps = { ...prev };
-               for (const key of Object.keys(newProps)) {
-                  if (key.endsWith(shortDroneId)) {
-                     newProps[key] = {
-                        ...newProps[key],
-                        alertText: 'DEVIATION',
-                        alertTime: Date.now()
-                     };
-                  }
-               }
-               return newProps;
-            });
-         }
+        const match = log.message.match(/\[([^\]]+)\] ALERT DEVIATION/);
+        if (match) {
+          const shortDroneId = match[1].replace('...', '');
+          // update any droneId that ends with shortDroneId
+          setDronesLiveProps(prev => {
+            const newProps = { ...prev };
+            for (const key of Object.keys(newProps)) {
+              if (key.endsWith(shortDroneId)) {
+                newProps[key] = {
+                  ...newProps[key],
+                  alertText: 'DEVIATION',
+                  alertTime: Date.now()
+                };
+              }
+            }
+            return newProps;
+          });
+        }
       });
     }
 
@@ -106,23 +106,23 @@ export function useSimulationTelemetry(currentRun, token) {
 
   // Clean up old alerts (ví dụ sau 3s không tái hiện thì xoá viền đỏ)
   useEffect(() => {
-     const interval = setInterval(() => {
-       setDronesLiveProps(prev => {
-          let changed = false;
-          const next = { ...prev };
-          const now = Date.now();
-          for (const key of Object.keys(next)) {
-             if (next[key].alertTime && (now - next[key].alertTime > 3000)) {
-                next[key] = { ...next[key] };
-                delete next[key].alertTime;
-                delete next[key].alertText;
-                changed = true;
-             }
+    const interval = setInterval(() => {
+      setDronesLiveProps(prev => {
+        let changed = false;
+        const next = { ...prev };
+        const now = Date.now();
+        for (const key of Object.keys(next)) {
+          if (next[key].alertTime && (now - next[key].alertTime > 3000)) {
+            next[key] = { ...next[key] };
+            delete next[key].alertTime;
+            delete next[key].alertText;
+            changed = true;
           }
-          return changed ? next : prev;
-       });
-     }, 1000);
-     return () => clearInterval(interval);
+        }
+        return changed ? next : prev;
+      });
+    }, 1000);
+    return () => clearInterval(interval);
   }, []);
 
   return { dronesLiveProps };
