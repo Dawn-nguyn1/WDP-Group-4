@@ -20,7 +20,7 @@ const AddFlightPlanModal = ({ visible, missionId, onClose, onSuccess }) => {
   useEffect(() => {
     // Fetch flight plans when modal opens
     if (visible) {
-      dispatch(fetchFlightPlans({ page: 1, limit: 100 }));
+      dispatch(fetchFlightPlans({ page: 1, limit: 100, status: "ACTIVE" }));
     }
   }, [dispatch, visible]);
 
