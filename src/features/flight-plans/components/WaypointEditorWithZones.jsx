@@ -89,7 +89,7 @@ const WaypointEditorWithZones = ({
       latitude: latlng.lat,
       longitude: latlng.lng,
       altitude: 50,
-      speed: 10,
+      speed: 22,
       estimatedTime: dayjs().add(waypoints.length * 10, "minutes").format("YYYY-MM-DDTHH:mm:ss"),
       action: waypoints.length === 0 ? "TAKEOFF" : (waypoints.length === 1 ? "LAND" : "WAYPOINT"),
     };

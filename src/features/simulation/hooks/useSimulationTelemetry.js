@@ -26,9 +26,10 @@ export function useSimulationTelemetry(currentRun, token) {
 
     console.log('🔌 [WS] Attempting connection to:', wsUrl, 'for mission:', missionId);
 
-    // Khởi tạo socket.io client - dùng polling trước (ổn định), rồi upgrade lên websocket
+    // Khởi tạo socket.io client - Backend uses path '/ws' (not default '/socket.io')
     const socket = io(wsUrl, {
-      transports: ['polling', 'websocket'],
+      path: '/ws',
+      transports: ['websocket', 'polling'],
       upgrade: true,
       auth: { token },
       query: { token },
@@ -38,9 +39,10 @@ export function useSimulationTelemetry(currentRun, token) {
     });
 
     socket.on('connect', () => {
-      console.log('✅ [WS] Connected to WebSocket at:', wsUrl);
-      console.log('✅ [WS] Joining watch_session with missionId:', missionId);
-      socket.emit('watch_session', { contextId: missionId });
+      console.log('✅ [WS] Connected to WebSocket at:', wsUrl, '(path: /ws)');
+      // Use watch_mission to join room "mission:<missionId>" and receive telemetry from ALL drones
+      console.log('✅ [WS] Watching mission:', missionId);
+      socket.emit('watch_mission', { missionId });
     });
 
     socket.on('connect_error', (err) => {
