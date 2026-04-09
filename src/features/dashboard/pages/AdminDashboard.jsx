@@ -40,10 +40,8 @@ const AdminDashboard = () => {
 
   return (
     <Layout className="dashboard-container">
-      <Header className="dashboard-header">
-        <div>
-          <Title level={2} className="dashboard-title">Admin Dashboards</Title>
-        </div>
+      <Header className="dashboard-header" style={{ display: 'flex', justifyContent: 'left' }}>
+        <Title level={2} className="dashboard-title">Admin Dashboards</Title>
       </Header>
       
       <Content>
