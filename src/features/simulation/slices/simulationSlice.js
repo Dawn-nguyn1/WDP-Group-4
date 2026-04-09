@@ -49,6 +49,19 @@ export const getSimulationStatus = createAsyncThunk(
   }
 );
 
+// Get simulation status by mission ID (alternative API with live drone data)
+export const getMissionSimulationStatus = createAsyncThunk(
+  "simulation/getMissionStatus",
+  async (missionId, { rejectWithValue }) => {
+    try {
+      const response = await simulationApi.getMissionSimulationStatusAPI(missionId);
+      return response;
+    } catch (err) {
+      return rejectWithValue(err.response?.data || err.message);
+    }
+  }
+);
+
 // Helper to manually clear run from local storage and state
 export const clearSimulation = () => (dispatch) => {
   localStorage.removeItem("currentSimulationRunId");
@@ -64,6 +77,7 @@ const initialState = {
   isStopping: false,
   isPolling: false,
   error: null,
+  liveDrones: [], // Store live drone data from mission status API
 };
 
 const simulationSlice = createSlice({
@@ -138,6 +152,19 @@ const simulationSlice = createSlice({
         if (action.payload?.message && typeof action.payload.message === "string" && action.payload.message.toLowerCase().includes("not found")) {
             state.currentRun = null;
         }
+      })
+
+      // getMissionSimulationStatus - alternative API with live drone data
+      .addCase(getMissionSimulationStatus.fulfilled, (state, action) => {
+        const response = action.payload;
+        // Store the live drone data separately
+        if (response?.run) {
+          state.currentRun = response.run;
+        }
+        state.liveDrones = response?.live?.drones || [];
+      })
+      .addCase(getMissionSimulationStatus.rejected, (state, action) => {
+        state.error = action.payload?.message || "Failed to fetch mission simulation status";
       });
   },
 });
@@ -148,5 +175,6 @@ export const selectCurrentRun = (state) => state.simulation.currentRun;
 export const selectIsStarting = (state) => state.simulation.isStarting;
 export const selectIsStopping = (state) => state.simulation.isStopping;
 export const selectSimulationError = (state) => state.simulation.error;
+export const selectLiveDrones = (state) => state.simulation.liveDrones;
 
 export default simulationSlice.reducer;

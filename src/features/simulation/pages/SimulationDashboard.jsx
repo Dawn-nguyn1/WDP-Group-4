@@ -5,8 +5,10 @@ import { SettingOutlined, ThunderboltOutlined, AimOutlined, CheckCircleOutlined 
 import '../../users/styles/UserPage.css';
 import {
   getSimulationStatus,
+  getMissionSimulationStatus,
   selectCurrentRun,
-  selectSimulationError
+  selectSimulationError,
+  selectLiveDrones
 } from "../slices/simulationSlice";
 import { fetchMissions, selectMissionsList, selectMissionsLoading } from "../../missions/slices/missionSlice";
 import { getMissionDetailAPI } from "../../missions/services/missionApi";
@@ -24,23 +26,25 @@ const SimulationDashboard = () => {
 
   const missions = useSelector(selectMissionsList);
   const missionsLoading = useSelector(selectMissionsLoading);
+  const liveDrones = useSelector(selectLiveDrones);
 
   const [selectedMissionId, setSelectedMissionId] = useState(null);
   const [detailedMission, setDetailedMission] = useState(null);
   const [missionFlightPaths, setMissionFlightPaths] = useState([]);
 
-  // Poll for status if a run is active
+  // Poll for status if a run is active - use mission-based API for live drone data
   useEffect(() => {
     let intervalId;
-    if (currentRun?.runId && ["RUNNING", "STOPPING"].includes(currentRun.status)) {
+    if (selectedMissionId && currentRun?.status && ["RUNNING", "STOPPING"].includes(currentRun.status)) {
       intervalId = setInterval(() => {
-        dispatch(getSimulationStatus(currentRun.runId));
-      }, 2000); // 2 second polling as planned
+        // Use mission-based API to get live drone data including battery
+        dispatch(getMissionSimulationStatus(selectedMissionId));
+      }, 2000); // 2 second polling
     }
     return () => {
       if (intervalId) clearInterval(intervalId);
     };
-  }, [currentRun?.runId, currentRun?.status, dispatch]);
+  }, [selectedMissionId, currentRun?.status, dispatch]);
 
   // Try to load missions if not loaded
   useEffect(() => {
@@ -150,19 +154,50 @@ const SimulationDashboard = () => {
   const token = localStorage.getItem("access_token");
   const { dronesLiveProps } = useSimulationTelemetry(currentRun, token);
 
-  // Calculate drone stats from telemetry
+  // Calculate drone stats from WebSocket telemetry data (real-time)
   const droneStats = Object.entries(dronesLiveProps).map(([droneId, props]) => {
-    const battery = props.batteryPercentage !== undefined ? props.batteryPercentage : 
-                   props.battery !== undefined ? props.battery : null;
-    const distance = props.distanceTraveled || props.distance || 0;
+    // Get battery from WebSocket telemetry (from simulate-mission.js)
+    let battery = null;
+    if (props.batteryLevel !== undefined && props.batteryLevel !== null) {
+      battery = props.batteryLevel;
+    } else if (props.battery !== undefined && props.battery !== null) {
+      battery = props.battery;
+    } else if (props.batteryPercentage !== undefined && props.batteryPercentage !== null) {
+      battery = props.batteryPercentage;
+    }
+    
+    // Calculate distance traveled from WebSocket telemetry: total - remaining
+    let distanceTraveled = 0;
+    let totalDistance = 0;
+    if (props.totalDistanceMeters !== undefined && props.remainingDistanceMeters !== undefined) {
+      totalDistance = props.totalDistanceMeters;
+      const remaining = props.remainingDistanceMeters;
+      distanceTraveled = totalDistance - remaining;
+    } else if (props.distanceTraveled !== undefined && props.distanceTraveled !== null) {
+      distanceTraveled = props.distanceTraveled;
+    } else if (props.distance !== undefined && props.distance !== null) {
+      distanceTraveled = props.distance;
+    }
+    
+    // Get progress percentage from WebSocket telemetry
+    const progressPercent = props.progressPercent !== undefined 
+      ? props.progressPercent 
+      : (totalDistance > 0 ? Math.round((distanceTraveled / totalDistance) * 100) : 0);
+    
     return {
       droneId: droneId.slice(-8), // Show last 8 chars
       fullDroneId: droneId,
       battery: battery !== null ? Math.round(battery) : null,
-      distance: distance,
+      distance: distanceTraveled,
+      totalDistance: totalDistance,
+      progressPercent: progressPercent,
       lat: props.lat,
       lng: props.lng,
-      altitude: props.altitude || props.alt
+      altitude: props.altitude || props.alt,
+      // Additional telemetry info
+      speed: props.speed,
+      heading: props.heading,
+      sessionId: props.sessionId
     };
   });
 
@@ -217,33 +252,39 @@ const SimulationDashboard = () => {
                     title={`Drone ...${drone.droneId}`}
                     style={{ background: '#fff' }}
                   >
-                    <Row gutter={8}>
-                      <Col span={12}>
-                        <Statistic
-                          title="Pin còn lại"
-                          value={drone.battery !== null ? drone.battery : 'N/A'}
-                          suffix={drone.battery !== null ? '%' : ''}
-                          valueStyle={{ 
-                            color: drone.battery !== null && drone.battery < 20 ? '#ff4d4f' : 
-                                   drone.battery !== null && drone.battery < 50 ? '#faad14' : '#52c41a',
-                            fontSize: '20px'
-                          }}
-                          prefix={<ThunderboltOutlined />}
-                        />
-                      </Col>
-                      <Col span={12}>
-                        <Statistic
-                          title="Quãng đường"
-                          value={(drone.distance / 1000).toFixed(2)}
-                          suffix="km"
-                          valueStyle={{ color: '#1890ff', fontSize: '20px' }}
-                          prefix={<AimOutlined />}
-                        />
-                      </Col>
-                    </Row>
-                    <div style={{ marginTop: 8, fontSize: 12, color: '#666' }}>
-                      Alt: {drone.altitude ? `${Math.round(drone.altitude)}m` : 'N/A'} | 
-                      Pos: {drone.lat?.toFixed(4)}, {drone.lng?.toFixed(4)}
+                    <div style={{ fontSize: 12, color: '#666', lineHeight: '1.8' }}>
+                      <div>
+                        <span style={{ color: '#1890ff' }}>🔋 Pin:</span>{' '}
+                        <span style={{ 
+                          color: drone.battery !== null 
+                            ? (drone.battery < 20 ? '#ff4d4f' : drone.battery < 50 ? '#faad14' : '#52c41a')
+                            : '#999',
+                          fontWeight: 500
+                        }}>
+                          {drone.battery !== null ? `${drone.battery}%` : 'N/A'}
+                        </span>
+                      </div>
+                      <div>
+                        <span style={{ color: '#1890ff' }}>📏 Quãng đường:</span>{' '}
+                        <span style={{ fontWeight: 500 }}>
+                          {(drone.distance / 1000).toFixed(2)} km
+                        </span>
+                        <span style={{ color: '#999', fontSize: 11 }}>
+                          {' '}(Tổng: {(drone.totalDistance / 1000).toFixed(2)} km)
+                        </span>
+                      </div>
+                      <div>
+                        <span style={{ color: '#1890ff' }}>📊 Tiến độ:</span>{' '}
+                        <span style={{ fontWeight: 500 }}>{drone.progressPercent}%</span>
+                      </div>
+                      <div>
+                        <span style={{ color: '#1890ff' }}>⛰️ Alt:</span>{' '}
+                        <span>{drone.altitude ? `${Math.round(drone.altitude)}m` : 'N/A'}</span>
+                      </div>
+                      <div>
+                        <span style={{ color: '#1890ff' }}>📍 Pos:</span>{' '}
+                        <span>{drone.lat?.toFixed(4)}, {drone.lng?.toFixed(4)}</span>
+                      </div>
                     </div>
                   </Card>
                 </Col>

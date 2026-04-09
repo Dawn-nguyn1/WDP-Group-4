@@ -11,3 +11,7 @@ export const stopSimulationAPI = (runId) => {
 export const getSimulationStatusAPI = (runId) => {
   return axios.get(`/api/simulations/${runId}/status`);
 };
+
+export const getMissionSimulationStatusAPI = (missionId) => {
+  return axios.get(`/api/simulations/missions/${missionId}/status`);
+};

@@ -54,7 +54,7 @@ export function useSimulationTelemetry(currentRun, token) {
     });
 
     socket.on('telemetry', (payload) => {
-      console.log('📡 [WS] Telemetry received:', payload.droneId, 'lat:', payload.lat, 'lng:', payload.lng);
+      console.log('📡 [WS] Telemetry received:', payload.droneId, 'lat:', payload.lat, 'lng:', payload.lng, 'battery:', payload.battery, 'batteryLevel:', payload.batteryLevel, 'distance:', payload.distance, 'distanceTraveled:', payload.distanceTraveled, 'full payload:', payload);
       setDronesLiveProps((prev) => ({
         ...prev,
         [payload.droneId]: {
