@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { Layout, Alert, Tag, Button } from "antd";
 import { SettingOutlined } from "@ant-design/icons";
+import '../../users/styles/UserPage.css';
 import {
   getSimulationStatus,
   selectCurrentRun,
@@ -141,17 +142,13 @@ const SimulationDashboard = () => {
   const hideConfigModal = () => setIsConfigModalOpen(false);
 
   return (
-    <Layout className="h-full bg-gray-50">
-      <Content className="p-6">
-        <div className="flex justify-between items-center mb-6">
-          <h1 className="text-2xl font-bold text-gray-800 m-0">Fleet Simulation Dashboard</h1>
-          {currentRun && (
-            <Tag color={currentRun.status === 'RUNNING' ? 'green' : currentRun.status === 'STOPPING' ? 'orange' : currentRun.status === 'FAILED' ? 'red' : 'blue'}>
-              Status: {currentRun.status}
-            </Tag>
-          )}
-        </div>
-
+    <div className="user-page-container">
+      <div className="page-header">
+        <h1 className="page-title">Fleet Simulation Dashboard</h1>
+        <p className="page-subtitle">Manage and monitor fleet simulations in real-time</p>
+      </div>
+      
+      <div className="p-6">
         {error && (
           <Alert message={error} type="error" showIcon className="mb-4" closable />
         )}
@@ -194,8 +191,8 @@ const SimulationDashboard = () => {
           isOpen={isConfigModalOpen}
           onClose={hideConfigModal}
         />
-      </Content>
-    </Layout>
+      </div>
+    </div>
   );
 };
 

@@ -4,6 +4,7 @@ import { PlusOutlined } from '@ant-design/icons';
 import MissionTable from '../MissionTable';
 import MissionForm from '../MissionForm';
 import MissionPlans from '../../missionsplans/Missonplans';
+import '../../../users/styles/UserPage.css';
 
 const { Title } = Typography;
 const { TabPane } = Tabs;
@@ -21,11 +22,13 @@ const MissionPage = () => {
   };
 
   return (
-    <div style={{ padding: '24px' }}>
-      <div style={{ marginBottom: '24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <Title level={2} style={{ margin: 0 }}>
-          Quản lý Missions
-        </Title>
+    <div className="user-page-container">
+      <div className="page-header">
+        <h1 className="page-title">Quản lý Mission</h1>
+        <p className="page-subtitle">Manage and view all missions in the system</p>
+      </div>
+      
+      <div style={{ marginBottom: '24px', display: 'flex', justifyContent: 'flex-end', alignItems: 'center' }}>
         {activeTab === 'missions' && (
           <Button 
             type="primary" 
@@ -38,14 +41,16 @@ const MissionPage = () => {
       </div>
 
       {/* Tabs for switching between missions and mission plans */}
-      <Tabs activeKey={activeTab} onChange={handleTabChange}>
-        <TabPane tab="Danh sách Missions" key="missions">
-          <MissionTable />
-        </TabPane>
-        <TabPane tab="Mission Plans" key="missionPlans">
-          <MissionPlans />
-        </TabPane>
-      </Tabs>
+      <div style={{ background: '#ffffff', borderRadius: '8px', border: '1px solid #e2e8f0', padding: '16px' }}>
+        <Tabs activeKey={activeTab} onChange={handleTabChange}>
+          <TabPane tab="Danh sách Missions" key="missions">
+            <MissionTable />
+          </TabPane>
+          <TabPane tab="Mission Plans" key="missionPlans">
+            <MissionPlans />
+          </TabPane>
+        </Tabs>
+      </div>
 
       {/* Modal for creating mission */}
       <Modal

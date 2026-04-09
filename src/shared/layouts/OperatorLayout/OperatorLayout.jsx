@@ -40,8 +40,9 @@ const OperatorLayout = () => {
   const getSelectedKey = () => {
     const path = location.pathname;
     if (path.includes("/operator/drones")) return "drones";
-    if (path.includes("/operator/flight-plans")) return "flight-plans";
-    if (path.includes("/operator/zones")) return "zones";
+    // Dashboard hidden
+    // if (path.includes("/operator/dashboard")) return "dashboard";
+    if (path.includes("/operator/drones")) return "drones";
     if (path.includes("/operator/missions")) return "missions";
     if (path.includes("/operator/simulation")) return "simulation";
     if (path.includes("/operator/profile")) return "profile";
@@ -49,11 +50,12 @@ const OperatorLayout = () => {
   };
 
   const menuItems = [
-    {
-      label: <Link to="/operator/dashboard">Dashboard</Link>,
-      key: "dashboard",
-      icon: <DashboardOutlined />,
-    },
+    // Dashboard hidden
+    // {
+    //   label: <Link to="/operator/dashboard">Dashboard</Link>,
+    //   key: "dashboard",
+    //   icon: <DashboardOutlined />,
+    // },
     {
       label: <Link to="/operator/drones">Drones</Link>,
       key: "drones",
