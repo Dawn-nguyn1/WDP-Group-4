@@ -88,28 +88,24 @@ const AddFlightPlanModal = ({ visible, missionId, onClose, onSuccess }) => {
         onFinish={handleSubmit}
       >
         <Form.Item
-          name="flightPlanId"
           label="Flight Plan"
-          rules={[
-            {
-              required: true,
-              message: 'Vui lòng chọn flight plan',
-            },
-          ]}
+          required
+          validateStatus={selectedFlightPlan ? 'success' : 'error'}
+          help={selectedFlightPlan ? null : 'Vui lòng chọn flight plan'}
         >
           <Select
             placeholder="Chọn Flight Plan"
             showSearch
+            value={selectedFlightPlan?._id}
             filterOption={(input, option) =>
               (option?.children ?? '').toLowerCase().includes(input.toLowerCase())
             }
             onChange={(value) => {
-              // Set form value immediately
-              form.setFieldValue('flightPlanId', value);
-              // Update selected flight plan state
+              console.log('🎯 Select onChange:', value);
               const selected = flightPlansList?.find(fp => fp._id === value);
+              console.log('📋 Selected:', selected?._id, 'time:', selected?.estimatedFlightTime);
               setSelectedFlightPlan(selected || null);
-              // If we have start time, auto-calculate end time immediately
+              form.setFieldValue('flightPlanId', value);
               const currentStart = form.getFieldValue('plannedStart');
               if (currentStart && selected?.estimatedFlightTime) {
                 const endTime = currentStart.add(selected.estimatedFlightTime, 'minute');
@@ -129,6 +125,11 @@ const AddFlightPlanModal = ({ visible, missionId, onClose, onSuccess }) => {
               Thời gian bay ước tính: {selectedFlightPlan.estimatedFlightTime} phút
             </Text>
           )}
+        </Form.Item>
+        
+        {/* Hidden field for form validation */}
+        <Form.Item name="flightPlanId" hidden>
+          <Input />
         </Form.Item>
 
         <Form.Item

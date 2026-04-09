@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { Layout, Alert, Tag, Button } from "antd";
-import { SettingOutlined } from "@ant-design/icons";
+import { Layout, Alert, Tag, Button, Card, Statistic, Row, Col, notification } from "antd";
+import { SettingOutlined, ThunderboltOutlined, AimOutlined, CheckCircleOutlined } from "@ant-design/icons";
 import '../../users/styles/UserPage.css';
 import {
   getSimulationStatus,
@@ -130,10 +130,41 @@ const SimulationDashboard = () => {
   const selectedMission = missions?.find(m => m._id === selectedMissionId);
 
   const isSimulationActive = currentRun && ["RUNNING", "STOPPING"].includes(currentRun.status);
+  const [prevStatus, setPrevStatus] = useState(null);
+
+  // Notification when simulation COMPLETED
+  useEffect(() => {
+    if (currentRun?.status === 'COMPLETED' && prevStatus && prevStatus !== 'COMPLETED') {
+      notification.success({
+        message: 'Simulation Completed',
+        description: 'Mission simulation has completed successfully!',
+        icon: <CheckCircleOutlined style={{ color: '#52c41a' }} />,
+        duration: 5,
+        placement: 'topRight'
+      });
+    }
+    setPrevStatus(currentRun?.status);
+  }, [currentRun?.status, prevStatus]);
 
   // Lắng nghe Telemetry qua WebSocket
   const token = localStorage.getItem("access_token");
   const { dronesLiveProps } = useSimulationTelemetry(currentRun, token);
+
+  // Calculate drone stats from telemetry
+  const droneStats = Object.entries(dronesLiveProps).map(([droneId, props]) => {
+    const battery = props.batteryPercentage !== undefined ? props.batteryPercentage : 
+                   props.battery !== undefined ? props.battery : null;
+    const distance = props.distanceTraveled || props.distance || 0;
+    return {
+      droneId: droneId.slice(-8), // Show last 8 chars
+      fullDroneId: droneId,
+      battery: battery !== null ? Math.round(battery) : null,
+      distance: distance,
+      lat: props.lat,
+      lng: props.lng,
+      altitude: props.altitude || props.alt
+    };
+  });
 
 
   const [isConfigModalOpen, setIsConfigModalOpen] = useState(false);
@@ -169,6 +200,57 @@ const SimulationDashboard = () => {
             Simulation Configuration
           </Button>
         </div>
+
+        {/* Drone Stats Panel - Show when simulation is active */}
+        {isSimulationActive && droneStats.length > 0 && (
+          <Card 
+            title="Drone Telemetry" 
+            size="small" 
+            className="mb-4"
+            style={{ background: '#f6ffed', borderColor: '#b7eb8f' }}
+          >
+            <Row gutter={[16, 16]}>
+              {droneStats.map((drone) => (
+                <Col span={8} key={drone.fullDroneId}>
+                  <Card 
+                    size="small" 
+                    title={`Drone ...${drone.droneId}`}
+                    style={{ background: '#fff' }}
+                  >
+                    <Row gutter={8}>
+                      <Col span={12}>
+                        <Statistic
+                          title="Pin còn lại"
+                          value={drone.battery !== null ? drone.battery : 'N/A'}
+                          suffix={drone.battery !== null ? '%' : ''}
+                          valueStyle={{ 
+                            color: drone.battery !== null && drone.battery < 20 ? '#ff4d4f' : 
+                                   drone.battery !== null && drone.battery < 50 ? '#faad14' : '#52c41a',
+                            fontSize: '20px'
+                          }}
+                          prefix={<ThunderboltOutlined />}
+                        />
+                      </Col>
+                      <Col span={12}>
+                        <Statistic
+                          title="Quãng đường"
+                          value={(drone.distance / 1000).toFixed(2)}
+                          suffix="km"
+                          valueStyle={{ color: '#1890ff', fontSize: '20px' }}
+                          prefix={<AimOutlined />}
+                        />
+                      </Col>
+                    </Row>
+                    <div style={{ marginTop: 8, fontSize: 12, color: '#666' }}>
+                      Alt: {drone.altitude ? `${Math.round(drone.altitude)}m` : 'N/A'} | 
+                      Pos: {drone.lat?.toFixed(4)}, {drone.lng?.toFixed(4)}
+                    </div>
+                  </Card>
+                </Col>
+              ))}
+            </Row>
+          </Card>
+        )}
 
         {/* Map Container */}
         <div className="bg-white rounded-lg p-6 relative" style={{ 

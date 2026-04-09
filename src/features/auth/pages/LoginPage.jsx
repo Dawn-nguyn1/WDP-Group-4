@@ -30,7 +30,7 @@ const LoginPage = () => {
         if (role === "UTM_ADMIN") {
           navigate("/admin/dashboard");
         } else if (role === "FLEET_OPERATOR") {
-          navigate("/operator/dashboard");
+          navigate("/operator/drones");
         } else {
           navigate("/login");
         }
