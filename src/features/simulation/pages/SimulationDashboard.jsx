@@ -166,15 +166,15 @@ const SimulationDashboard = () => {
             />
           </Col>
 
-          <Col xs={24} md={6}>
+          {/* <Col xs={24} md={6}>
             <SimulationLogConsole currentRun={currentRun} compact />
-          </Col>
+          </Col> */}
         </Row>
 
         {/* Row 2: Map */}
         <Row>
           <Col span={24}>
-            <div className="bg-white rounded-lg shadow-sm p-2 relative overflow-hidden" style={{ height: 'calc(100vh - 280px)', minHeight: '500px' }}>
+            <div className="bg-white rounded-lg shadow-sm p-2 relative overflow-hidden" style={{ height: 'calc(100vh - 200px)', minHeight: '1000px' }}>
               <SimulationMap
                 currentMission={detailedMission || selectedMission}
                 missionFlightPaths={missionFlightPaths}

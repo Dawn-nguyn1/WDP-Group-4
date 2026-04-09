@@ -8,11 +8,16 @@ import {
   Col,
   message,
   InputNumber,
+  Modal,
 } from "antd";
-import { SaveOutlined, ArrowLeftOutlined, RocketOutlined } from "@ant-design/icons";
+import { SaveOutlined, ArrowLeftOutlined, RocketOutlined, WarningOutlined } from "@ant-design/icons";
 import { useParams, useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { fetchDrones, selectDronesList } from "../../drones/slices/droneSlice";
+import { 
+  validatePathAgainstZones, 
+  validatePathAgainstOtherPlans 
+} from "../utils/collisionUtils";
 import {
   createFlightPlan,
   updateFlightPlan,
@@ -41,6 +46,7 @@ const FlightPlanForm = ({ initialValues = null, editingId = null }) => {
   const [priority, setPriority] = useState(1);
   const [batteryPercentageUsed, setBatteryPercentageUsed] = useState(100);
   const [estimatedFlightTime, setEstimatedFlightTime] = useState(1);
+  const [loadedData, setLoadedData] = useState({ zones: [], flightPlans: [] });
 
   useEffect(() => { dispatch(fetchDrones()); }, [dispatch]);
 
@@ -179,12 +185,77 @@ const FlightPlanForm = ({ initialValues = null, editingId = null }) => {
       }
       
       // 11. Validate Waypoint actions
-      const validActions = ["TAKEOFF", "WAYPOINT", "LAND"];
+      const validActions = ["TAKEOFF", "WAYPOINT", "HOVER", "LAND"];
       const invalidAction = waypoints.find(wp => !validActions.includes(wp.action));
       if (invalidAction) {
         message.error(`Waypoint #${invalidAction.sequenceNumber}: action "${invalidAction.action}" không hợp lệ!`);
         return;
       }
+      
+      // 11.5. NEW: GEOMETRIC COLLISION VALIDATION
+      // Check against zones
+      const zoneConflicts = validatePathAgainstZones(waypoints, loadedData.zones);
+      const blockingConflicts = zoneConflicts.filter(c => c.type === 'BLOCKING');
+      const warningConflictsForZones = zoneConflicts.filter(c => c.type === 'WARNING');
+
+      if (blockingConflicts.length > 0) {
+        Modal.error({
+          title: 'KHÔNG THỂ TẠO KẾ HOẠCH BAY',
+          content: (
+            <div>
+              <p>Đường bay của bạn vi phạm các vùng cấm (No-Fly Zones):</p>
+              <ul style={{ paddingLeft: '20px', marginTop: '10px' }}>
+                {blockingConflicts.map((c, i) => (
+                  <li key={i} style={{ color: '#ff4d4f', fontWeight: '500', marginBottom: '4px' }}>
+                    • {c.message}
+                  </li>
+                ))}
+              </ul>
+              <p style={{ marginTop: '12px', fontStyle: 'italic', color: '#666' }}>Vui lòng điều chỉnh tọa độ hoặc độ cao của các waypoint để tránh các vùng này.</p>
+            </div>
+          ),
+          width: 500,
+        });
+        return;
+      }
+
+      // Check against other flight plans
+      // Exclude current plan from comparison if editing
+      const otherPlansToCompare = loadedData.flightPlans.filter(p => p._id !== actualEditingId);
+      const collisionWarnings = validatePathAgainstOtherPlans(waypoints, otherPlansToCompare);
+
+      const allWarnings = [...warningConflictsForZones, ...collisionWarnings];
+
+      if (allWarnings.length > 0) {
+        const proceed = await new Promise((resolve) => {
+          Modal.confirm({
+            title: 'CẢNH BÁO ĐỤNG ĐỘ / HẠN CHẾ BAY',
+            icon: <WarningOutlined style={{ color: '#faad14' }} />,
+            content: (
+              <div>
+                <p>Kế hoạch bay của bạn có một số cảnh báo sau:</p>
+                <ul style={{ paddingLeft: '20px', marginTop: '10px', maxHeight: '200px', overflowY: 'auto' }}>
+                  {allWarnings.map((c, i) => (
+                    <li key={i} style={{ color: '#faad14', marginBottom: '6px' }}>
+                      • {c.message}
+                    </li>
+                  ))}
+                </ul>
+                <p style={{ marginTop: '15px', fontWeight: '600' }}>Bạn có chắc chắn muốn tiếp tục lưu kế hoạch bay này không?</p>
+              </div>
+            ),
+            okText: 'Vẫn tiếp tục',
+            cancelText: 'Quay lại chỉnh sửa',
+            okButtonProps: { danger: true },
+            onOk: () => resolve(true),
+            onCancel: () => resolve(false),
+            width: 500,
+          });
+        });
+
+        if (!proceed) return;
+      }
+      
       
       // 12. Final validation - all required fields present
       const payload = {
@@ -577,6 +648,7 @@ const FlightPlanForm = ({ initialValues = null, editingId = null }) => {
                 <WaypointEditorWithZones
                   waypoints={waypoints}
                   setWaypoints={setWaypoints}
+                  onDataLoaded={(data) => setLoadedData(prev => ({ ...prev, ...data }))}
                 />
               </div>
             </div>

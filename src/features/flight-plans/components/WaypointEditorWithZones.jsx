@@ -9,7 +9,7 @@ import {
   FeatureGroup,
   Polygon,
 } from "react-leaflet";
-import { InputNumber, Select, TimePicker, Button, Space } from "antd";
+import { InputNumber, Select, TimePicker, Button, Space, message } from "antd";
 import { DeleteOutlined, EnvironmentOutlined, ThunderboltOutlined } from "@ant-design/icons";
 import L from "leaflet";
 import dayjs from "dayjs";
@@ -41,10 +41,23 @@ const ACTION_CONFIG = {
   LAND:     { color: "#ef4444", bg: "#fef2f2", label: "LAND" },
 };
 
+// Haversine formula to calculate distance between two points
+const calculateDistance = (lat1, lon1, lat2, lon2) => {
+  const R = 6371000; // Earth's radius in meters
+  const dLat = (lat2 - lat1) * Math.PI / 180;
+  const dLon = (lon2 - lon1) * Math.PI / 180;
+  const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+    Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+    Math.sin(dLon/2) * Math.sin(dLon/2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+  return R * c; // Distance in meters
+};
+
 const WaypointEditorWithZones = ({
   waypoints,
   setWaypoints,
   initialCenter = [10.8231, 106.6297],
+  onDataLoaded,
 }) => {
   const [mapZones, setMapZones] = useState([]);
   const [zoneFilter, setZoneFilter] = useState('all'); // Bộ lọc zone types
@@ -67,23 +80,50 @@ const WaypointEditorWithZones = ({
           return { lat, lng };
         }).filter(Boolean);
         if (coordinates.length < 3) return null;
-        return { id: z._id, name: z.name, status: z.status, type: z.type, coordinates };
+        return { 
+          id: z._id, 
+          name: z.name, 
+          status: z.status, 
+          type: z.type, 
+          coordinates,
+          minAltitude: z.minAltitude || 0,
+          maxAltitude: z.maxAltitude
+        };
       }).filter(Boolean);
       setMapZones(leafletZones);
+      if (onDataLoaded) onDataLoaded({ zones: leafletZones });
     } catch { setMapZones([]); }
   };
 
   const fetchFlightPlans = async () => {
     setLoading(true);
     try {
-      const res = await fetchFlightPlansAPI({ page: 1, limit: 20, sortBy: "createdAt", sortOrder: "desc", status: "ACTIVE" });
-      setFlightPlans(Array.isArray(res?.data) ? res.data : []);
+      const res = await fetchFlightPlansAPI({ page: 1, limit: 100, sortBy: "createdAt", sortOrder: "desc", status: "ACTIVE" });
+      const plans = Array.isArray(res?.data) ? res.data : [];
+      setFlightPlans(plans);
+      if (onDataLoaded) onDataLoaded({ flightPlans: plans });
     } catch { setFlightPlans([]); } finally { setLoading(false); }
   };
 
   useEffect(() => { fetchZones(); fetchFlightPlans(); }, []);
 
   const handleMapClick = (latlng) => {
+    // Check distance from previous waypoint if exists
+    if (waypoints.length > 0) {
+      const lastWaypoint = waypoints[waypoints.length - 1];
+      const distance = calculateDistance(
+        lastWaypoint.latitude, 
+        lastWaypoint.longitude, 
+        latlng.lat, 
+        latlng.lng
+      );
+      
+      if (distance > 50000) {
+        message.warning(`Khoảng cách giữa 2 waypoint quá lớn: ${Math.round(distance/1000)}km (tối đa 50km)`);
+        return;
+      }
+    }
+
     const newWaypoint = {
       sequenceNumber: waypoints.length + 1,
       latitude: latlng.lat,
