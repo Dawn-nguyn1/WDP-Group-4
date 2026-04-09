@@ -1,18 +1,28 @@
 /* Admin Dashboard Styles */
 .dashboard-container {
-  padding: 24px;
-  background: #f0f2f5;
   min-height: 100vh;
+  background: #f8f9fc;
+  padding: 32px;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
 }
 
 .dashboard-header {
   margin-bottom: 24px;
+  padding: 24px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-radius: 12px;
+  border: 2px solid #e2e8f0;
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.2);
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  text-align: left;
 }
 
 .dashboard-title {
-  font-size: 24px;
+  font-size: 28px;
   font-weight: 600;
-  color: #262626;
+  color: #ffffff !important;
   margin: 0;
 }
 

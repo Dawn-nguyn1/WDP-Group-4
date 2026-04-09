@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import {
   Form,
   Input,
@@ -8,11 +8,16 @@ import {
   Col,
   message,
   InputNumber,
+  Modal,
 } from "antd";
-import { SaveOutlined, ArrowLeftOutlined, RocketOutlined } from "@ant-design/icons";
+import { SaveOutlined, ArrowLeftOutlined, RocketOutlined, WarningOutlined } from "@ant-design/icons";
 import { useParams, useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { fetchDrones, selectDronesList } from "../../drones/slices/droneSlice";
+import { 
+  validatePathAgainstZones, 
+  validatePathAgainstOtherPlans 
+} from "../utils/collisionUtils";
 import {
   createFlightPlan,
   updateFlightPlan,
@@ -21,6 +26,7 @@ import {
   clearCurrentPlan,
 } from "../slices/flightPlanSlice";
 import WaypointEditorWithZones from "./WaypointEditorWithZones";
+import * as turf from "@turf/turf";
 
 const { Option } = Select;
 
@@ -41,6 +47,54 @@ const FlightPlanForm = ({ initialValues = null, editingId = null }) => {
   const [priority, setPriority] = useState(1);
   const [batteryPercentageUsed, setBatteryPercentageUsed] = useState(100);
   const [estimatedFlightTime, setEstimatedFlightTime] = useState(1);
+  const [loadedData, setLoadedData] = useState({ zones: [], flightPlans: [] });
+
+  // Flight estimation calculation using the provided formula
+  const flightEstimates = useMemo(() => {
+    if (waypoints.length < 2) return { time: 0, battery: 0, distance: 0 };
+
+    let totalTimeSeconds = 0;
+    let distance = 0;
+
+    for (let i = 1; i < waypoints.length; i++) {
+      const prevWp = waypoints[i - 1];
+      const currWp = waypoints[i];
+
+      const fromPoint = turf.point([prevWp.longitude, prevWp.latitude]);
+      const toPoint = turf.point([currWp.longitude, currWp.latitude]);
+      const horizontalDist = turf.distance(fromPoint, toPoint, { units: 'kilometers' }) * 1000;
+      
+      const verticalDist = Math.abs(currWp.altitude - prevWp.altitude);
+
+      const segmentDistance = Math.sqrt(Math.pow(horizontalDist, 2) + Math.pow(verticalDist, 2));
+
+      const speed = currWp.speed > 0 ? currWp.speed : 22;
+
+      totalTimeSeconds += segmentDistance / speed;
+      distance += horizontalDist;
+    }
+
+    totalTimeSeconds += 30; // Add 30 seconds for takeoff/landing
+
+    const timeMinutes = Math.ceil(totalTimeSeconds / 60);
+
+    const MAX_DRONE_FLIGHT_TIME = 30; // 30 minutes max flight time
+    const batteryPercent = Math.ceil((timeMinutes / MAX_DRONE_FLIGHT_TIME) * 100);
+
+    return {
+      time: timeMinutes,
+      battery: batteryPercent,
+      distance: distance
+    };
+  }, [waypoints]);
+
+  // Auto-update battery and time fields when waypoints change
+  useEffect(() => {
+    if (flightEstimates.time > 0) {
+      setBatteryPercentageUsed(flightEstimates.battery);
+      setEstimatedFlightTime(flightEstimates.time);
+    }
+  }, [flightEstimates]);
 
   useEffect(() => { dispatch(fetchDrones()); }, [dispatch]);
 
@@ -179,12 +233,77 @@ const FlightPlanForm = ({ initialValues = null, editingId = null }) => {
       }
       
       // 11. Validate Waypoint actions
-      const validActions = ["TAKEOFF", "WAYPOINT", "LAND"];
+      const validActions = ["TAKEOFF", "WAYPOINT", "HOVER", "LAND"];
       const invalidAction = waypoints.find(wp => !validActions.includes(wp.action));
       if (invalidAction) {
         message.error(`Waypoint #${invalidAction.sequenceNumber}: action "${invalidAction.action}" không hợp lệ!`);
         return;
       }
+      
+      // 11.5. NEW: GEOMETRIC COLLISION VALIDATION
+      // Check against zones
+      const zoneConflicts = validatePathAgainstZones(waypoints, loadedData.zones);
+      const blockingConflicts = zoneConflicts.filter(c => c.type === 'BLOCKING');
+      const warningConflictsForZones = zoneConflicts.filter(c => c.type === 'WARNING');
+
+      if (blockingConflicts.length > 0) {
+        Modal.error({
+          title: 'KHÔNG THỂ TẠO KẾ HOẠCH BAY',
+          content: (
+            <div>
+              <p>Đường bay của bạn vi phạm các vùng cấm (No-Fly Zones):</p>
+              <ul style={{ paddingLeft: '20px', marginTop: '10px' }}>
+                {blockingConflicts.map((c, i) => (
+                  <li key={i} style={{ color: '#ff4d4f', fontWeight: '500', marginBottom: '4px' }}>
+                    • {c.message}
+                  </li>
+                ))}
+              </ul>
+              <p style={{ marginTop: '12px', fontStyle: 'italic', color: '#666' }}>Vui lòng điều chỉnh tọa độ hoặc độ cao của các waypoint để tránh các vùng này.</p>
+            </div>
+          ),
+          width: 500,
+        });
+        return;
+      }
+
+      // Check against other flight plans
+      // Exclude current plan from comparison if editing
+      const otherPlansToCompare = loadedData.flightPlans.filter(p => p._id !== actualEditingId);
+      const collisionWarnings = validatePathAgainstOtherPlans(waypoints, otherPlansToCompare);
+
+      const allWarnings = [...warningConflictsForZones, ...collisionWarnings];
+
+      if (allWarnings.length > 0) {
+        const proceed = await new Promise((resolve) => {
+          Modal.confirm({
+            title: 'CẢNH BÁO ĐỤNG ĐỘ / HẠN CHẾ BAY',
+            icon: <WarningOutlined style={{ color: '#faad14' }} />,
+            content: (
+              <div>
+                <p>Kế hoạch bay của bạn có một số cảnh báo sau:</p>
+                <ul style={{ paddingLeft: '20px', marginTop: '10px', maxHeight: '200px', overflowY: 'auto' }}>
+                  {allWarnings.map((c, i) => (
+                    <li key={i} style={{ color: '#faad14', marginBottom: '6px' }}>
+                      • {c.message}
+                    </li>
+                  ))}
+                </ul>
+                <p style={{ marginTop: '15px', fontWeight: '600' }}>Bạn có chắc chắn muốn tiếp tục lưu kế hoạch bay này không?</p>
+              </div>
+            ),
+            okText: 'Vẫn tiếp tục',
+            cancelText: 'Quay lại chỉnh sửa',
+            okButtonProps: { danger: true },
+            onOk: () => resolve(true),
+            onCancel: () => resolve(false),
+            width: 500,
+          });
+        });
+
+        if (!proceed) return;
+      }
+      
       
       // 12. Final validation - all required fields present
       const payload = {
@@ -533,11 +652,12 @@ const FlightPlanForm = ({ initialValues = null, editingId = null }) => {
                         <InputNumber
                           min={0}
                           max={100}
-                          value={batteryPercentageUsed}
-                          onChange={(value) => setBatteryPercentageUsed(value ?? 100)}
-                          style={{ width: "100%" }}
+                          value={flightEstimates.battery || 0}
+                          readOnly
+                          style={{ width: "100%", backgroundColor: '#f5f5f5', cursor: 'not-allowed' }}
                           size="large"
-                          placeholder="100"
+                          placeholder="0"
+                          addonAfter="%"
                         />
                       </div>
                     </Form.Item>
@@ -550,11 +670,12 @@ const FlightPlanForm = ({ initialValues = null, editingId = null }) => {
                         </div>
                         <InputNumber
                           min={1}
-                          value={estimatedFlightTime}
-                          onChange={(value) => setEstimatedFlightTime(value ?? 1)}
-                          style={{ width: "100%" }}
+                          value={flightEstimates.time || 0}
+                          readOnly
+                          style={{ width: "100%", backgroundColor: '#f5f5f5', cursor: 'not-allowed' }}
                           size="large"
-                          placeholder="1"
+                          placeholder="0"
+                          addonAfter="phút"
                         />
                       </div>
                     </Form.Item>
@@ -565,7 +686,60 @@ const FlightPlanForm = ({ initialValues = null, editingId = null }) => {
           </div>
 
           <div>
-            <div className="fp-section-label">Bản đồ & Waypoints</div>
+            <div className="fp-section-label">Bên do & Waypoints</div>
+            
+            {/* Flight Estimation Summary */}
+            {waypoints.length >= 2 && (
+              <div style={{
+                background: '#f0f9ff',
+                border: '1px solid #bae6fd',
+                borderRadius: '8px',
+                padding: '12px 16px',
+                marginBottom: '16px',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '24px'
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <div style={{
+                    width: '8px',
+                    height: '8px',
+                    borderRadius: '50%',
+                    background: '#0ea5e9',
+                    animation: 'pulse 2s infinite'
+                  }} />
+                  <span style={{ fontSize: '12px', fontWeight: '600', color: '#0c4a6e' }}>
+                    Thông tin estimation chuyến bay:
+                  </span>
+                </div>
+                <div style={{ display: 'flex', gap: '20px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <span style={{ fontSize: '11px', color: '#64748b' }}>Thời gian:</span>
+                    <span style={{ fontSize: '12px', fontWeight: '700', color: '#0284c7', fontFamily: 'Space Mono, monospace' }}>
+                      {flightEstimates.time} phút
+                    </span>
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <span style={{ fontSize: '11px', color: '#64748b' }}>Pin:</span>
+                    <span style={{ 
+                      fontSize: '12px', 
+                      fontWeight: '700', 
+                      color: flightEstimates.battery > 80 ? '#059669' : flightEstimates.battery > 50 ? '#d97706' : '#dc2626',
+                      fontFamily: 'Space Mono, monospace' 
+                    }}>
+                      {flightEstimates.battery}%
+                    </span>
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <span style={{ fontSize: '11px', color: '#64748b' }}>Quãng đường:</span>
+                    <span style={{ fontSize: '12px', fontWeight: '700', color: '#0284c7', fontFamily: 'Space Mono, monospace' }}>
+                      {(flightEstimates.distance / 1000).toFixed(1)} km
+                    </span>
+                  </div>
+                </div>
+              </div>
+            )}
+            
             <div className="fp-map-panel">
               <div className="fp-map-header">
                 <div className="fp-map-title">
@@ -577,6 +751,8 @@ const FlightPlanForm = ({ initialValues = null, editingId = null }) => {
                 <WaypointEditorWithZones
                   waypoints={waypoints}
                   setWaypoints={setWaypoints}
+                  batteryPercentage={flightEstimates.battery}
+                  onDataLoaded={(data) => setLoadedData(prev => ({ ...prev, ...data }))}
                 />
               </div>
             </div>

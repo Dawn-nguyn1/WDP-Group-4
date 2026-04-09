@@ -9,10 +9,11 @@ import {
   FeatureGroup,
   Polygon,
 } from "react-leaflet";
-import { InputNumber, Select, TimePicker, Button, Space } from "antd";
-import { DeleteOutlined, EnvironmentOutlined, ThunderboltOutlined } from "@ant-design/icons";
+import { InputNumber, Select, TimePicker, Button, Space, message } from "antd";
+import { DeleteOutlined, EnvironmentOutlined, ThunderboltOutlined, ExpandOutlined, CompressOutlined } from "@ant-design/icons";
 import L from "leaflet";
 import dayjs from "dayjs";
+import * as turf from "@turf/turf";
 import { fetchZonesAPI } from "../../zones/services/zoneApi";
 import { fetchFlightPlansAPI } from "../services/flightPlanApi";
 
@@ -41,10 +42,34 @@ const ACTION_CONFIG = {
   LAND:     { color: "#ef4444", bg: "#fef2f2", label: "LAND" },
 };
 
+// Advanced distance calculation using Turf.js (same as flight estimation formula)
+const calculateDistance = (lat1, lon1, alt1, lat2, lon2, alt2) => {
+  const fromPoint = turf.point([lon1, lat1]);
+  const toPoint = turf.point([lon2, lat2]);
+  const horizontalDist = turf.distance(fromPoint, toPoint, { units: 'kilometers' }) * 1000;
+  
+  const verticalDist = Math.abs(alt2 - alt1);
+  const segmentDistance = Math.sqrt(Math.pow(horizontalDist, 2) + Math.pow(verticalDist, 2));
+  
+  return {
+    horizontal: horizontalDist,
+    vertical: verticalDist,
+    total: segmentDistance
+  };
+};
+
+// Legacy function for backward compatibility
+const calculateSimpleDistance = (lat1, lon1, lat2, lon2) => {
+  const result = calculateDistance(lat1, lon1, 0, lat2, lon2, 0);
+  return result.horizontal;
+};
+
 const WaypointEditorWithZones = ({
   waypoints,
   setWaypoints,
   initialCenter = [10.8231, 106.6297],
+  onDataLoaded,
+  batteryPercentage = 0,
 }) => {
   const [mapZones, setMapZones] = useState([]);
   const [zoneFilter, setZoneFilter] = useState('all'); // Bộ lọc zone types
@@ -53,6 +78,7 @@ const WaypointEditorWithZones = ({
   const [selectedPlanId, setSelectedPlanId] = useState(null);
   const [loading, setLoading] = useState(false);
   const [showAllPaths, setShowAllPaths] = useState(false);
+  const [isCompactView, setIsCompactView] = useState(false);
 
   const fetchZones = async () => {
     try {
@@ -67,29 +93,104 @@ const WaypointEditorWithZones = ({
           return { lat, lng };
         }).filter(Boolean);
         if (coordinates.length < 3) return null;
-        return { id: z._id, name: z.name, status: z.status, type: z.type, coordinates };
+        return { 
+          id: z._id, 
+          name: z.name, 
+          status: z.status, 
+          type: z.type, 
+          coordinates,
+          minAltitude: z.minAltitude || 0,
+          maxAltitude: z.maxAltitude
+        };
       }).filter(Boolean);
       setMapZones(leafletZones);
+      if (onDataLoaded) onDataLoaded({ zones: leafletZones });
     } catch { setMapZones([]); }
   };
 
   const fetchFlightPlans = async () => {
     setLoading(true);
     try {
-      const res = await fetchFlightPlansAPI({ page: 1, limit: 20, sortBy: "createdAt", sortOrder: "desc", status: "ACTIVE" });
-      setFlightPlans(Array.isArray(res?.data) ? res.data : []);
+      const res = await fetchFlightPlansAPI({ page: 1, limit: 100, sortBy: "createdAt", sortOrder: "desc", status: "ACTIVE" });
+      const plans = Array.isArray(res?.data) ? res.data : [];
+      setFlightPlans(plans);
+      if (onDataLoaded) onDataLoaded({ flightPlans: plans });
     } catch { setFlightPlans([]); } finally { setLoading(false); }
   };
 
   useEffect(() => { fetchZones(); fetchFlightPlans(); }, []);
 
   const handleMapClick = (latlng) => {
+    // Check battery percentage - block if > 100%
+    if (batteryPercentage > 100) {
+      message.error({
+        content: (
+          <div>
+            <div><strong>Không thể thêm waypoint!</strong></div>
+            <div style={{ marginTop: '8px', fontSize: '12px', color: '#666' }}>
+              Pin dự kiến sử dụng ({batteryPercentage}%) đã vượt quá 100%.<br/>
+              Vui lòng giảm số lượng waypoint hoặc độ cao bay.
+            </div>
+          </div>
+        ),
+        duration: 5
+      });
+      return;
+    }
+
+    // Warning if battery > 50% but still allow adding
+    if (batteryPercentage > 50) {
+      message.warning({
+        content: (
+          <div>
+            <div><strong>Cảnh báo: Không đủ pin nếu không quay lại!</strong></div>
+            <div style={{ marginTop: '8px', fontSize: '12px', color: '#666' }}>
+              Pin dự kiến sử dụng: {batteryPercentage}%<br/>
+              Đảm bảo drone có đủ pin để quay về điểm xuất phát.
+            </div>
+          </div>
+        ),
+        duration: 5
+      });
+      // Still allow adding waypoint, just show warning
+    }
+
+    // Check distance from previous waypoint if exists
+    if (waypoints.length > 0) {
+      const lastWaypoint = waypoints[waypoints.length - 1];
+      const distance = calculateDistance(
+        lastWaypoint.latitude, 
+        lastWaypoint.longitude, 
+        lastWaypoint.altitude || 50,
+        latlng.lat, 
+        latlng.lng,
+        50 // Default altitude for new waypoint
+      );
+      
+      if (distance.horizontal > 50000) {
+        message.warning({
+          content: (
+            <div>
+              <div><strong>Khoảng cách giữa 2 waypoint quá lớn!</strong></div>
+              <div style={{ marginTop: '8px', fontSize: '12px', color: '#666' }}>
+                • Khoảng cách ngang: {Math.round(distance.horizontal/1000)}km (tối đa 50km)
+                {distance.vertical > 0 && <div>• Chênh lệch độ cao: {Math.round(distance.vertical)}m</div>}
+                • Khoảng cách thực tế: {Math.round(distance.total/1000)}km
+              </div>
+            </div>
+          ),
+          duration: 6
+        });
+        return;
+      }
+    }
+
     const newWaypoint = {
       sequenceNumber: waypoints.length + 1,
       latitude: latlng.lat,
       longitude: latlng.lng,
       altitude: 50,
-      speed: 10,
+      speed: 22,
       estimatedTime: dayjs().add(waypoints.length * 10, "minutes").format("YYYY-MM-DDTHH:mm:ss"),
       action: waypoints.length === 0 ? "TAKEOFF" : (waypoints.length === 1 ? "LAND" : "WAYPOINT"),
     };
@@ -113,13 +214,15 @@ const WaypointEditorWithZones = ({
 
   // Filter zones based on selected filter
   const getFilteredZones = () => {
-    if (zoneFilter === 'all') return mapZones;
-    if (zoneFilter === 'no_fly') return mapZones.filter(zone => zone.type === 'no_fly');
-    if (zoneFilter === 'restricted') return mapZones.filter(zone => zone.type === 'restricted');
-    return mapZones;
+    const activeZones = mapZones.filter(zone => zone.status === 'active');
+    if (zoneFilter === 'all') return activeZones;
+    if (zoneFilter === 'no_fly') return activeZones.filter(zone => zone.type === 'no_fly');
+    if (zoneFilter === 'restricted') return activeZones.filter(zone => zone.type === 'restricted');
+    return activeZones;
   };
 
   const filteredZones = getFilteredZones();
+  const activeZonesCount = mapZones.filter(zone => zone.status === 'active').length;
 
   return (
     <>
@@ -274,33 +377,21 @@ const WaypointEditorWithZones = ({
           display: flex;
           flex-direction: column;
           gap: 10px;
-          max-height: 380px;
+          max-height: 600px;
           overflow-y: auto;
+        }
+
+        .we-wp-list.compact {
+          max-height: 300px;
+        }
+
+        .we-wp-list.expanded {
+          max-height: 800px;
         }
 
         .we-wp-list::-webkit-scrollbar { width: 4px; }
         .we-wp-list::-webkit-scrollbar-track { background: transparent; }
         .we-wp-list::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 4px; }
-
-        .we-wp-empty {
-          text-align: center;
-          padding: 40px 20px;
-          color: #9ca3af;
-        }
-        .we-wp-empty-icon {
-          font-size: 32px;
-          margin-bottom: 10px;
-          opacity: 0.4;
-        }
-        .we-wp-empty-text {
-          font-size: 13px;
-          font-weight: 500;
-        }
-        .we-wp-empty-sub {
-          font-size: 12px;
-          margin-top: 4px;
-          opacity: 0.7;
-        }
 
         /* ── Waypoint card ── */
         .we-wp-card {
@@ -375,6 +466,28 @@ const WaypointEditorWithZones = ({
           align-items: start;
         }
 
+        .we-wp-list.compact .we-wp-card-body {
+          grid-template-columns: 130px 100px 100px;
+          gap: 8px;
+          padding: 8px 12px;
+        }
+
+        .we-wp-list.compact .we-field-label {
+          font-size: 9px;
+          margin-bottom: 2px;
+        }
+
+        .we-wp-list.compact .ant-input-number,
+        .we-wp-list.compact .ant-select-selector {
+          height: 28px !important;
+          font-size: 11px !important;
+        }
+
+        .we-wp-list.compact .ant-input-number-input {
+          height: 26px;
+          font-size: 11px;
+        }
+
         .we-field-label {
           font-size: 10.5px;
           font-weight: 600;
@@ -419,7 +532,17 @@ const WaypointEditorWithZones = ({
             </div>
             <div className="we-stat-chip">
               <div className="we-stat-dot" style={{ background: "#ef4444" }} />
-              Vùng cấm: <strong>{mapZones.length}</strong>
+              Vùng cấm: <strong>{activeZonesCount}</strong>
+            </div>
+            <div className="we-stat-chip">
+              <Button
+                size="small"
+                icon={isCompactView ? <ExpandOutlined /> : <CompressOutlined />}
+                onClick={() => setIsCompactView(!isCompactView)}
+                style={{ fontSize: "11px", height: "24px" }}
+              >
+                {isCompactView ? "Mở rộng" : "Thu gọn"}
+              </Button>
             </div>
           </div>
 
@@ -711,7 +834,7 @@ const WaypointEditorWithZones = ({
         </div>
 
         {/* Waypoints list */}
-        <div className="we-wp-list">
+        <div className={`we-wp-list ${isCompactView ? 'compact' : 'expanded'}`}>
           {waypoints.length === 0 ? (
             <div className="we-wp-empty">
               <div className="we-wp-empty-icon">🗺️</div>

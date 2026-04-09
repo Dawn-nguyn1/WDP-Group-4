@@ -1,9 +1,9 @@
 import React, { useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { Layout, Typography, message } from 'antd';
-import { fetchPayments, fetchRevenue, clearError } from '../slices/dashboardSlice';
-import DashboardStats from '../components/DashboardStats';
+import { fetchPayments, fetchRevenue, fetchDroneAnalytics, clearError } from '../slices/dashboardSlice';
 import RevenueChart from '../components/RevenueChart';
+import DroneStatsCard from '../components/DroneStatsCard';
 import PaymentTable from '../components/PaymentTable';
 import '../styles/DashboardStyles.css';
 
@@ -12,7 +12,7 @@ const { Title, Text } = Typography;
 
 const AdminDashboard = () => {
   const dispatch = useDispatch();
-  const { payments, revenue, loading, error } = useSelector((state) => state.dashboard);
+  const { payments, revenue, droneAnalytics, loading, error } = useSelector((state) => state.dashboard);
 
   useEffect(() => {
     // Fetch data on component mount
@@ -20,7 +20,8 @@ const AdminDashboard = () => {
       try {
         await Promise.all([
           dispatch(fetchPayments()).unwrap(),
-          dispatch(fetchRevenue()).unwrap()
+          dispatch(fetchRevenue()).unwrap(),
+          dispatch(fetchDroneAnalytics()).unwrap()
         ]);
       } catch (error) {
         message.error('Không thể tải dữ liệu dashboard');
@@ -39,26 +40,22 @@ const AdminDashboard = () => {
 
   return (
     <Layout className="dashboard-container">
-      <Header className="dashboard-header">
-        <div>
-          <Title level={2} className="dashboard-title">Admin Dashboard</Title>
-          <Text className="dashboard-subtitle">Quản lý và theo dõi hệ thống</Text>
-        </div>
+      <Header className="dashboard-header" style={{ display: 'flex', justifyContent: 'left' }}>
+        <Title level={2} className="dashboard-title">Admin Dashboards</Title>
       </Header>
       
       <Content>
-        <div className="stats-row">
-          <DashboardStats 
-            payments={payments} 
+        <div className="chart-card">
+          <RevenueChart 
             revenue={revenue} 
             loading={loading} 
           />
         </div>
 
-        <div className="chart-card">
-          <RevenueChart 
-            revenue={revenue} 
-            loading={loading} 
+        <div className="drone-stats-card" style={{ marginBottom: 24 }}>
+          <DroneStatsCard
+            droneAnalytics={droneAnalytics}
+            loading={loading}
           />
         </div>
 

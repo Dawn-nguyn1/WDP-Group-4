@@ -34,6 +34,7 @@ import FlightPlanDetailPage from "../features/flight-plans/components/FlightPlan
 import MissionPage from "../features/missions/components/page/mission";
 import MissionDetail from "../features/missions/components/MissionDetail";
 import FlightPlanForm from "../features/flight-plans/components/FlightPlanForm";
+import SimulationDashboard from "../features/simulation/pages/SimulationDashboard";
 
 const router = createBrowserRouter([
   // Public routes
@@ -157,6 +158,13 @@ const router = createBrowserRouter([
         path: "missions/:id",
         element: <ProtectedRoute allowedRoles={["FLEET_OPERATOR"]}>
           <MissionDetail />
+        </ProtectedRoute>,
+      },
+      // Simulation
+      {
+        path: "simulation",
+        element: <ProtectedRoute allowedRoles={["FLEET_OPERATOR", "UTM_ADMIN"]}>
+          <SimulationDashboard />
         </ProtectedRoute>,
       },
     ],

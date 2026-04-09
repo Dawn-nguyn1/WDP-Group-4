@@ -25,7 +25,7 @@ import {
   selectFlightPlansLoading,
   clearCurrentPlan,
 } from "../slices/flightPlanSlice";
-import FlightPlanMapWithZones from "../components/FlightPlanMapDetail";
+import FlightPlanMapWithZones from "./FlightPlanMapDetail";
 
 const { Title, Text } = Typography;
 const { confirm } = Modal;
@@ -81,7 +81,7 @@ const FlightPlanDetailPage = () => {
     );
   }
 
-  const { status, drone, waypoints, notes, _id, pilot, priority, conflictStatus, createdAt, updatedAt } =
+  const { status, drone, waypoints, notes, _id, pilot, priority, conflictStatus, createdAt, updatedAt, batteryPercentageUsed, estimatedFlightTime } =
     flightPlan;
 
   const isDraft = status === "DRAFT";
@@ -173,6 +173,12 @@ const FlightPlanDetailPage = () => {
           </Descriptions.Item>
           <Descriptions.Item label="Số Lượng Waypoints">
             {waypoints?.length || 0} điểm
+          </Descriptions.Item>
+          <Descriptions.Item label="Pin Sử Dụng (ước tính)">
+            {batteryPercentageUsed ? `${batteryPercentageUsed}%` : "N/A"}
+          </Descriptions.Item>
+          <Descriptions.Item label="Thời Gian Bay (ước tính)">
+            {estimatedFlightTime ? `${estimatedFlightTime} phút` : "N/A"}
           </Descriptions.Item>
           <Descriptions.Item label="Ngày Tạo">
             {createdAt ? new Date(createdAt).toLocaleString('vi-VN') : "N/A"}

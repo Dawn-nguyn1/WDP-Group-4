@@ -1,5 +1,5 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
-import { fetchPaymentsAPI, fetchRevenueAPI } from "../services/dashboardAPI";
+import { fetchPaymentsAPI, fetchRevenueAPI, fetchDroneAnalyticsAPI } from "../services/dashboardAPI";
 
 // Async thunks
 export const fetchPayments = createAsyncThunk(
@@ -26,13 +26,34 @@ export const fetchRevenue = createAsyncThunk(
   }
 );
 
+export const fetchDroneAnalytics = createAsyncThunk(
+  "dashboard/fetchDroneAnalytics",
+  async (_, { rejectWithValue }) => {
+    try {
+      const response = await fetchDroneAnalyticsAPI();
+      return response;
+    } catch (err) {
+      return rejectWithValue(err.response?.data || "Lỗi tải thống kê drone");
+    }
+  }
+);
+
 // Initial state
 const initialState = {
   payments: [],
   revenue: {
     daily: [],
     monthly: [],
+    quarterly: [],
     yearly: []
+  },
+  droneAnalytics: {
+    totalDrones: 0,
+    byOwnerType: {
+      INDIVIDUAL: 0,
+      FLEET: 0
+    },
+    drones: []
   },
   loading: false,
   error: null,
@@ -48,7 +69,12 @@ const dashboardSlice = createSlice({
     },
     resetDashboard: (state) => {
       state.payments = [];
-      state.revenue = { daily: [], monthly: [], yearly: [] };
+      state.revenue = { daily: [], monthly: [], quarterly: [], yearly: [] };
+      state.droneAnalytics = {
+        totalDrones: 0,
+        byOwnerType: { INDIVIDUAL: 0, FLEET: 0 },
+        drones: []
+      };
       state.loading = false;
       state.error = null;
     },
@@ -77,11 +103,30 @@ const dashboardSlice = createSlice({
       })
       .addCase(fetchRevenue.fulfilled, (state, action) => {
         state.loading = false;
-        state.revenue = action.payload.data || { daily: [], monthly: [], yearly: [] };
+        state.revenue = action.payload.data || { daily: [], monthly: [], quarterly: [], yearly: [] };
       })
       .addCase(fetchRevenue.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload?.message || "Lỗi tải thống kê doanh thu";
+      });
+
+    // Fetch drone analytics
+    builder
+      .addCase(fetchDroneAnalytics.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(fetchDroneAnalytics.fulfilled, (state, action) => {
+        state.loading = false;
+        state.droneAnalytics = action.payload.data || {
+          totalDrones: 0,
+          byOwnerType: { INDIVIDUAL: 0, FLEET: 0 },
+          drones: []
+        };
+      })
+      .addCase(fetchDroneAnalytics.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload?.message || "Lỗi tải thống kê drone";
       });
   },
 });

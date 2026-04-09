@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Modal, Form, Input, Button, Select, DatePicker, message } from 'antd';
+import { Modal, Form, Input, Button, Select, DatePicker, message, Typography } from 'antd';
 import { useDispatch, useSelector } from 'react-redux';
 import { addFlightPlanToMission, fetchMissions } from '../slices/missionSlice';
 import { fetchFlightPlans } from '../../flight-plans/slices/flightPlanSlice';
@@ -10,17 +10,32 @@ import dayjs from 'dayjs';
 const { Option } = Select;
 const { TextArea } = Input;
 
+const { Text } = Typography;
+
 const AddFlightPlanModal = ({ visible, missionId, onClose, onSuccess }) => {
   const [form] = Form.useForm();
   const [loading, setLoading] = useState(false);
+  const [selectedFlightPlan, setSelectedFlightPlan] = useState(null);
   const dispatch = useDispatch();
   const missionsList = useSelector(selectMissionsList);
   const flightPlansList = useSelector(selectFlightPlansList);
 
+  // Watch for start time changes to auto-calculate end time
+  const plannedStart = Form.useWatch('plannedStart', form);
+
+  useEffect(() => {
+    // Auto-calculate end time when start time changes and we have selected flight plan
+    if (plannedStart && selectedFlightPlan?.estimatedFlightTime) {
+      const durationMinutes = selectedFlightPlan.estimatedFlightTime;
+      const endTime = plannedStart.add(durationMinutes, 'minute');
+      form.setFieldValue('plannedEnd', endTime);
+    }
+  }, [plannedStart, selectedFlightPlan, form]);
+
   useEffect(() => {
     // Fetch flight plans when modal opens
     if (visible) {
-      dispatch(fetchFlightPlans({ page: 1, limit: 100 }));
+      dispatch(fetchFlightPlans({ page: 1, limit: 100, status: "ACTIVE" }));
     }
   }, [dispatch, visible]);
 
@@ -73,28 +88,48 @@ const AddFlightPlanModal = ({ visible, missionId, onClose, onSuccess }) => {
         onFinish={handleSubmit}
       >
         <Form.Item
-          name="flightPlanId"
           label="Flight Plan"
-          rules={[
-            {
-              required: true,
-              message: 'Vui lòng chọn flight plan',
-            },
-          ]}
+          required
+          validateStatus={selectedFlightPlan ? 'success' : 'error'}
+          help={selectedFlightPlan ? null : 'Vui lòng chọn flight plan'}
         >
           <Select
             placeholder="Chọn Flight Plan"
             showSearch
+            value={selectedFlightPlan?._id}
             filterOption={(input, option) =>
               (option?.children ?? '').toLowerCase().includes(input.toLowerCase())
             }
+            onChange={(value) => {
+              console.log('🎯 Select onChange:', value);
+              const selected = flightPlansList?.find(fp => fp._id === value);
+              console.log('📋 Selected:', selected?._id, 'time:', selected?.estimatedFlightTime);
+              setSelectedFlightPlan(selected || null);
+              form.setFieldValue('flightPlanId', value);
+              const currentStart = form.getFieldValue('plannedStart');
+              if (currentStart && selected?.estimatedFlightTime) {
+                const endTime = currentStart.add(selected.estimatedFlightTime, 'minute');
+                form.setFieldValue('plannedEnd', endTime);
+              }
+            }}
           >
             {flightPlansList?.map((flightPlan) => (
               <Option key={flightPlan._id} value={flightPlan._id}>
                 {flightPlan._id.slice(-8)} - Drone: {flightPlan.drone?.model || 'N/A'}
+                {flightPlan.estimatedFlightTime && ` (${flightPlan.estimatedFlightTime} phút)`}
               </Option>
             ))}
           </Select>
+          {selectedFlightPlan?.estimatedFlightTime && (
+            <Text type="secondary" style={{ display: 'block', marginTop: 4, fontSize: 12 }}>
+              Thời gian bay ước tính: {selectedFlightPlan.estimatedFlightTime} phút
+            </Text>
+          )}
+        </Form.Item>
+        
+        {/* Hidden field for form validation */}
+        <Form.Item name="flightPlanId" hidden>
+          <Input />
         </Form.Item>
 
         <Form.Item
@@ -116,7 +151,7 @@ const AddFlightPlanModal = ({ visible, missionId, onClose, onSuccess }) => {
 
         <Form.Item
           name="plannedEnd"
-          label="Thời gian kết thúc"
+          label="Thời gian kết thúc (tự động tính)"
           rules={[
             {
               required: true,
@@ -126,8 +161,9 @@ const AddFlightPlanModal = ({ visible, missionId, onClose, onSuccess }) => {
         >
           <DatePicker
             showTime
-            placeholder="Chọn thời gian kết thúc"
+            placeholder="Thời gian kết thúc (tự động tính)"
             style={{ width: '100%' }}
+            disabled={!selectedFlightPlan?.estimatedFlightTime}
           />
         </Form.Item>
 

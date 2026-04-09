@@ -26,7 +26,7 @@ const ZonePage = ({ readOnly = false }) => {
 
   // Search and filter states
   const [searchText, setSearchText] = useState('');
-  const [filterStatus, setFilterStatus] = useState('');
+  const [filterStatus, setFilterStatus] = useState('active'); // Default to active only
   const [filterType, setFilterType] = useState('');
   const [sortBy, setSortBy] = useState('createdAt');
   const [sortOrder, setSortOrder] = useState('desc');
@@ -217,7 +217,7 @@ const ZonePage = ({ readOnly = false }) => {
 
   const handleClearFilters = () => {
     setSearchText('');
-    setFilterStatus('');
+    setFilterStatus('active'); // Reset to active only
     setFilterType('');
     setSortBy('createdAt');
     setSortOrder('desc');
@@ -230,6 +230,17 @@ const ZonePage = ({ readOnly = false }) => {
     setPagination(prev => ({ ...prev, currentPage: page, limit: pageSize }));
     fetchZonesList(page);
   };
+
+  // Filter zones for display - only show active zones by default
+  const getFilteredZonesForDisplay = () => {
+    // If no status filter is set, default to active only
+    if (!filterStatus) {
+      return zonesList.filter(zone => zone.status === 'active');
+    }
+    return zonesList;
+  };
+
+  const filteredZonesForDisplay = getFilteredZonesForDisplay();
 
   // Fetch zones when search/filter/sort changes
   useEffect(() => {
@@ -273,7 +284,7 @@ const ZonePage = ({ readOnly = false }) => {
           onZoneDeleted={handleZoneDeleted}
           onZoneClick={handleMapClick}
           onMapClickOutside={handleMapClickOutside}
-          zonesList={zonesList}
+          zonesList={filteredZonesForDisplay}
           hoveredZoneId={hoveredZoneId}
           selectedZoneId={selectedZoneId}
           onZoneHover={handleZoneHover}
@@ -369,7 +380,7 @@ const ZonePage = ({ readOnly = false }) => {
 
         {/* Results Summary */}
         <div style={{ marginTop: 12, fontSize: "12px", color: "#666" }}>
-          Tìm thấy <strong>{pagination.totalCount}</strong> zones 
+          Hiển thị <strong>{filteredZonesForDisplay.length}</strong> của <strong>{pagination.totalCount}</strong> zones
           {searchText && ` cho "${searchText}"`}
           {filterStatus && ` • Trạng thái: ${filterStatus}`}
           {filterType && ` • Loại: ${filterType}`}
@@ -395,7 +406,7 @@ const ZonePage = ({ readOnly = false }) => {
           <div style={{ textAlign: "center", padding: "40px" }}>
             <Spin size="large" />
           </div>
-        : zonesList.length === 0 ?
+        : filteredZonesForDisplay.length === 0 ?
           <div style={{ textAlign: "center", padding: "40px", color: "#999" }}>
             Chưa có vùng cấm bay nào
           </div>
@@ -408,7 +419,7 @@ const ZonePage = ({ readOnly = false }) => {
               margin: "0 auto" // Center the grid
             }}
           >
-            {zonesList.map((zone, index) => (
+            {filteredZonesForDisplay.map((zone, index) => (
               <div
                 key={zone._id}
                 style={{
