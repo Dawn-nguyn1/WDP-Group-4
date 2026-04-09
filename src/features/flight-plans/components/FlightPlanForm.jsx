@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import {
   Form,
   Input,
@@ -26,6 +26,7 @@ import {
   clearCurrentPlan,
 } from "../slices/flightPlanSlice";
 import WaypointEditorWithZones from "./WaypointEditorWithZones";
+import * as turf from "@turf/turf";
 
 const { Option } = Select;
 
@@ -47,6 +48,53 @@ const FlightPlanForm = ({ initialValues = null, editingId = null }) => {
   const [batteryPercentageUsed, setBatteryPercentageUsed] = useState(100);
   const [estimatedFlightTime, setEstimatedFlightTime] = useState(1);
   const [loadedData, setLoadedData] = useState({ zones: [], flightPlans: [] });
+
+  // Flight estimation calculation using the provided formula
+  const flightEstimates = useMemo(() => {
+    if (waypoints.length < 2) return { time: 0, battery: 0, distance: 0 };
+
+    let totalTimeSeconds = 0;
+    let distance = 0;
+
+    for (let i = 1; i < waypoints.length; i++) {
+      const prevWp = waypoints[i - 1];
+      const currWp = waypoints[i];
+
+      const fromPoint = turf.point([prevWp.longitude, prevWp.latitude]);
+      const toPoint = turf.point([currWp.longitude, currWp.latitude]);
+      const horizontalDist = turf.distance(fromPoint, toPoint, { units: 'kilometers' }) * 1000;
+      
+      const verticalDist = Math.abs(currWp.altitude - prevWp.altitude);
+
+      const segmentDistance = Math.sqrt(Math.pow(horizontalDist, 2) + Math.pow(verticalDist, 2));
+
+      const speed = currWp.speed > 0 ? currWp.speed : 22;
+
+      totalTimeSeconds += segmentDistance / speed;
+      distance += horizontalDist;
+    }
+
+    totalTimeSeconds += 30; // Add 30 seconds for takeoff/landing
+
+    const timeMinutes = Math.ceil(totalTimeSeconds / 60);
+
+    const MAX_DRONE_FLIGHT_TIME = 30; // 30 minutes max flight time
+    const batteryPercent = Math.ceil((timeMinutes / MAX_DRONE_FLIGHT_TIME) * 100);
+
+    return {
+      time: timeMinutes,
+      battery: batteryPercent,
+      distance: distance
+    };
+  }, [waypoints]);
+
+  // Auto-update battery and time fields when waypoints change
+  useEffect(() => {
+    if (flightEstimates.time > 0) {
+      setBatteryPercentageUsed(flightEstimates.battery);
+      setEstimatedFlightTime(flightEstimates.time);
+    }
+  }, [flightEstimates]);
 
   useEffect(() => { dispatch(fetchDrones()); }, [dispatch]);
 
@@ -604,11 +652,12 @@ const FlightPlanForm = ({ initialValues = null, editingId = null }) => {
                         <InputNumber
                           min={0}
                           max={100}
-                          value={batteryPercentageUsed}
-                          onChange={(value) => setBatteryPercentageUsed(value ?? 100)}
-                          style={{ width: "100%" }}
+                          value={flightEstimates.battery || 0}
+                          readOnly
+                          style={{ width: "100%", backgroundColor: '#f5f5f5', cursor: 'not-allowed' }}
                           size="large"
-                          placeholder="100"
+                          placeholder="0"
+                          addonAfter="%"
                         />
                       </div>
                     </Form.Item>
@@ -621,11 +670,12 @@ const FlightPlanForm = ({ initialValues = null, editingId = null }) => {
                         </div>
                         <InputNumber
                           min={1}
-                          value={estimatedFlightTime}
-                          onChange={(value) => setEstimatedFlightTime(value ?? 1)}
-                          style={{ width: "100%" }}
+                          value={flightEstimates.time || 0}
+                          readOnly
+                          style={{ width: "100%", backgroundColor: '#f5f5f5', cursor: 'not-allowed' }}
                           size="large"
-                          placeholder="1"
+                          placeholder="0"
+                          addonAfter="phút"
                         />
                       </div>
                     </Form.Item>
@@ -636,7 +686,60 @@ const FlightPlanForm = ({ initialValues = null, editingId = null }) => {
           </div>
 
           <div>
-            <div className="fp-section-label">Bản đồ & Waypoints</div>
+            <div className="fp-section-label">Bên do & Waypoints</div>
+            
+            {/* Flight Estimation Summary */}
+            {waypoints.length >= 2 && (
+              <div style={{
+                background: '#f0f9ff',
+                border: '1px solid #bae6fd',
+                borderRadius: '8px',
+                padding: '12px 16px',
+                marginBottom: '16px',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '24px'
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <div style={{
+                    width: '8px',
+                    height: '8px',
+                    borderRadius: '50%',
+                    background: '#0ea5e9',
+                    animation: 'pulse 2s infinite'
+                  }} />
+                  <span style={{ fontSize: '12px', fontWeight: '600', color: '#0c4a6e' }}>
+                    Thông tin estimation chuyến bay:
+                  </span>
+                </div>
+                <div style={{ display: 'flex', gap: '20px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <span style={{ fontSize: '11px', color: '#64748b' }}>Thời gian:</span>
+                    <span style={{ fontSize: '12px', fontWeight: '700', color: '#0284c7', fontFamily: 'Space Mono, monospace' }}>
+                      {flightEstimates.time} phút
+                    </span>
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <span style={{ fontSize: '11px', color: '#64748b' }}>Pin:</span>
+                    <span style={{ 
+                      fontSize: '12px', 
+                      fontWeight: '700', 
+                      color: flightEstimates.battery > 80 ? '#059669' : flightEstimates.battery > 50 ? '#d97706' : '#dc2626',
+                      fontFamily: 'Space Mono, monospace' 
+                    }}>
+                      {flightEstimates.battery}%
+                    </span>
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <span style={{ fontSize: '11px', color: '#64748b' }}>Quãng đường:</span>
+                    <span style={{ fontSize: '12px', fontWeight: '700', color: '#0284c7', fontFamily: 'Space Mono, monospace' }}>
+                      {(flightEstimates.distance / 1000).toFixed(1)} km
+                    </span>
+                  </div>
+                </div>
+              </div>
+            )}
+            
             <div className="fp-map-panel">
               <div className="fp-map-header">
                 <div className="fp-map-title">

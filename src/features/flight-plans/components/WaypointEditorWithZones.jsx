@@ -13,6 +13,7 @@ import { InputNumber, Select, TimePicker, Button, Space, message } from "antd";
 import { DeleteOutlined, EnvironmentOutlined, ThunderboltOutlined } from "@ant-design/icons";
 import L from "leaflet";
 import dayjs from "dayjs";
+import * as turf from "@turf/turf";
 import { fetchZonesAPI } from "../../zones/services/zoneApi";
 import { fetchFlightPlansAPI } from "../services/flightPlanApi";
 
@@ -41,16 +42,26 @@ const ACTION_CONFIG = {
   LAND:     { color: "#ef4444", bg: "#fef2f2", label: "LAND" },
 };
 
-// Haversine formula to calculate distance between two points
-const calculateDistance = (lat1, lon1, lat2, lon2) => {
-  const R = 6371000; // Earth's radius in meters
-  const dLat = (lat2 - lat1) * Math.PI / 180;
-  const dLon = (lon2 - lon1) * Math.PI / 180;
-  const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
-    Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
-    Math.sin(dLon/2) * Math.sin(dLon/2);
-  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-  return R * c; // Distance in meters
+// Advanced distance calculation using Turf.js (same as flight estimation formula)
+const calculateDistance = (lat1, lon1, alt1, lat2, lon2, alt2) => {
+  const fromPoint = turf.point([lon1, lat1]);
+  const toPoint = turf.point([lon2, lat2]);
+  const horizontalDist = turf.distance(fromPoint, toPoint, { units: 'kilometers' }) * 1000;
+  
+  const verticalDist = Math.abs(alt2 - alt1);
+  const segmentDistance = Math.sqrt(Math.pow(horizontalDist, 2) + Math.pow(verticalDist, 2));
+  
+  return {
+    horizontal: horizontalDist,
+    vertical: verticalDist,
+    total: segmentDistance
+  };
+};
+
+// Legacy function for backward compatibility
+const calculateSimpleDistance = (lat1, lon1, lat2, lon2) => {
+  const result = calculateDistance(lat1, lon1, 0, lat2, lon2, 0);
+  return result.horizontal;
 };
 
 const WaypointEditorWithZones = ({
@@ -114,12 +125,26 @@ const WaypointEditorWithZones = ({
       const distance = calculateDistance(
         lastWaypoint.latitude, 
         lastWaypoint.longitude, 
+        lastWaypoint.altitude || 50,
         latlng.lat, 
-        latlng.lng
+        latlng.lng,
+        50 // Default altitude for new waypoint
       );
       
-      if (distance > 50000) {
-        message.warning(`Khoảng cách giữa 2 waypoint quá lớn: ${Math.round(distance/1000)}km (tối đa 50km)`);
+      if (distance.horizontal > 50000) {
+        message.warning({
+          content: (
+            <div>
+              <div><strong>Khoảng cách giữa 2 waypoint quá lớn!</strong></div>
+              <div style={{ marginTop: '8px', fontSize: '12px', color: '#666' }}>
+                • Khoảng cách ngang: {Math.round(distance.horizontal/1000)}km (tối đa 50km)
+                {distance.vertical > 0 && <div>• Chênh lệch độ cao: {Math.round(distance.vertical)}m</div>}
+                • Khoảng cách thực tế: {Math.round(distance.total/1000)}km
+              </div>
+            </div>
+          ),
+          duration: 6
+        });
         return;
       }
     }
