@@ -153,25 +153,30 @@ const SimulationDashboard = () => {
           <Alert message={error} type="error" showIcon className="mb-4" closable />
         )}
 
-        {/* Map Container with Config Button Overlay */}
-        <div className="bg-white rounded-lg shadow-sm p-2 relative" style={{ height: 'calc(100vh - 140px)', minHeight: '600px' }}>
-          {/* Config Button - Top Right on Map */}
-          <div className="absolute top-4 right-4 z-[1000]">
-            <Button
-              type="primary"
-              icon={<SettingOutlined />}
-              onClick={showConfigModal}
-              size="large"
-              style={{
-                background: 'linear-gradient(135deg, #1890ff 0%, #096dd9 100%)',
-                border: 'none',
-                boxShadow: '0 4px 12px rgba(24, 144, 255, 0.4)'
-              }}
-            >
-              Simulation Configuration
-            </Button>
-          </div>
+        {/* Config Button - Outside Map Container */}
+        <div className="flex justify-end mb-4">
+          <Button
+            type="primary"
+            icon={<SettingOutlined />}
+            onClick={showConfigModal}
+            size="large"
+            style={{
+              background: 'linear-gradient(135deg, #1890ff 0%, #096dd9 100%)',
+              border: 'none',
+              boxShadow: '0 4px 12px rgba(24, 144, 255, 0.4)'
+            }}
+          >
+            Simulation Configuration
+          </Button>
+        </div>
 
+        {/* Map Container */}
+        <div className="bg-white rounded-lg p-6 relative" style={{ 
+          height: 'calc(100vh - 150px)', 
+          minHeight: '700px',
+          boxShadow: '0 25px 50px -12px rgba(162, 158, 158, 0.48)',
+          border: '2px solid #d1d5db'
+        }}>
           <SimulationMap
             currentMission={detailedMission || selectedMission}
             missionFlightPaths={missionFlightPaths}
