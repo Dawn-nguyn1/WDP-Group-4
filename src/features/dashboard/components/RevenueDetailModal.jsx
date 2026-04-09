@@ -8,19 +8,33 @@ const RevenueDetailModal = ({ visible, onClose, type, revenue }) => {
   const now = new Date();
   const currentMonth = now.getMonth() + 1;
   const currentYear = now.getFullYear();
+  const currentQuarter = Math.ceil(currentMonth / 3);
 
   const [selectedMonth, setSelectedMonth] = useState(currentMonth);
+  const [selectedQuarter, setSelectedQuarter] = useState(currentQuarter);
   const [selectedYear, setSelectedYear] = useState(currentYear);
 
   const isMonthly = type === 'monthly';
+  const isQuarterly = type === 'quarterly';
 
   const title = isMonthly
     ? `Chi tiết tháng ${selectedMonth}/${selectedYear}`
+    : isQuarterly
+    ? `Chi tiết quý ${selectedQuarter}/${selectedYear}`
     : `Chi tiết năm ${selectedYear}`;
 
-  // For monthly view: show daily breakdown of selected month
-  const monthlyData = (revenue.daily || []).filter((item) => {
+  // For monthly view: show monthly summary (API doesn't have daily breakdown)
+  const monthlyData = (revenue.monthly || []).filter((item) => {
     return item._id.month === selectedMonth && item._id.year === selectedYear;
+  });
+
+  // For quarterly view: show monthly breakdown of selected quarter
+  const startMonth = (selectedQuarter - 1) * 3 + 1;
+  const endMonth = startMonth + 2;
+  const quarterlyData = (revenue.monthly || []).filter((item) => {
+    return item._id.year === selectedYear &&
+           item._id.month >= startMonth &&
+           item._id.month <= endMonth;
   });
 
   // For yearly view: show monthly breakdown of selected year
@@ -30,20 +44,65 @@ const RevenueDetailModal = ({ visible, onClose, type, revenue }) => {
 
   const totalRevenue = isMonthly
     ? monthlyData.reduce((sum, i) => sum + i.totalRevenue, 0)
+    : isQuarterly
+    ? quarterlyData.reduce((sum, i) => sum + i.totalRevenue, 0)
     : yearlyData.reduce((sum, i) => sum + i.totalRevenue, 0);
 
   const totalTx = isMonthly
     ? monthlyData.reduce((sum, i) => sum + i.transactionCount, 0)
+    : isQuarterly
+    ? quarterlyData.reduce((sum, i) => sum + i.transactionCount, 0)
     : yearlyData.reduce((sum, i) => sum + i.transactionCount, 0);
 
-  const dailyColumns = [
+  const monthlySummaryColumns = [
     {
-      title: 'Ngày',
+      title: 'Tháng',
       dataIndex: '_id',
-      key: 'day',
-      render: (d) => `${String(d.day).padStart(2, '0')}/${String(d.month).padStart(2, '0')}/${d.year}`,
-      sorter: (a, b) => a._id.day - b._id.day,
-      defaultSortOrder: 'descend',
+      key: 'month',
+      render: (d) => (
+        <Tag color="blue">
+          Tháng {d.month}/{d.year}
+        </Tag>
+      ),
+    },
+    {
+      title: 'Doanh thu',
+      dataIndex: 'totalRevenue',
+      key: 'revenue',
+      render: (v) => (
+        <span style={{ fontWeight: 500, color: '#3B6D11' }}>
+          {v.toLocaleString('vi-VN')} VND
+        </span>
+      ),
+    },
+    {
+      title: 'Số GD',
+      dataIndex: 'transactionCount',
+      key: 'tx',
+      render: (v) => <Tag color="blue">{v} GD</Tag>,
+    },
+    {
+      title: 'Trung bình/GD',
+      key: 'avg',
+      render: (_, record) =>
+        record.transactionCount > 0
+          ? `${Math.round(record.totalRevenue / record.transactionCount).toLocaleString('vi-VN')} VND`
+          : '—',
+    },
+  ];
+
+  const quarterlyColumns = [
+    {
+      title: 'Quý',
+      dataIndex: '_id',
+      key: 'quarter',
+      render: (d) => (
+        <Tag color="blue">
+          Quý {Math.ceil(d.month / 3)}/{d.year}
+        </Tag>
+      ),
+      sorter: (a, b) => Math.ceil(a._id.month / 3) - Math.ceil(b._id.month / 3),
+      defaultSortOrder: 'ascend',
     },
     {
       title: 'Doanh thu',
@@ -112,8 +171,8 @@ const RevenueDetailModal = ({ visible, onClose, type, revenue }) => {
     },
   ];
 
-  const dataSource = isMonthly ? monthlyData : yearlyData;
-  const columns = isMonthly ? dailyColumns : monthlyColumns;
+  const dataSource = isMonthly ? monthlyData : isQuarterly ? quarterlyData : yearlyData;
+  const columns = isMonthly ? monthlySummaryColumns : isQuarterly ? quarterlyColumns : monthlyColumns;
 
   return (
     <Modal
@@ -121,6 +180,8 @@ const RevenueDetailModal = ({ visible, onClose, type, revenue }) => {
         <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           {isMonthly ? (
             <CalendarOutlined style={{ color: '#185FA5' }} />
+          ) : isQuarterly ? (
+            <BarChartOutlined style={{ color: '#722ed1' }} />
           ) : (
             <BarChartOutlined style={{ color: '#3B6D11' }} />
           )}
@@ -135,7 +196,7 @@ const RevenueDetailModal = ({ visible, onClose, type, revenue }) => {
     >
       {/* Date selectors */}
       <Row gutter={16} style={{ marginBottom: 20 }}>
-        <Col span={isMonthly ? 12 : 24}>
+        <Col span={isMonthly || isQuarterly ? 12 : 24}>
           <div style={{ marginBottom: 8, fontSize: 14, fontWeight: 500 }}>
             Chọn năm:
           </div>
@@ -166,6 +227,25 @@ const RevenueDetailModal = ({ visible, onClose, type, revenue }) => {
               {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].map((month) => (
                 <Option key={month} value={month}>
                   Tháng {month}
+                </Option>
+              ))}
+            </Select>
+          </Col>
+        )}
+        {isQuarterly && (
+          <Col span={12}>
+            <div style={{ marginBottom: 8, fontSize: 14, fontWeight: 500 }}>
+              Chọn quý:
+            </div>
+            <Select
+              value={selectedQuarter}
+              onChange={setSelectedQuarter}
+              style={{ width: '100%' }}
+              size="small"
+            >
+              {[1, 2, 3, 4].map((quarter) => (
+                <Option key={quarter} value={quarter}>
+                  Quý {quarter}
                 </Option>
               ))}
             </Select>
@@ -208,9 +288,12 @@ const RevenueDetailModal = ({ visible, onClose, type, revenue }) => {
           dataSource={dataSource}
           rowKey={(r) =>
             isMonthly
-              ? `${r._id.year}-${r._id.month}-${r._id.day}`
+              ? `${r._id.year}-${r._id.month}`
+              : isQuarterly
+              ? `${r._id.year}-${r._id.month}`
               : `${r._id.year}-${r._id.month}`
           }
+          locale={{ emptyText: 'Không có dữ liệu' }}
           pagination={dataSource.length > 10 ? { pageSize: 10 } : false}
           size="small"
           bordered={false}

@@ -41,20 +41,11 @@ const AdminDashboard = () => {
     <Layout className="dashboard-container">
       <Header className="dashboard-header">
         <div>
-          <Title level={2} className="dashboard-title">Admin Dashboard</Title>
-          <Text className="dashboard-subtitle">Quản lý và theo dõi hệ thống</Text>
+          <Title level={2} className="dashboard-title">Admin Dashboards</Title>
         </div>
       </Header>
       
       <Content>
-        <div className="stats-row">
-          <DashboardStats 
-            payments={payments} 
-            revenue={revenue} 
-            loading={loading} 
-          />
-        </div>
-
         <div className="chart-card">
           <RevenueChart 
             revenue={revenue} 

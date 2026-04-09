@@ -5,14 +5,16 @@ import RevenueDetailModal from './RevenueDetailModal';
 
 const RevenueChart = ({ revenue, loading }) => {
   const [modalVisible, setModalVisible] = useState(false);
-  const [modalType, setModalType] = useState(null); // 'monthly' | 'yearly'
-  const [hoveredCard, setHoveredCard] = useState(null); // 'monthly' | 'yearly' | null
+  const [modalType, setModalType] = useState(null); // 'monthly' | 'quarterly' | 'yearly'
+  const [hoveredCard, setHoveredCard] = useState(null); // 'monthly' | 'quarterly' | 'yearly' | null
 
   const now = new Date();
   const currentMonth = now.getMonth() + 1;
   const currentYear = now.getFullYear();
+  const currentQuarter = Math.ceil(currentMonth / 3);
 
   const monthlyRevenue = revenue.monthly || [];
+  const quarterlyRevenue = revenue.quarterly || [];
   const yearlyRevenue = revenue.yearly || [];
 
   const totalRevenue = monthlyRevenue.reduce((sum, item) => sum + item.totalRevenue, 0);
@@ -21,6 +23,11 @@ const RevenueChart = ({ revenue, loading }) => {
   // Current month data
   const currentMonthData = monthlyRevenue.find(
     (m) => m._id.month === currentMonth && m._id.year === currentYear
+  );
+
+  // Current quarter data
+  const currentQuarterData = quarterlyRevenue.find(
+    (q) => q._id.quarter === currentQuarter && q._id.year === currentYear
   );
 
   // Current year data
@@ -74,10 +81,10 @@ const RevenueChart = ({ revenue, loading }) => {
           </Col>
         </Row>
 
-        {/* Thống kê theo tháng và năm hiện tại — có thể click để xem chi tiết */}
+        {/* Thống kê theo tháng, quý và năm hiện tại — có thể click để xem chi tiết */}
         <Row gutter={16} style={{ marginBottom: 24 }}>
           {/* Card tháng hiện tại */}
-          <Col span={12}>
+          <Col span={8}>
             <div
               onClick={() => handleOpenModal('monthly')}
               style={hoveredCard === 'monthly' ? clickableCardHoverStyle : clickableCardStyle}
@@ -109,8 +116,41 @@ const RevenueChart = ({ revenue, loading }) => {
             </div>
           </Col>
 
+          {/* Card quý hiện tại */}
+          <Col span={8}>
+            <div
+              onClick={() => handleOpenModal('quarterly')}
+              style={hoveredCard === 'quarterly' ? clickableCardHoverStyle : clickableCardStyle}
+              role="button"
+              tabIndex={0}
+              onMouseEnter={() => setHoveredCard('quarterly')}
+              onMouseLeave={() => setHoveredCard(null)}
+              onKeyDown={(e) => e.key === 'Enter' && handleOpenModal('quarterly')}
+              title="Xem chi tiết theo tháng trong quý này"
+            >
+              <div style={cardInnerHeader}>
+                <span style={cardTitleStyle}>Doanh thu theo quý</span>
+                <RightOutlined style={{ fontSize: 12, color: '#8c8c8c' }} />
+              </div>
+              <div style={{ marginTop: 8 }}>
+                <Tag color="purple">
+                  Q{currentQuarter}/{currentYear}
+                </Tag>
+                <div style={{ marginTop: 6 }}>
+                  <strong style={{ fontSize: 15 }}>
+                    {(currentQuarterData?.totalRevenue || 0).toLocaleString('vi-VN')} VND
+                  </strong>
+                  <span style={{ color: '#8c8c8c', marginLeft: 6, fontSize: 13 }}>
+                    - {currentQuarterData?.transactionCount || 0} GD
+                  </span>
+                </div>
+              </div>
+              <div style={clickHintStyle}>Nhấn để xem chi tiết theo tháng →</div>
+            </div>
+          </Col>
+
           {/* Card năm hiện tại */}
-          <Col span={12}>
+          <Col span={8}>
             <div
               onClick={() => handleOpenModal('yearly')}
               style={hoveredCard === 'yearly' ? clickableCardHoverStyle : clickableCardStyle}
@@ -119,7 +159,7 @@ const RevenueChart = ({ revenue, loading }) => {
               onMouseEnter={() => setHoveredCard('yearly')}
               onMouseLeave={() => setHoveredCard(null)}
               onKeyDown={(e) => e.key === 'Enter' && handleOpenModal('yearly')}
-              title="Xem chi tiết theo tháng trong năm này"
+              title="Xem chi tiết theo quý trong năm này"
             >
               <div style={cardInnerHeader}>
                 <span style={cardTitleStyle}>Doanh thu theo năm</span>
@@ -136,7 +176,7 @@ const RevenueChart = ({ revenue, loading }) => {
                   </span>
                 </div>
               </div>
-              <div style={clickHintStyle}>Nhấn để xem chi tiết theo tháng →</div>
+              <div style={clickHintStyle}>Nhấn để xem chi tiết theo quý →</div>
             </div>
           </Col>
         </Row>

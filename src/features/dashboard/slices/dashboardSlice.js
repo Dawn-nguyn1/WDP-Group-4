@@ -32,6 +32,7 @@ const initialState = {
   revenue: {
     daily: [],
     monthly: [],
+    quarterly: [],
     yearly: []
   },
   loading: false,
@@ -48,7 +49,7 @@ const dashboardSlice = createSlice({
     },
     resetDashboard: (state) => {
       state.payments = [];
-      state.revenue = { daily: [], monthly: [], yearly: [] };
+      state.revenue = { daily: [], monthly: [], quarterly: [], yearly: [] };
       state.loading = false;
       state.error = null;
     },
@@ -77,7 +78,7 @@ const dashboardSlice = createSlice({
       })
       .addCase(fetchRevenue.fulfilled, (state, action) => {
         state.loading = false;
-        state.revenue = action.payload.data || { daily: [], monthly: [], yearly: [] };
+        state.revenue = action.payload.data || { daily: [], monthly: [], quarterly: [], yearly: [] };
       })
       .addCase(fetchRevenue.rejected, (state, action) => {
         state.loading = false;

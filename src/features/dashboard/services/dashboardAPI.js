@@ -8,8 +8,9 @@ export const fetchPaymentsAPI = () => {
 };
 
 /**
- * Thống kê doanh thu theo ngày, tháng, năm (Chỉ Admin)
+ * Thống kê doanh thu theo tháng, quý, năm (Chỉ Admin)
+ * Endpoint: /api/admin/analytics/revenue
  */
 export const fetchRevenueAPI = () => {
-  return axios.get("/api/sepay/admin/revenue");
+  return axios.get("/api/admin/analytics/revenue");
 };
