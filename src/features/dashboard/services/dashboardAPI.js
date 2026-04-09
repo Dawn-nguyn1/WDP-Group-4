@@ -14,3 +14,11 @@ export const fetchPaymentsAPI = () => {
 export const fetchRevenueAPI = () => {
   return axios.get("/api/admin/analytics/revenue");
 };
+
+/**
+ * Thống kê drone theo owner type (Chỉ Admin)
+ * Endpoint: /api/admin/analytics/drones
+ */
+export const fetchDroneAnalyticsAPI = () => {
+  return axios.get("/api/admin/analytics/drones");
+};

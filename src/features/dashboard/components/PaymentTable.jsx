@@ -9,6 +9,12 @@ const PaymentTable = ({ payments, loading }) => {
       key: 'order_id',
     },
     {
+      title: 'Customer ID',
+      dataIndex: 'customer_id',
+      key: 'customer_id',
+      ellipsis: true,
+    },
+    {
       title: 'Mô tả',
       dataIndex: 'order_description',
       key: 'order_description',
@@ -24,7 +30,7 @@ const PaymentTable = ({ payments, loading }) => {
       dataIndex: 'status',
       key: 'status',
       render: (status) => {
-        const color = status === 'COMPLETED' ? 'green' : status === 'PENDING' ? 'orange' : 'red';
+        const color = status === 'SUCCESS' || status === 'COMPLETED' ? 'green' : status === 'PENDING' ? 'orange' : 'red';
         return <Tag color={color}>{status}</Tag>;
       },
     },
