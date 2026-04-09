@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { Layout, Alert, Tag, Button, Card, Statistic, Row, Col, notification } from "antd";
+import { Layout, Alert, Tag, Button, Card, Statistic, Row, Col, notification, Table, Badge } from "antd";
 import { SettingOutlined, ThunderboltOutlined, AimOutlined, CheckCircleOutlined } from "@ant-design/icons";
 import '../../users/styles/UserPage.css';
 import {
@@ -8,7 +8,9 @@ import {
   getMissionSimulationStatus,
   selectCurrentRun,
   selectSimulationError,
-  selectLiveDrones
+  selectLiveDrones,
+  selectFlightType,
+  selectCompletedAutoFlights
 } from "../slices/simulationSlice";
 import { fetchMissions, selectMissionsList, selectMissionsLoading } from "../../missions/slices/missionSlice";
 import { getMissionDetailAPI } from "../../missions/services/missionApi";
@@ -27,6 +29,8 @@ const SimulationDashboard = () => {
   const missions = useSelector(selectMissionsList);
   const missionsLoading = useSelector(selectMissionsLoading);
   const liveDrones = useSelector(selectLiveDrones);
+  const flightType = useSelector(selectFlightType);
+  const completedAutoFlights = useSelector(selectCompletedAutoFlights);
 
   const [selectedMissionId, setSelectedMissionId] = useState(null);
   const [detailedMission, setDetailedMission] = useState(null);
@@ -242,7 +246,7 @@ const SimulationDashboard = () => {
             title="Drone Telemetry" 
             size="small" 
             className="mb-4"
-            style={{ background: '#f6ffed', borderColor: '#b7eb8f' }}
+            style={{ background: '#f8f9fc', borderColor: '#d9d9d9' }}
           >
             <Row gutter={[16, 16]}>
               {droneStats.map((drone) => (
@@ -306,6 +310,59 @@ const SimulationDashboard = () => {
             dronesLiveProps={dronesLiveProps}
           />
         </div>
+
+        {/* Completed Automatic Flights Table - Below Map */}
+        {completedAutoFlights.length > 0 && (
+          <Card
+            title="📋 Bay Tự Động Thành Công"
+            size="small"
+            className="mt-4"
+            style={{ background: '#e6fffb', borderColor: '#87e8de' }}
+          >
+            <Table
+              dataSource={completedAutoFlights}
+              rowKey="missionId"
+              size="small"
+              pagination={false}
+              columns={[
+                {
+                  title: 'Mission ID',
+                  dataIndex: 'missionId',
+                  key: 'missionId',
+                  render: (id) => <code>{id.slice(-8)}</code>
+                },
+                {
+                  title: 'Số Drone',
+                  dataIndex: 'droneCount',
+                  key: 'droneCount',
+                  render: (count) => <Tag color="blue">{count} drone</Tag>
+                },
+                {
+                  title: 'Thời gian cập nhật',
+                  dataIndex: 'completedAt',
+                  key: 'completedAt',
+                  render: (time) => new Date(time).toLocaleString('vi-VN')
+                },
+                {
+                  title: 'Chi tiết',
+                  key: 'details',
+                  render: (_, record) => (
+                    <div style={{ fontSize: 11 }}>
+                      {record.drones.map((d, i) => (
+                        <div key={i} style={{ marginBottom: 4 }}>
+                          <Tag size="small" color={d.sessionStatus === 'COMPLETED' ? 'green' : 'orange'}>
+                            {d.sessionStatus}
+                          </Tag>{' '}
+                          <span style={{ color: '#666' }}>{d.droneId?.slice(-12)}</span>
+                        </div>
+                      ))}
+                    </div>
+                  )
+                }
+              ]}
+            />
+          </Card>
+        )}
 
         {/* Simulation Control Modal */}
         <SimulationControl
