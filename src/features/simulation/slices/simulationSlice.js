@@ -49,6 +49,19 @@ export const getSimulationStatus = createAsyncThunk(
   }
 );
 
+// Get simulation status by mission ID (alternative API with live drone data)
+export const getMissionSimulationStatus = createAsyncThunk(
+  "simulation/getMissionStatus",
+  async (missionId, { rejectWithValue }) => {
+    try {
+      const response = await simulationApi.getMissionSimulationStatusAPI(missionId);
+      return response;
+    } catch (err) {
+      return rejectWithValue(err.response?.data || err.message);
+    }
+  }
+);
+
 // Helper to manually clear run from local storage and state
 export const clearSimulation = () => (dispatch) => {
   localStorage.removeItem("currentSimulationRunId");
@@ -64,6 +77,10 @@ const initialState = {
   isStopping: false,
   isPolling: false,
   error: null,
+  liveDrones: [], // Store live drone data from mission status API
+  missionStatusResponse: null, // Full response from mission status API
+  flightType: null, // "manual" or "auto"
+  completedAutoFlights: [], // Track completed automatic flights
 };
 
 const simulationSlice = createSlice({
@@ -91,7 +108,8 @@ const simulationSlice = createSlice({
       })
       .addCase(startSimulation.rejected, (state, action) => {
         state.isStarting = false;
-        state.error = action.payload?.message || "Failed to start simulation";
+        // Store the full error payload to access details later
+        state.error = action.payload;
       })
 
       // stopSimulation
@@ -137,6 +155,70 @@ const simulationSlice = createSlice({
         if (action.payload?.message && typeof action.payload.message === "string" && action.payload.message.toLowerCase().includes("not found")) {
             state.currentRun = null;
         }
+      })
+
+      // getMissionSimulationStatus - alternative API with live drone data
+      .addCase(getMissionSimulationStatus.fulfilled, (state, action) => {
+        const response = action.payload;
+        // Store the full response to detect flight type (manual vs auto)
+        state.missionStatusResponse = response;
+        
+        // Detect flight type based on response structure
+        const isManualFlight = response?.runId !== null && response?.runId !== undefined;
+        const isAutoFlight = !isManualFlight && response?.source === "DATABASE";
+        
+        state.flightType = isManualFlight ? "manual" : isAutoFlight ? "auto" : null;
+        
+        // Store the live drone data separately
+        if (response?.run) {
+          state.currentRun = response.run;
+        }
+        state.liveDrones = response?.live?.drones || response?.run?.drones || [];
+        
+        // Track automatic flights (both IN_PROGRESS and COMPLETED)
+        if (isAutoFlight && response?.run?.drones) {
+          const missionId = response.run.missionId;
+          // Include all drones with active or completed sessions
+          const activeDrones = response.run.drones.filter(
+            d => d.sessionStatus === "IN_PROGRESS" || 
+                 d.sessionStatus === "COMPLETED" ||
+                 d.sessionStatus === "RUNNING"
+          );
+          
+          if (activeDrones.length > 0) {
+            // Check if we already have this mission tracked
+            const existingIndex = state.completedAutoFlights.findIndex(
+              f => f.missionId === missionId
+            );
+            
+            const flightData = {
+              missionId,
+              updatedAt: new Date().toISOString(),
+              hasRun: response.hasRun,
+              status: response.status,
+              droneCount: activeDrones.length,
+              drones: activeDrones.map(d => ({
+                droneId: d.drone?.droneId,
+                droneCode: d.drone?._id,
+                sessionStatus: d.sessionStatus,
+                actualStart: d.actualStart,
+                actualEnd: d.actualEnd,
+                flightSessionId: d.flightSessionId
+              }))
+            };
+            
+            if (existingIndex >= 0) {
+              // Update existing entry
+              state.completedAutoFlights[existingIndex] = flightData;
+            } else {
+              // Add new entry
+              state.completedAutoFlights.push(flightData);
+            }
+          }
+        }
+      })
+      .addCase(getMissionSimulationStatus.rejected, (state, action) => {
+        state.error = action.payload?.message || "Failed to fetch mission simulation status";
       });
   },
 });
@@ -147,5 +229,9 @@ export const selectCurrentRun = (state) => state.simulation.currentRun;
 export const selectIsStarting = (state) => state.simulation.isStarting;
 export const selectIsStopping = (state) => state.simulation.isStopping;
 export const selectSimulationError = (state) => state.simulation.error;
+export const selectLiveDrones = (state) => state.simulation.liveDrones;
+export const selectFlightType = (state) => state.simulation.flightType;
+export const selectMissionStatusResponse = (state) => state.simulation.missionStatusResponse;
+export const selectCompletedAutoFlights = (state) => state.simulation.completedAutoFlights;
 
 export default simulationSlice.reducer;
