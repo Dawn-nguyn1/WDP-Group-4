@@ -15,6 +15,11 @@ export const validatePathAgainstZones = (waypoints, zones) => {
   const pathLine = turf.lineString(pathCoordinates);
 
   zones.forEach(zone => {
+    // Only validate against active zones
+    if (zone.status !== 'active') {
+      return;
+    }
+    
     // 1. Horizontal check: Does the path intersect or is it inside the zone polygon?
     // Note: zone.coordinates is an array of {lat, lng} from WaypointEditorWithZones mapping
     const zoneCoords = zone.coordinates.map(c => [c.lng, c.lat]);

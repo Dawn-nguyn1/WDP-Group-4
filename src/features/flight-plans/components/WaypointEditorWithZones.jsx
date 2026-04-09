@@ -179,13 +179,15 @@ const WaypointEditorWithZones = ({
 
   // Filter zones based on selected filter
   const getFilteredZones = () => {
-    if (zoneFilter === 'all') return mapZones;
-    if (zoneFilter === 'no_fly') return mapZones.filter(zone => zone.type === 'no_fly');
-    if (zoneFilter === 'restricted') return mapZones.filter(zone => zone.type === 'restricted');
-    return mapZones;
+    const activeZones = mapZones.filter(zone => zone.status === 'active');
+    if (zoneFilter === 'all') return activeZones;
+    if (zoneFilter === 'no_fly') return activeZones.filter(zone => zone.type === 'no_fly');
+    if (zoneFilter === 'restricted') return activeZones.filter(zone => zone.type === 'restricted');
+    return activeZones;
   };
 
   const filteredZones = getFilteredZones();
+  const activeZonesCount = mapZones.filter(zone => zone.status === 'active').length;
 
   return (
     <>
@@ -495,7 +497,7 @@ const WaypointEditorWithZones = ({
             </div>
             <div className="we-stat-chip">
               <div className="we-stat-dot" style={{ background: "#ef4444" }} />
-              Vùng cấm: <strong>{mapZones.length}</strong>
+              Vùng cấm: <strong>{activeZonesCount}</strong>
             </div>
             <div className="we-stat-chip">
               <Button
