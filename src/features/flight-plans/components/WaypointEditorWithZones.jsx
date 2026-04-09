@@ -69,6 +69,7 @@ const WaypointEditorWithZones = ({
   setWaypoints,
   initialCenter = [10.8231, 106.6297],
   onDataLoaded,
+  batteryPercentage = 0,
 }) => {
   const [mapZones, setMapZones] = useState([]);
   const [zoneFilter, setZoneFilter] = useState('all'); // Bộ lọc zone types
@@ -120,6 +121,40 @@ const WaypointEditorWithZones = ({
   useEffect(() => { fetchZones(); fetchFlightPlans(); }, []);
 
   const handleMapClick = (latlng) => {
+    // Check battery percentage - block if > 100%
+    if (batteryPercentage > 100) {
+      message.error({
+        content: (
+          <div>
+            <div><strong>Không thể thêm waypoint!</strong></div>
+            <div style={{ marginTop: '8px', fontSize: '12px', color: '#666' }}>
+              Pin dự kiến sử dụng ({batteryPercentage}%) đã vượt quá 100%.<br/>
+              Vui lòng giảm số lượng waypoint hoặc độ cao bay.
+            </div>
+          </div>
+        ),
+        duration: 5
+      });
+      return;
+    }
+
+    // Warning if battery > 50% but still allow adding
+    if (batteryPercentage > 50) {
+      message.warning({
+        content: (
+          <div>
+            <div><strong>Cảnh báo: Không đủ pin nếu không quay lại!</strong></div>
+            <div style={{ marginTop: '8px', fontSize: '12px', color: '#666' }}>
+              Pin dự kiến sử dụng: {batteryPercentage}%<br/>
+              Đảm bảo drone có đủ pin để quay về điểm xuất phát.
+            </div>
+          </div>
+        ),
+        duration: 5
+      });
+      // Still allow adding waypoint, just show warning
+    }
+
     // Check distance from previous waypoint if exists
     if (waypoints.length > 0) {
       const lastWaypoint = waypoints[waypoints.length - 1];

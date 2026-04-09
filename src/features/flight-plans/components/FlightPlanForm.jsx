@@ -751,6 +751,7 @@ const FlightPlanForm = ({ initialValues = null, editingId = null }) => {
                 <WaypointEditorWithZones
                   waypoints={waypoints}
                   setWaypoints={setWaypoints}
+                  batteryPercentage={flightEstimates.battery}
                   onDataLoaded={(data) => setLoadedData(prev => ({ ...prev, ...data }))}
                 />
               </div>
