@@ -10,7 +10,7 @@ import {
   Polygon,
 } from "react-leaflet";
 import { InputNumber, Select, TimePicker, Button, Space, message } from "antd";
-import { DeleteOutlined, EnvironmentOutlined, ThunderboltOutlined } from "@ant-design/icons";
+import { DeleteOutlined, EnvironmentOutlined, ThunderboltOutlined, ExpandOutlined, CompressOutlined } from "@ant-design/icons";
 import L from "leaflet";
 import dayjs from "dayjs";
 import * as turf from "@turf/turf";
@@ -77,6 +77,7 @@ const WaypointEditorWithZones = ({
   const [selectedPlanId, setSelectedPlanId] = useState(null);
   const [loading, setLoading] = useState(false);
   const [showAllPaths, setShowAllPaths] = useState(false);
+  const [isCompactView, setIsCompactView] = useState(false);
 
   const fetchZones = async () => {
     try {
@@ -339,33 +340,21 @@ const WaypointEditorWithZones = ({
           display: flex;
           flex-direction: column;
           gap: 10px;
-          max-height: 380px;
+          max-height: 600px;
           overflow-y: auto;
+        }
+
+        .we-wp-list.compact {
+          max-height: 300px;
+        }
+
+        .we-wp-list.expanded {
+          max-height: 800px;
         }
 
         .we-wp-list::-webkit-scrollbar { width: 4px; }
         .we-wp-list::-webkit-scrollbar-track { background: transparent; }
         .we-wp-list::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 4px; }
-
-        .we-wp-empty {
-          text-align: center;
-          padding: 40px 20px;
-          color: #9ca3af;
-        }
-        .we-wp-empty-icon {
-          font-size: 32px;
-          margin-bottom: 10px;
-          opacity: 0.4;
-        }
-        .we-wp-empty-text {
-          font-size: 13px;
-          font-weight: 500;
-        }
-        .we-wp-empty-sub {
-          font-size: 12px;
-          margin-top: 4px;
-          opacity: 0.7;
-        }
 
         /* ── Waypoint card ── */
         .we-wp-card {
@@ -440,6 +429,28 @@ const WaypointEditorWithZones = ({
           align-items: start;
         }
 
+        .we-wp-list.compact .we-wp-card-body {
+          grid-template-columns: 130px 100px 100px;
+          gap: 8px;
+          padding: 8px 12px;
+        }
+
+        .we-wp-list.compact .we-field-label {
+          font-size: 9px;
+          margin-bottom: 2px;
+        }
+
+        .we-wp-list.compact .ant-input-number,
+        .we-wp-list.compact .ant-select-selector {
+          height: 28px !important;
+          font-size: 11px !important;
+        }
+
+        .we-wp-list.compact .ant-input-number-input {
+          height: 26px;
+          font-size: 11px;
+        }
+
         .we-field-label {
           font-size: 10.5px;
           font-weight: 600;
@@ -485,6 +496,16 @@ const WaypointEditorWithZones = ({
             <div className="we-stat-chip">
               <div className="we-stat-dot" style={{ background: "#ef4444" }} />
               Vùng cấm: <strong>{mapZones.length}</strong>
+            </div>
+            <div className="we-stat-chip">
+              <Button
+                size="small"
+                icon={isCompactView ? <ExpandOutlined /> : <CompressOutlined />}
+                onClick={() => setIsCompactView(!isCompactView)}
+                style={{ fontSize: "11px", height: "24px" }}
+              >
+                {isCompactView ? "Mở rộng" : "Thu gọn"}
+              </Button>
             </div>
           </div>
 
@@ -776,7 +797,7 @@ const WaypointEditorWithZones = ({
         </div>
 
         {/* Waypoints list */}
-        <div className="we-wp-list">
+        <div className={`we-wp-list ${isCompactView ? 'compact' : 'expanded'}`}>
           {waypoints.length === 0 ? (
             <div className="we-wp-empty">
               <div className="we-wp-empty-icon">🗺️</div>
