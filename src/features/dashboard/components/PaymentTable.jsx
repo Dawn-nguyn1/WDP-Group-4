@@ -1,5 +1,6 @@
 import React, { useState, useMemo } from 'react';
-import { Table, Tag, Card, Select, Space } from 'antd';
+import { Table, Tag, Card, Select, Space, Input } from 'antd';
+import { SearchOutlined } from '@ant-design/icons';
 
 const { Option } = Select;
 
@@ -7,6 +8,7 @@ const PaymentTable = ({ payments, loading }) => {
   // Filter and sort states
   const [filterStatus, setFilterStatus] = useState('');
   const [sortOrder, setSortOrder] = useState('desc');
+  const [searchText, setSearchText] = useState('');
 
   // Filter and sort payments
   const filteredPayments = useMemo(() => {
@@ -17,6 +19,24 @@ const PaymentTable = ({ payments, loading }) => {
       result = result.filter(payment => payment.status === filterStatus);
     }
     
+    // Search by customer name, customer ID, or description
+    if (searchText) {
+      const searchLower = searchText.toLowerCase();
+      result = result.filter(payment => {
+        const customerName = payment.customer_id?.profile?.fullName || payment.customer_id?.email || '';
+        const customerId = payment.customer_id?._id || '';
+        const description = payment.order_description || '';
+        const orderId = payment.order_id || '';
+        
+        return (
+          customerName.toLowerCase().includes(searchLower) ||
+          customerId.toLowerCase().includes(searchLower) ||
+          description.toLowerCase().includes(searchLower) ||
+          orderId.toLowerCase().includes(searchLower)
+        );
+      });
+    }
+    
     // Sort by createdAt
     result.sort((a, b) => {
       const dateA = new Date(a.createdAt);
@@ -25,7 +45,7 @@ const PaymentTable = ({ payments, loading }) => {
     });
     
     return result;
-  }, [payments, filterStatus, sortOrder]);
+  }, [payments, filterStatus, sortOrder, searchText]);
 
   const columns = [
     {
@@ -43,7 +63,7 @@ const PaymentTable = ({ payments, loading }) => {
         return (
           <div>
             <div style={{ fontWeight: 500 }}>{name}</div>
-            <div style={{ fontSize: '11px', color: '#888' }}>ID: {customer._id?.slice(-6)}</div>
+            <div style={{ fontSize: '11px', color: '#888' }}>ID: {customer._id}</div>
           </div>
         );
       },
@@ -83,6 +103,14 @@ const PaymentTable = ({ payments, loading }) => {
       title="Lịch sử Thanh toán"
       extra={
         <Space>
+          <Input
+            placeholder="Tìm kiếm: tên, ID khách hàng, mô tả, mã đơn..."
+            prefix={<SearchOutlined />}
+            allowClear
+            style={{ width: 300 }}
+            value={searchText}
+            onChange={(e) => setSearchText(e.target.value)}
+          />
           <Select
             placeholder="Lọc theo trạng thái"
             allowClear
@@ -96,7 +124,7 @@ const PaymentTable = ({ payments, loading }) => {
             <Option value="COMPLETED">Hoàn thành</Option>
           </Select>
           <Select
-            placeholder="Sắp xếp ngày"
+            placeholder="Sắp xếp theo ngày"
             style={{ width: 140 }}
             value={sortOrder}
             onChange={setSortOrder}
