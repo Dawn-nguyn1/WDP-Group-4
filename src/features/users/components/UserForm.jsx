@@ -51,10 +51,7 @@ const UserForm = (props) => {
     <div className="user-form" style={{ margin: "10px 0" }}>
       <div style={{ display: "flex", justifyContent: "space-between" }}>
         <h3>Table Users</h3>
-        <Button onClick={() => setIsModalOpen(true)} type="primary">
-          {" "}
-          Create User{" "}
-        </Button>
+        {/* Create User button hidden */}
       </div>
 
       <Modal

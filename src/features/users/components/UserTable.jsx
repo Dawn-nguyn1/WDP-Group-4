@@ -157,7 +157,8 @@ const UserTable = (props) => {
           >
             <EyeOutlined />
           </button>
-          <button
+          {/* Edit button hidden */}
+          {/* <button
             className="action-btn-icon edit-btn"
             onClick={() => {
               setDataUpdate(record);
@@ -166,7 +167,7 @@ const UserTable = (props) => {
             title="Edit"
           >
             <EditOutlined />
-          </button>
+          </button> */}
           {
             confirmDelete ?
               // Xóa trực tiếp
