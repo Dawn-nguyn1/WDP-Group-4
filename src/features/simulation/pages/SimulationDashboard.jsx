@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { Layout, Select, Alert, Spin, Tag, Row, Col } from "antd";
+import { Layout, Alert, Tag, Button } from "antd";
+import { SettingOutlined } from "@ant-design/icons";
 import {
   getSimulationStatus,
   selectCurrentRun,
@@ -10,12 +11,10 @@ import { fetchMissions, selectMissionsList, selectMissionsLoading } from "../../
 import { getMissionDetailAPI } from "../../missions/services/missionApi";
 import { getFlightPlanDetailAPI } from "../../flight-plans/services/flightPlanApi";
 import SimulationControl from "../components/SimulationControl";
-import SimulationLogConsole from "../components/SimulationLogConsole";
 import SimulationMap from "../components/SimulationMap";
 import { useSimulationTelemetry } from "../hooks/useSimulationTelemetry";
 
 const { Content } = Layout;
-const { Option } = Select;
 
 const SimulationDashboard = () => {
   const dispatch = useDispatch();
@@ -136,6 +135,11 @@ const SimulationDashboard = () => {
   const { dronesLiveProps } = useSimulationTelemetry(currentRun, token);
 
 
+  const [isConfigModalOpen, setIsConfigModalOpen] = useState(false);
+
+  const showConfigModal = () => setIsConfigModalOpen(true);
+  const hideConfigModal = () => setIsConfigModalOpen(false);
+
   return (
     <Layout className="h-full bg-gray-50">
       <Content className="p-6">
@@ -152,38 +156,44 @@ const SimulationDashboard = () => {
           <Alert message={error} type="error" showIcon className="mb-4" closable />
         )}
 
-        {/* Row 1: Control Form + Console */}
-        <Row gutter={16} style={{ marginBottom: 16 }}>
-          <Col xs={24} md={18}>
-            <SimulationControl
-              currentMission={selectedMission}
-              currentRun={currentRun}
-              missions={missions}
-              missionsLoading={missionsLoading}
-              selectedMissionId={selectedMissionId}
-              onMissionChange={handleMissionChange}
-              isSimulationActive={isSimulationActive}
-            />
-          </Col>
+        {/* Map Container with Config Button Overlay */}
+        <div className="bg-white rounded-lg shadow-sm p-2 relative" style={{ height: 'calc(100vh - 140px)', minHeight: '600px' }}>
+          {/* Config Button - Top Right on Map */}
+          <div className="absolute top-4 right-4 z-[1000]">
+            <Button
+              type="primary"
+              icon={<SettingOutlined />}
+              onClick={showConfigModal}
+              size="large"
+              style={{
+                background: 'linear-gradient(135deg, #1890ff 0%, #096dd9 100%)',
+                border: 'none',
+                boxShadow: '0 4px 12px rgba(24, 144, 255, 0.4)'
+              }}
+            >
+              Simulation Configuration
+            </Button>
+          </div>
 
-          {/* <Col xs={24} md={6}>
-            <SimulationLogConsole currentRun={currentRun} compact />
-          </Col> */}
-        </Row>
+          <SimulationMap
+            currentMission={detailedMission || selectedMission}
+            missionFlightPaths={missionFlightPaths}
+            dronesLiveProps={dronesLiveProps}
+          />
+        </div>
 
-        {/* Row 2: Map */}
-        <Row>
-          <Col span={24}>
-            <div className="bg-white rounded-lg shadow-sm p-2 relative overflow-hidden" style={{ height: 'calc(100vh - 200px)', minHeight: '1000px' }}>
-              <SimulationMap
-                currentMission={detailedMission || selectedMission}
-                missionFlightPaths={missionFlightPaths}
-                dronesLiveProps={dronesLiveProps}
-              />
-            </div>
-          </Col>
-        </Row>
-
+        {/* Simulation Control Modal */}
+        <SimulationControl
+          currentMission={selectedMission}
+          currentRun={currentRun}
+          missions={missions}
+          missionsLoading={missionsLoading}
+          selectedMissionId={selectedMissionId}
+          onMissionChange={handleMissionChange}
+          isSimulationActive={isSimulationActive}
+          isOpen={isConfigModalOpen}
+          onClose={hideConfigModal}
+        />
       </Content>
     </Layout>
   );
