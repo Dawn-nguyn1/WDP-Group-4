@@ -91,7 +91,8 @@ const simulationSlice = createSlice({
       })
       .addCase(startSimulation.rejected, (state, action) => {
         state.isStarting = false;
-        state.error = action.payload?.message || "Failed to start simulation";
+        // Store the full error payload to access details later
+        state.error = action.payload;
       })
 
       // stopSimulation
