@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Form, Select, InputNumber, Switch, Button, Card, Modal } from "antd";
+import { Form, Select, InputNumber, Switch, Button, Card, Modal, Tag } from "antd";
 import { PlayCircleOutlined, StopOutlined } from "@ant-design/icons";
 import { useDispatch, useSelector } from "react-redux";
 import {
@@ -11,7 +11,15 @@ import {
 
 const { Option } = Select;
 
-const SimulationControl = ({ currentMission, currentRun }) => {
+const SimulationControl = ({ 
+  currentMission, 
+  currentRun,
+  missions = [],
+  missionsLoading = false,
+  selectedMissionId,
+  onMissionChange,
+  isSimulationActive = false
+}) => {
   const [form] = Form.useForm();
   const dispatch = useDispatch();
   const [isStopModalVisible, setIsStopModalVisible] = useState(false);
@@ -55,6 +63,42 @@ const SimulationControl = ({ currentMission, currentRun }) => {
         onFinish={onStart}
         disabled={isRunning || isStoppingState || isStarting || isStopping}
       >
+        {/* Mission Select and Status */}
+        <div className="flex justify-between items-center mb-4" style={{ gap: '16px' }}>
+          <div className="flex-1">
+            <Form.Item label="Select Mission" required>
+              <Select
+                showSearch
+                placeholder="Choose a mission to simulate"
+                loading={missionsLoading}
+                value={selectedMissionId}
+                onChange={onMissionChange}
+                disabled={isSimulationActive}
+                filterOption={(input, option) =>
+                  (option?.children ?? "").toLowerCase().includes(input.toLowerCase())
+                }
+              >
+                {missions?.map(m => (
+                  <Option key={m._id} value={m._id}>
+                    {m.name} ({m.status})
+                  </Option>
+                ))}
+              </Select>
+            </Form.Item>
+          </div>
+          
+          <div className="flex items-end">
+            <Form.Item label="Current Status">
+              {currentRun ? (
+                <Tag color={currentRun.status === 'RUNNING' ? 'green' : currentRun.status === 'STOPPING' ? 'orange' : currentRun.status === 'FAILED' ? 'red' : 'blue'}>
+                  {currentRun.status}
+                </Tag>
+              ) : (
+                <Tag color="default">No Active Run</Tag>
+              )}
+            </Form.Item>
+          </div>
+        </div>
         <Form.Item name="mode" label="Mode" tooltip="Select simulation scenario">
           <Select>
             <Option value="normal">Normal Flight</Option>

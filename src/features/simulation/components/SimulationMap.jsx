@@ -96,7 +96,7 @@ const SimulationMap = ({
 
 
   return (
-    <div className="simulation-map-container" style={{ height: '300px', width: '100%', borderRadius: '8px', overflow: 'hidden' }}>
+    <div className="simulation-map-container" style={{ height: '100%', width: '100%', borderRadius: '8px', overflow: 'hidden' }}>
       <MapContainer center={center} zoom={13} style={{ height: '100%', width: '100%' }}>
         <TileLayer
           attribution='&copy; OpenStreetMap'

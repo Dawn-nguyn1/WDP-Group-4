@@ -152,46 +152,35 @@ const SimulationDashboard = () => {
           <Alert message={error} type="error" showIcon className="mb-4" closable />
         )}
 
-        <Row gutter={24}>
-          <Col xs={24} lg={8}>
-            <div className="bg-white p-4 rounded-lg shadow-sm mb-4">
-              <h3 className="text-md font-semibold mb-2">Select Mission</h3>
-              <Select
-                showSearch
-                placeholder="Choose a mission to simulate"
-                style={{ width: "100%" }}
-                loading={missionsLoading}
-                value={selectedMissionId}
-                onChange={handleMissionChange}
-                disabled={isSimulationActive}
-                filterOption={(input, option) =>
-                  (option?.children ?? "").toLowerCase().includes(input.toLowerCase())
-                }
-              >
-                {missions?.map(m => (
-                  <Option key={m._id} value={m._id}>
-                    {m.name} ({m.status})
-                  </Option>
-                ))}
-              </Select>
-            </div>
-
+        {/* Row 1: Control Form + Console */}
+        <Row gutter={16} style={{ marginBottom: 16 }}>
+          <Col xs={24} md={18}>
             <SimulationControl
               currentMission={selectedMission}
               currentRun={currentRun}
+              missions={missions}
+              missionsLoading={missionsLoading}
+              selectedMissionId={selectedMissionId}
+              onMissionChange={handleMissionChange}
+              isSimulationActive={isSimulationActive}
             />
           </Col>
 
-          <Col xs={24} lg={16}>
-            <div className="bg-white rounded-lg shadow-sm mb-4 p-2 relative overflow-hidden">
+          <Col xs={24} md={6}>
+            <SimulationLogConsole currentRun={currentRun} compact />
+          </Col>
+        </Row>
+
+        {/* Row 2: Map */}
+        <Row>
+          <Col span={24}>
+            <div className="bg-white rounded-lg shadow-sm p-2 relative overflow-hidden" style={{ height: 'calc(100vh - 280px)', minHeight: '500px' }}>
               <SimulationMap
                 currentMission={detailedMission || selectedMission}
                 missionFlightPaths={missionFlightPaths}
                 dronesLiveProps={dronesLiveProps}
               />
             </div>
-
-            <SimulationLogConsole currentRun={currentRun} />
           </Col>
         </Row>
 

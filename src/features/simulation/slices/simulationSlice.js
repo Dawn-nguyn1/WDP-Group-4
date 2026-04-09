@@ -116,9 +116,19 @@ const simulationSlice = createSlice({
       .addCase(getSimulationStatus.fulfilled, (state, action) => {
         state.isPolling = false;
         const newRunParams = action.payload;
-        // Merge the status; typically we shouldn't replace completely 
-        // to avoid flickering unless needed, but replacing is fine.
-        state.currentRun = newRunParams;
+        
+        // Merge new data with existing logs to preserve log history
+        if (state.currentRun && newRunParams.logs) {
+          const existingLogIds = new Set(state.currentRun.logs?.map(log => log.id || `${log.ts}-${log.message}`));
+          const newLogs = newRunParams.logs.filter(log => !existingLogIds.has(log.id || `${log.ts}-${log.message}`));
+          
+          state.currentRun = {
+            ...newRunParams,
+            logs: [...(state.currentRun.logs || []), ...newLogs]
+          };
+        } else {
+          state.currentRun = newRunParams;
+        }
       })
       .addCase(getSimulationStatus.rejected, (state, action) => {
         state.isPolling = false;
