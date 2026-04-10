@@ -96,19 +96,20 @@ const FlightPlanListPage = () => {
         </div>
       ),
     },
-    {
-      title: "Conflict Status",
-      key: "conflictStatus",
-      dataIndex: "conflictStatus",
-      render: (conflictStatus) => {
-        const isClear = conflictStatus === "CLEAR";
-        return (
-          <span className={`${listStyles.statusBadge} ${isClear ? listStyles.statusActive : listStyles.statusInactive}`}>
-            {conflictStatus || "N/A"}
-          </span>
-        );
-      },
-    },
+    // Conflict Status column hidden as requested
+    // {
+    //   title: "Conflict Status",
+    //   key: "conflictStatus",
+    //   dataIndex: "conflictStatus",
+    //   render: (conflictStatus) => {
+    //     const isClear = conflictStatus === "CLEAR";
+    //     return (
+    //       <span className={`${listStyles.statusBadge} ${isClear ? listStyles.statusActive : listStyles.statusInactive}`}>
+    //         {conflictStatus || "N/A"}
+    //       </span>
+    //     );
+    //   },
+    // },
     {
       title: "Hành động",
       key: "actions",
